@@ -13,37 +13,6 @@ namespace donniebot.classes
 {
     public static class IEnumerableExtensions
     {
-        public static string MakeString(this Dictionary<DynValue, DynValue> t, int level = 0)
-        {
-            if (t == null || !(t as IEnumerable).Cast<object>().Any())
-                return $"[\n{"  ".RepeatString(level)}]";
-
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < t.Values.Count(); i++)
-            {
-                var key = t.Keys.ElementAt(i);
-                var value = t.Values.ElementAt(i);
-
-                var toAppend = "  ".RepeatString(level + 1);
-
-                if (value.Type == DataType.Table)
-                {
-                    var tab = value.Table;
-                    var dict = new Dictionary<DynValue, DynValue>();
-                    for (int x = 0; x < tab.Values.Count(); x++)
-                        dict.Add(tab.Keys.ElementAt(i), tab.Values.ElementAt(i));
-                    toAppend += $"[{key}, \n{"  ".RepeatString(level + 2)}{dict.MakeString(level + 2)}\n{"  ".RepeatString(level + 1)}]";
-                }
-                else
-                    toAppend += $"[{key}, {value.MakeString()}]";
-
-                toAppend += ",\n";
-
-                sb.Append(toAppend);
-            }
-            var str = sb.ToString();
-            return $"[\n{str.Substring(0, str.Length - 2)}\n{"  ".RepeatString(level)}]";
-        }
         public static string MakeString(this IEnumerable t, int level = 0)
         {
             if (t == null || !t.Cast<object>().Any())

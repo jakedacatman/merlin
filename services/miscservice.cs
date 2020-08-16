@@ -309,9 +309,7 @@ namespace donniebot.services
                 description = $"in: **[input]({await UploadToPastebinAsync(code)})**\nout: \n";
             string tostringed = (result == null) ? "nil" : result.ToString();
 
-            if (result is Dictionary<DynValue, DynValue> d)
-                tostringed = d.MakeString();
-            else if (result is ICollection r)
+            if (result is ICollection r)
                 tostringed = r.MakeString();
             else if (result is IReadOnlyCollection<object> x)
                 tostringed = x.MakeString();
