@@ -514,19 +514,36 @@ namespace donniebot.services
             float padding = 0.05f * source.Width;
             float wrap = source.Width - (2 * padding);
 
-            var bounds = TextMeasurer.MeasureBounds(text, new RendererOptions(font) 
+            /*var bounds = TextMeasurer.MeasureBounds(text, new RendererOptions(font) 
             { 
                 WrappingWidth = wrap, 
                 HorizontalAlignment = HorizontalAlignment.Center, 
                 VerticalAlignment = VerticalAlignment.Center 
-            });
+            });*/
 
-            var tBounds = TextMeasurer.MeasureBounds(text, new RendererOptions(tFont) 
+            /*var tBounds = TextMeasurer.MeasureBounds(text, new RendererOptions(tFont) 
             { 
                 WrappingWidth = wrap, 
                 HorizontalAlignment = HorizontalAlignment.Center, 
                 VerticalAlignment = VerticalAlignment.Center 
-            });
+            });*/
+            TextMeasurer.TryMeasureCharacterBounds(text, new RendererOptions(tFont) 
+            { 
+                WrappingWidth = wrap, 
+                HorizontalAlignment = HorizontalAlignment.Center, 
+                VerticalAlignment = VerticalAlignment.Center 
+            }, out var bnds);
+
+            var bounds = bnds.OrderByDescending(x => x.Bounds.Height).Select(x => x.Bounds).First();
+            
+            TextMeasurer.TryMeasureCharacterBounds(text, new RendererOptions(tFont) 
+            { 
+                WrappingWidth = wrap, 
+                HorizontalAlignment = HorizontalAlignment.Center, 
+                VerticalAlignment = VerticalAlignment.Center 
+            }, out var tbnds);
+
+            var tBounds = tbnds.OrderByDescending(x => x.Bounds.Height).Select(x => x.Bounds).First();
 
             var bw = (int)Math.Round(w / 8d);
             var bh = (int)Math.Round(h / 8d);
@@ -536,7 +553,7 @@ namespace donniebot.services
             bg.Mutate(x => x.Resize(new ResizeOptions
             {
                 Mode = ResizeMode.Stretch,
-                Size = new Size((int)Math.Round(5d * w / 4d), (int)(Math.Round((1.75f * bh) + h + height + bounds.Height))),
+                Size = new Size((int)Math.Round(5d * w / 4d), (int)Math.Round((1.5f * h) + tBounds.Height + bounds.Height)),
                 Sampler = KnownResamplers.NearestNeighbor
             }));
             
@@ -544,23 +561,24 @@ namespace donniebot.services
 
             bg.Mutate(x => x.Draw(Pens.Solid(Color.White, 3), r));
 
-            var location = new PointF(bw + padding, h + .8f * height);// + (.5f * tBounds.Height));
+            var location = new PointF(bw + padding, r.Bottom + bh);
 
             var to = new TextOptions
             {
                 HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center,
                 WrapTextWidth = wrap,
-                /*FallbackFonts = 
+                FallbackFonts = 
                 {
-                    SystemFonts.Collection.CreateFont("Twemoji", source.Width / 12f, FontStyle.Regular).Family
+                    SystemFonts.Find("Twemoji")
                 }
-                */
+                
             };
 
             var options = new TextGraphicsOptions(new GraphicsOptions(), to);
             bg.Mutate(x => x.DrawText(options, title, tFont, Color.White, location));
-            location.Y += tBounds.Height + .25f * bounds.Height;
+            Console.WriteLine(tBounds.Height);
+            location.Y += bh + tBounds.Height;
             bg.Mutate(x => x.DrawText(options, text, font, Color.White, location));
 
             if (source.Frames.Count() > 1)
