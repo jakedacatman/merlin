@@ -116,7 +116,7 @@ namespace donniebot
                 if (!msg.HasStringPrefix(prefix, ref argPos)) return;
 
                 if (context.User.IsBot) return;
-                var result = await _commands.ExecuteAsync(context, argPos, _services);
+                await _commands.ExecuteAsync(context, argPos, _services);
             }
             catch (Exception e)
             {

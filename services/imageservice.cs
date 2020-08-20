@@ -166,6 +166,20 @@ namespace donniebot.services
             return source;
         }
 
+        public async Task<Image> Greyscale(string url)
+        {
+            Image source = await DownloadFromUrlAsync(url);
+            return Greyscale(source);
+        }
+        public Image Greyscale(Image source)
+        {
+            if (source.Frames.Count > 1)
+                GifFilter(source, Greyscale);
+            else
+                source.Mutate(x => x.Grayscale());
+            return source;
+        }
+
         public async Task<Image> Edges(string url)
         {
             Image source = await DownloadFromUrlAsync(url);
@@ -1219,7 +1233,10 @@ namespace donniebot.services
                     if (previousmsg.Attachments.Count > 0)
                         url = previousmsg.Attachments.First().Url;
                     else
-                        throw new Exception("Try the command with a url, or attach an image.");
+                        if (Uri.IsWellFormedUriString(previousmsg.Content, UriKind.Absolute))
+                            url = previousmsg.Content;
+                        else
+                            throw new Exception("Try the command with a url, or attach an image.");
                 }
                 else
                     url = context.Message.Attachments.First().Url;
