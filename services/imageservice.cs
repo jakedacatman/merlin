@@ -141,30 +141,28 @@ namespace donniebot.services
         public async Task<Image> Brightness(string url, float brightness)
         {
             Image source = await DownloadFromUrlAsync(url);
+            return Brightness(source, brightness);
+        }
+        public Image Brightness(Image source, float brightness)
+        {
             if (source.Frames.Count > 1)
                 GifFilter(source, brightness, Brightness);
             else
                 source.Mutate(x => x.Brightness(brightness));
             return source;
         }
-        public Image Brightness(Image source, object brightness)
-        {
-            source.Mutate(x => x.Brightness((float)brightness));
-            return source;
-        }
 
         public async Task<Image> Blur(string url, float amount)
         {
             Image source = await DownloadFromUrlAsync(url);
+            return Blur(source, amount);
+        }
+        public Image Blur(Image source, float amount)
+        {
             if (source.Frames.Count > 1)
                 GifFilter(source, amount, Blur);
             else
                 source.Mutate(x => x.GaussianBlur(amount));
-            return source;
-        }
-        public Image Blur(Image source, object amount)
-        {
-            source.Mutate(x => x.GaussianBlur((float)amount));
             return source;
         }
 
@@ -192,39 +190,37 @@ namespace donniebot.services
                 source.Mutate(x => x.Contrast(amount));
             return source;
         }
-        public Image Contrast(Image source, object amount)
+        public Image Contrast(Image source, float amount)
         {
-            source.Mutate(x => x.Contrast((float)amount));
+            source.Mutate(x => x.Contrast(amount));
             return source;
         }
 
         public async Task<Image> Sharpen(string url, float amount)
         {
             Image source = await DownloadFromUrlAsync(url);
+            return Sharpen(source, amount);
+        }
+        public Image Sharpen(Image source, float amount)
+        {
             if (source.Frames.Count > 1)
                 GifFilter(source, amount, Sharpen);
             else
                 source.Mutate(x => x.GaussianSharpen(amount));
             return source;
         }
-        public Image Sharpen(Image source, object amount)
-        {
-            source.Mutate(x => x.GaussianSharpen((float)amount));
-            return source;
-        }
 
         public async Task<Image> Pixelate(string url, int size)
         {
             Image source = await DownloadFromUrlAsync(url);
+            return Pixelate(source, size);
+        }
+        public Image Pixelate(Image source, int size)
+        {
             if (source.Frames.Count > 1)
                 GifFilter(source, size, Pixelate);
             else
                 source.Mutate(x => x.Pixelate(size));
-            return source;
-        }
-        public Image Pixelate(Image source, object size)
-        {
-            source.Mutate(x => x.Pixelate((int)size));
             return source;
         }
         
@@ -237,24 +233,23 @@ namespace donniebot.services
                 source.Mutate(x => x.Hue(amount));
             return source;
         }
-        public Image Hue(Image source, object amount)
+        public Image Hue(Image source, float amount)
         {
-            source.Mutate(x => x.Hue((float)amount));
+            source.Mutate(x => x.Hue(amount));
             return source;
         }
 
         public async Task<Image> BackgroundColor(string url, int r, int g, int b)
         {
             Image source = await DownloadFromUrlAsync(url);
+            return BackgroundColor(source, r, g, b);
+        }
+        public Image BackgroundColor(Image source, int r, int g, int b)
+        {
             if (source.Frames.Count > 1)
                 GifFilter(source, r, g, b, BackgroundColor);
             else
                 source.Mutate(x => x.BackgroundColor(new Color(new Rgba64((ushort)r, (ushort)g, (ushort)b, 255))));
-            return source;
-        }
-        public Image BackgroundColor(Image source, int r, int g, int b)
-        {
-            source.Mutate(x => x.BackgroundColor(new Color(new Rgba64((ushort)r, (ushort)g, (ushort)b, 255))));
             return source;
         }
 
@@ -419,15 +414,14 @@ namespace donniebot.services
         public async Task<Image> Saturate(string url, float amount)
         {
             Image source = await DownloadFromUrlAsync(url);
+            return Saturate(source, amount);
+        }
+        public Image Saturate(Image source, float amount)
+        {
             if (source.Frames.Count > 1)
                 GifFilter(source, amount, Saturate);
             else
                 source.Mutate(x => x.Saturate(amount));
-            return source;
-        }
-        public Image Saturate(Image source, object amount)
-        {
-            source.Mutate(x => x.Saturate((float)amount));
             return source;
         }
 
@@ -464,20 +458,21 @@ namespace donniebot.services
         public async Task<Image> Jpeg(string url, int quality)
         {
             Image source = await DownloadFromUrlAsync(url);
+            return Jpeg(source, quality);
+        }
+        public Image Jpeg(Image source, int quality)
+        {
             if (source.Frames.Count > 1)
                 GifFilter(source, quality, Jpeg);
             else
-                source = Jpeg(source, quality);
+            {
+                var path = SaveAsJpeg(source, quality);
+                var f = File.Open(path, FileMode.Open);
+                source = Image.Load(f);
+                f.Dispose();
+                File.Delete(path);  
+            }
             return source;
-        }
-        public Image Jpeg(Image source, object quality)
-        {
-            var path = SaveAsJpeg(source, (int)quality);
-            var f = File.Open(path, FileMode.Open);
-            var img = Image.Load(f);
-            f.Dispose();
-            File.Delete(path);
-            return img;
         }
 
         public async Task<Image> Demotivational(string url, string title, string text)
@@ -577,7 +572,6 @@ namespace donniebot.services
 
             var options = new TextGraphicsOptions(new GraphicsOptions(), to);
             bg.Mutate(x => x.DrawText(options, title, tFont, Color.White, location));
-            Console.WriteLine(tBounds.Height);
             location.Y += bh + tBounds.Height;
             bg.Mutate(x => x.DrawText(options, text, font, Color.White, location));
 
@@ -677,10 +671,27 @@ namespace donniebot.services
 
             return source;
         }
-        public Image GifFilter(Image source, object x, Func<Image, object, Image> func)
+        public Image GifFilter(Image source, float x, Func<Image, float, Image> func)
         {
             if (source.Frames.Count <= 1) throw new InvalidOperationException("can't use a gif filter on a stationary image");
+            
+            var delay = source.Frames.RootFrame.Metadata.GetFormatMetadata(GifFormat.Instance).FrameDelay;
+            for (int i = 0; i < source.Frames.Count; i++)
+            {
+                var f = source.Frames.CloneFrame(i);
+                f = func(f, x);
+                var frame = f.Frames[0];
+                frame.Metadata.GetFormatMetadata(GifFormat.Instance).FrameDelay = delay;
+                source.Frames.RemoveFrame(i);
+                source.Frames.InsertFrame(i, frame);
+            }
 
+            return source;
+        }
+        public Image GifFilter(Image source, int x, Func<Image, int, Image> func)
+        {
+            if (source.Frames.Count <= 1) throw new InvalidOperationException("can't use a gif filter on a stationary image");
+            
             var delay = source.Frames.RootFrame.Metadata.GetFormatMetadata(GifFormat.Instance).FrameDelay;
             for (int i = 0; i < source.Frames.Count; i++)
             {

@@ -36,8 +36,7 @@ namespace donniebot.commands
             try
             {
                 url = await _img.ParseUrlAsync(url, Context);
-                var img = await _img.BackgroundColor(url.Trim('<').Trim('>'), _misc.RandomNumber(0, 255), _misc.RandomNumber(0, 255), _misc.RandomNumber(0, 255));
-                //img = _img.Hue(img, _misc.RandomFloat(5));
+                var img = await _img.BackgroundColor(url, _misc.RandomNumber(0, 255), _misc.RandomNumber(0, 255), _misc.RandomNumber(0, 255));
                 img = _img.Saturate(img, _misc.RandomFloat(5));
                 img = _img.Brightness(img, _misc.RandomFloat(5, 1));
                 img = _img.Blur(img, _misc.RandomFloat(5));
