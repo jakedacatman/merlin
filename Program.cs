@@ -6,11 +6,9 @@ using Discord;
 using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
 using donniebot.services;
-using donniebot.classes;
 using Discord.Addons.Interactive;
 using LiteDB;
 using System.IO;
-using System.Collections.Generic;
 
 namespace donniebot
 {

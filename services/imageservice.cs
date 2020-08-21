@@ -19,7 +19,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using System.Numerics;
+
 namespace donniebot.services
 {
     public class ImageService
@@ -850,7 +850,7 @@ namespace donniebot.services
             {
                 Mode = ResizeMode.Stretch,
                 Size = new SixLabors.ImageSharp.Size(x, y),
-                Sampler = KnownResamplers.Lanczos8
+                Sampler = KnownResamplers.MitchellNetravali
             }));
 
             var delay = source.Frames.RootFrame.Metadata.GetFormatMetadata(GifFormat.Instance).FrameDelay;
@@ -1010,7 +1010,7 @@ namespace donniebot.services
             {
                 Mode = ResizeMode.Stretch,
                 Size = new SixLabors.ImageSharp.Size(x, y),
-                Sampler = KnownResamplers.Lanczos8
+                Sampler = KnownResamplers.MitchellNetravali
             }));
             return source;
         }

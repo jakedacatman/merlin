@@ -3,7 +3,6 @@ using System.Collections;
 using System.Numerics;
 using System.Collections.Generic;
 using System.Text;
-using Discord;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;

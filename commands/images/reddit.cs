@@ -1,8 +1,4 @@
 using System;
-using System.Collections.Generic;   
-using System.Collections.Concurrent;
-using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Discord;
@@ -10,11 +6,6 @@ using Discord.WebSocket;
 using Discord.Commands;
 using donniebot.services;
 using Discord.Addons.Interactive;
-using System.IO;
-using SixLabors.ImageSharp;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using donniebot.classes;
 
 namespace donniebot.commands
 {

@@ -13,13 +13,11 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Scripting;
 using Microsoft.CodeAnalysis.CSharp.Scripting;
 using System.Diagnostics;
-using System.Text.RegularExpressions;
 using Microsoft.Extensions.DependencyInjection;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using Discord.Commands;
 using MoonSharp.Interpreter;
-using System.Web;
 
 namespace donniebot.services
 {
@@ -216,6 +214,9 @@ namespace donniebot.services
                 tostringed = str;
             else
                 tostringed = result.MakeString();
+
+            if (tostringed == "" || string.IsNullOrEmpty(tostringed) || tostringed.Length == 0)
+                tostringed = " ";
             
             if (tostringed.Length > 1000)
                 description += $"Here is a **[link]({await UploadToPastebinAsync(tostringed)})** to the result.";
@@ -317,7 +318,7 @@ namespace donniebot.services
             else
                 tostringed = result.MakeString();
 
-            if (tostringed == "")
+            if (tostringed == "" || string.IsNullOrEmpty(tostringed))
                 tostringed = " ";
 
             if (tostringed.Length > 1000)

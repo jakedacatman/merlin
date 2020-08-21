@@ -1,12 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
 using donniebot.classes;
-using Discord.WebSocket;
-using System.IO;
 using Microsoft.Extensions.DependencyInjection;
 using LiteDB;
 
