@@ -101,15 +101,24 @@ namespace donniebot.services
             {
                 description = "This command has thrown an exception. Here is ";
 
-                if (e.Message.Length < 1000)
-                    description += $"its message:\n**{e.Message}**";
+                var ie = e.InnerException;
+                string message = e.Message;
+                if (ie != null) message += $"\n*(inner: {ie.Message})*";
+
+                if (message.Length < 1000)
+                    description += $"its message:\n**{message}**";
                 else
-                    description += $"a [link]({await UploadToPastebinAsync(e.Message)}) to its message.";
+                    description += $"a [link]({await UploadToPastebinAsync(message)} to its message.";
+
                 description += "\nStack trace:\n";
-                if (e.StackTrace.Length < 1000)
-                    description += $"```{e.StackTrace}```";
+
+                string trace = e.StackTrace;
+                if (ie != null) trace += $"\ninner: {ie.StackTrace}";
+
+                if (trace.Length < 1000)
+                    description += $"```{trace}```";
                 else
-                    description += $"[here]({await UploadToPastebinAsync(e.StackTrace)})";
+                    description += $"[here]({await UploadToPastebinAsync(trace)})";
             }
 
             EmbedBuilder embed = new EmbedBuilder()
