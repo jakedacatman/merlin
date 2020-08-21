@@ -491,6 +491,12 @@ namespace donniebot.services
 
         public async Task<Image> Demotivational(string url, string title, string text)
         {
+            Image source = await DownloadFromUrlAsync(url);
+            return Demotivational(source, title, text);
+        }
+
+        public Image Demotivational(Image source, string title, string text)
+        {
             Image bg = Image.Load(new byte[]
             {
                 137, 80, 78, 71, 13, 
@@ -512,8 +518,6 @@ namespace donniebot.services
                 73, 69, 78, 68, 174, 
                 66, 96, 130
             });
-
-            Image source = await DownloadFromUrlAsync(url);
 
             var w = source.Width;
             var h = source.Height;
@@ -614,7 +618,7 @@ namespace donniebot.services
 
             var tmp = Directory.CreateDirectory($"tmp-{id}");
             await Shell.Run($"ffmpeg -i {id} -hide_banner -vn {tmp.Name}/{id}.aac", true);
-            await Shell.Run($"ffmpeg -i {id} -r {framerate} -f image2 -hide_banner {tmp.Name}/frame-%04d.png", true);
+            await Shell.Run($"ffmpeg -i {id} -r {framerate} -f image2 -hide_banner {tmp.Name}/frame-%d.png", true);
 
             foreach (var f in tmp.EnumerateFiles().Where(x => x.Name.Contains(".png")))
             {
@@ -629,7 +633,7 @@ namespace donniebot.services
                 Save(img, f.FullName);
             }
 
-            await Shell.Run($"ffmpeg -f image2 -framerate {framerate} -i {tmp.Name}/frame-%04d.png -i {tmp.Name}/{id}.aac -hide_banner -c:v libx264 -c:a copy {id}.mp4", true);
+            await Shell.Run($"ffmpeg -f image2 -framerate {framerate} -i {tmp.Name}/frame-%d.png -i {tmp.Name}/{id}.aac -hide_banner -c:v libx264 -c:a copy {id}.mp4", true);
 
             File.Delete(id);
             Directory.Delete(tmp.Name, true);

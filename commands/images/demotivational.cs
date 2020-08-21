@@ -38,8 +38,16 @@ namespace donniebot.commands
             try
             {
                 url = await _img.ParseUrlAsync(url, Context);
-                var img = await _img.Demotivational(url, title, text);
-                await _img.SendToChannelAsync(img, Context.Channel);
+                if (await _img.IsVideoAsync(url))
+                {
+                    var path = await _img.VideoFilter(url, _img.Demotivational, title, text);
+                    await _img.SendToChannelAsync(path, Context.Channel);
+                }
+                else
+                {
+                    var img = await _img.Demotivational(url, title, text);
+                    await _img.SendToChannelAsync(img, Context.Channel);
+                }
             }
             catch (Exception e)
             {
