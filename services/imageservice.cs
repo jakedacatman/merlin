@@ -354,13 +354,24 @@ namespace donniebot.services
             Image source = await DownloadFromUrlAsync(sourceUrl);
             var overlay = await DownloadFromUrlAsync(overlayUrl);
 
-            return Overlay(source, overlay, new Point(x, y), new Size(width, height), rot);  
+            if (width == 0) width = overlay.Width;
+            if (height == 0) height = overlay.Height;
+
+            if (width < 0) width = source.Width;
+            if (height < 0) height = source.Height;
+
+            var size = new Size(width, height);
+
+            Point location;
+            if (x == -1 && y == -1)
+                location = new Point((source.Width / 2) - (size.Width / 2), (source.Height / 2) - (size.Height / 2));
+            else
+                location = new Point(x, y);
+
+            return Overlay(source, overlay, location, size, rot);  
         }
         public Image Overlay(Image source, Image overlay, Point location, Size size, float rot = 0f)
         {
-            if (size.Width != overlay.Width || size.Height != overlay.Height)
-                overlay = Resize(overlay, size.Width, size.Height);
-
             if (rot != 0f)
             {
                 var ow = overlay.Width;
@@ -948,17 +959,17 @@ namespace donniebot.services
             return source;
         }
 
-        public async Task<Image> SpeedUp(string url, int speed)
+        public async Task<Image> SpeedUp(string url, double speed)
         {
             Image source = await DownloadFromUrlAsync(url);
 
-            if (speed > 1000 || speed < 1) speed = 2;
+            if (speed > 1000 || speed <= 0) speed = 2;
             
             var delay = source.Frames.RootFrame.Metadata.GetFormatMetadata(GifFormat.Instance).FrameDelay;
             for (int i = 0; i < source.Frames.Count; i++)
             {
                 var frame = source.Frames.CloneFrame(i).Frames[0];
-                frame.Metadata.GetFormatMetadata(GifFormat.Instance).FrameDelay = (int)Math.Max(Math.Round(delay / (double)speed), 2);
+                frame.Metadata.GetFormatMetadata(GifFormat.Instance).FrameDelay = (int)Math.Max(Math.Round((double)delay / speed), 2);
 
                 source.Frames.RemoveFrame(i);
                 source.Frames.InsertFrame(i, frame);

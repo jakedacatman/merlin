@@ -106,7 +106,7 @@ namespace donniebot.services
                 if (ie != null) message += $"\n*(inner: {ie.Message})*";
 
                 if (message.Length < 1000)
-                    description += $"its message:\n**{message}**";
+                    description += $"its message:\n**{message.Replace("`", @"\`")}**";
                 else
                     description += $"a [link]({await UploadToPastebinAsync(message)} to its message.";
 
@@ -116,7 +116,7 @@ namespace donniebot.services
                 if (ie != null) trace += $"\ninner: {ie.StackTrace}";
 
                 if (trace.Length < 1000)
-                    description += $"```{trace}```";
+                    description += $"```{trace.Replace("`", @"\`")}```";
                 else
                     description += $"[here]({await UploadToPastebinAsync(trace)})";
             }
