@@ -969,7 +969,7 @@ namespace donniebot.services
             for (int i = 0; i < source.Frames.Count; i++)
             {
                 var frame = source.Frames.CloneFrame(i).Frames[0];
-                frame.Metadata.GetFormatMetadata(GifFormat.Instance).FrameDelay = (int)Math.Max(Math.Round((double)delay / speed), 2);
+                frame.Metadata.GetFormatMetadata(GifFormat.Instance).FrameDelay = (int)Math.Max(Math.Round(delay / speed), 2);
 
                 source.Frames.RemoveFrame(i);
                 source.Frames.InsertFrame(i, frame);
