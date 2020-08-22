@@ -1158,7 +1158,7 @@ namespace donniebot.services
             {
                 var post = postdata.ElementAt(i)["data"];
                 var hint = post["post_hint"];
-                if (post["url"] != null && hint != null && (hint.Value<string>() == "image" || hint.Value<string>().Contains("video")))
+                if (post["url"] != null && hint != null && (hint.Value<string>() == "image" || hint.Value<string>() == "hosted:video"))
                 {
                     var title = post["title"].Value<string>();
                     if (title.Length > 256)
