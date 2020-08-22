@@ -126,15 +126,14 @@ namespace donniebot.services
         public async Task<Image> Invert(string url)
         {
             Image source = await DownloadFromUrlAsync(url);
+            return Invert(source);
+        }
+        public Image Invert(Image source)
+        {
             if (source.Frames.Count > 1)
                 GifFilter(source, Invert);
             else
                 source.Mutate(x => x.Invert());
-            return source;
-        }
-        public Image Invert(Image source)
-        {
-            source.Mutate(x => x.Invert());
             return source;
         }
 
@@ -183,30 +182,28 @@ namespace donniebot.services
         public async Task<Image> Edges(string url)
         {
             Image source = await DownloadFromUrlAsync(url);
+            return Edges(source);
+        }
+        public Image Edges(Image source)
+        {
             if (source.Frames.Count > 1)
                 GifFilter(source, Edges);
             else
                 source.Mutate(x => x.DetectEdges());
             return source;
         }
-        public Image Edges(Image source)
-        {
-            source.Mutate(x => x.DetectEdges());
-            return source;
-        }
 
         public async Task<Image> Contrast(string url, float amount)
         {
             Image source = await DownloadFromUrlAsync(url);
+            return Contrast(source, amount);
+        }
+        public Image Contrast(Image source, float amount)
+        {
             if (source.Frames.Count > 1)
                 GifFilter(source, amount, Contrast);
             else
                 source.Mutate(x => x.Contrast(amount));
-            return source;
-        }
-        public Image Contrast(Image source, float amount)
-        {
-            source.Mutate(x => x.Contrast(amount));
             return source;
         }
 
@@ -241,15 +238,14 @@ namespace donniebot.services
         public async Task<Image> Hue(string url, float amount)
         {
             Image source = await DownloadFromUrlAsync(url);
+            return Hue(source, amount);
+        }
+        public Image Hue(Image source, float amount)
+        {
             if (source.Frames.Count > 1)
                 GifFilter(source, amount, Hue);
             else
                 source.Mutate(x => x.Hue(amount));
-            return source;
-        }
-        public Image Hue(Image source, float amount)
-        {
-            source.Mutate(x => x.Hue(amount));
             return source;
         }
 
@@ -270,15 +266,14 @@ namespace donniebot.services
         public async Task<Image> Rotate(string url, float r)
         {
             Image source = await DownloadFromUrlAsync(url);
+            return Rotate(source, r);
+        }
+        public Image Rotate(Image source, float r)
+        {
             if (source.Frames.Count > 1)
                 return GifFilterR(source, r, Rotate);
             else
                 source.Mutate(x => x.Rotate(r));
-            return source;
-        }
-        public Image Rotate(Image source, float r)
-        {
-            source.Mutate(x => x.Rotate(r));
             return source;
         }
 
@@ -327,11 +322,10 @@ namespace donniebot.services
                 HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center,
                 WrapTextWidth = wrap,
-                /*FallbackFonts = 
+                FallbackFonts = 
                 {
-                    SystemFonts.Collection.CreateFont("Twemoji", source.Width / 12f, FontStyle.Regular).Family
+                    SystemFonts.Find("Twemoji")
                 }
-                */
             };
 
             var options = new TextGraphicsOptions(new GraphicsOptions(), to);
@@ -360,50 +354,7 @@ namespace donniebot.services
             Image source = await DownloadFromUrlAsync(sourceUrl);
             var overlay = await DownloadFromUrlAsync(overlayUrl);
 
-            if (width == 0) width = overlay.Width;
-            if (height == 0) height = overlay.Height;
-
-            if (width == -1) width = source.Width;
-            if (height == -1) height = source.Height;
-
-            var Size = new Size(width, height);
-
-            Point location;
-            if (x == -1 && y == -1)
-                location = new Point((source.Width / 2) - (Size.Width / 2), (source.Height / 2) - (Size.Height / 2));
-            else
-                location = new Point(x, y);
-
-            if (source.Frames.Count > 1)
-                GifFilter(source, overlay, location, Size, rot, Overlay);
-            else
-            {
-                if (overlay.Frames.Count == 1)
-                {
-                    if (Size.Width != overlay.Width || Size.Height != overlay.Height)
-                        overlay = Resize(overlay, Size.Width, Size.Height);
-                    if (rot != 0f)
-                    {
-                        var ow = overlay.Width;
-                        var oh = overlay.Height;
-                        overlay.Mutate(x => x.Rotate(rot));
-                        var nw = overlay.Width;
-                        var nh = overlay.Height;
-            
-                        location = new Point(location.X - ((nw - ow) / 2), location.Y - ((nh - oh) / 2));
-                    }
-
-                    source.Mutate(x => x.DrawImage(overlay, location, 1f));
-                }
-                else
-                {
-                    for (int i = 1; i < overlay.Frames.Count; i++)
-                        source.Frames.InsertFrame(i, source.Frames.CloneFrame(0).Frames[0]);
-                        
-                    GifFilter(source, overlay, location, Size, rot, Overlay);
-                }
-            }
-            return source;  
+            return Overlay(source, overlay, new Point(x, y), new Size(width, height), rot);  
         }
         public Image Overlay(Image source, Image overlay, Point location, Size size, float rot = 0f)
         {
@@ -442,30 +393,28 @@ namespace donniebot.services
         public async Task<Image> Glow(string url)
         {
             Image source = await DownloadFromUrlAsync(url);
+            return Glow(source);
+        }
+        public Image Glow(Image source)
+        {
             if (source.Frames.Count > 1)
                 GifFilter(source, Glow);
             else
                 source.Mutate(x => x.Glow());
             return source;
         }
-        public Image Glow(Image source)
-        {
-            source.Mutate(x => x.Glow());
-            return source;
-        }
 
         public async Task<Image> Polaroid(string url)
         {
             Image source = await DownloadFromUrlAsync(url);
+            return Polaroid(source);
+        }
+        public Image Polaroid(Image source)
+        {
             if (source.Frames.Count > 1)
                 GifFilter(source, Polaroid);
             else
                 source.Mutate(x => x.Polaroid());
-            return source;
-        }
-        public Image Polaroid(Image source)
-        {
-            source.Mutate(x => x.Polaroid());
             return source;
         }
 
@@ -527,19 +476,6 @@ namespace donniebot.services
             float padding = 0.05f * source.Width;
             float wrap = source.Width - (2 * padding);
 
-            /*var bounds = TextMeasurer.MeasureBounds(text, new RendererOptions(font) 
-            { 
-                WrappingWidth = wrap, 
-                HorizontalAlignment = HorizontalAlignment.Center, 
-                VerticalAlignment = VerticalAlignment.Center 
-            });*/
-
-            /*var tBounds = TextMeasurer.MeasureBounds(text, new RendererOptions(tFont) 
-            { 
-                WrappingWidth = wrap, 
-                HorizontalAlignment = HorizontalAlignment.Center, 
-                VerticalAlignment = VerticalAlignment.Center 
-            });*/
             TextMeasurer.TryMeasureCharacterBounds(text, new RendererOptions(tFont) 
             { 
                 WrappingWidth = wrap, 
@@ -585,7 +521,6 @@ namespace donniebot.services
                 {
                     SystemFonts.Find("Twemoji")
                 }
-                
             };
 
             var options = new TextGraphicsOptions(new GraphicsOptions(), to);
@@ -893,7 +828,7 @@ namespace donniebot.services
                 143, 0, 0, 0, 0, 
                 73, 69, 78, 68, 174, 
                 66, 96, 130
-            });
+            }); //1px image
 
             var id = await DownloadToFileAsync(url);
             
@@ -963,11 +898,10 @@ namespace donniebot.services
                 HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Bottom,
                 WrapTextWidth = width,
-                /*FallbackFonts = 
+                FallbackFonts = 
                 {
-                    SystemFonts.Collection.CreateFont("Twemoji", source.Width / 12f, FontStyle.Regular).Family
+                    SystemFonts.Find("Twemoji")
                 }
-                */
             };
 
             var options = new TextGraphicsOptions(new GraphicsOptions(), to);
@@ -997,21 +931,20 @@ namespace donniebot.services
         public async Task<Image> Resize(string url, int x, int y)
         {
             Image source = await DownloadFromUrlAsync(url);
-            if (source.Frames.Count > 1)
-                source = ResizeGif(source, x, y);
-            else
-                source = Resize(source, x, y);
-
-            return source;
+            return Resize(source, x, y);
         }
         public Image Resize(Image source, int x, int y)
         {
-            source.Mutate(h => h.Resize(new ResizeOptions
-            {
-                Mode = ResizeMode.Stretch,
-                Size = new SixLabors.ImageSharp.Size(x, y),
-                Sampler = KnownResamplers.MitchellNetravali
-            }));
+            if (source.Frames.Count > 1)
+                source = ResizeGif(source, x, y);
+            else
+                source.Mutate(h => h.Resize(new ResizeOptions
+                {
+                    Mode = ResizeMode.Stretch,
+                    Size = new SixLabors.ImageSharp.Size(x, y),
+                    Sampler = KnownResamplers.MitchellNetravali
+                }));
+
             return source;
         }
 
