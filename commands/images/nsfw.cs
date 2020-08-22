@@ -1,5 +1,6 @@
 using System;
 using System.Text.RegularExpressions;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
@@ -33,32 +34,33 @@ namespace donniebot.commands
         {
             try
             {
+                Dictionary<string, string> info;
                 if (sub == null)
-                {
-                    var info = await _img.GetRedditImageAsync(Context.Guild.Id, "nsfw", true, mode);
-                    await ReplyAsync(embed: (new EmbedBuilder()
-                        .WithTitle(info["title"])
-                        .WithColor(_misc.RandomColor())
-                        .WithImageUrl(info["url"])
-                        .WithTimestamp(DateTime.UtcNow)
-                        .WithFooter($"Posted by {info["author"]} • From {info["sub"]}")
-                    ).Build());
-                }
+                    info = await _img.GetRedditImageAsync(Context.Guild.Id, "nsfw", true, mode);
                 else if (_reg.Match(sub).Success)
-                {
-                    var info = await _img.GetRedditImageAsync(sub, Context.Guild.Id, true, mode);
-                    await ReplyAsync(embed: (new EmbedBuilder()
-                        .WithTitle(info["title"])
-                        .WithColor(_misc.RandomColor())
-                        .WithImageUrl(info["url"])
-                        .WithTimestamp(DateTime.UtcNow)
-                        .WithFooter($"Posted by {info["author"]} • From {info["sub"]}")
-                    ).Build());
-                }
+                    info = await _img.GetRedditImageAsync(sub, Context.Guild.Id, true, mode);
                 else
                 {
                     await ReplyAsync("Invalid subreddit.");
+                    return;
                 }
+
+                var embed = new EmbedBuilder()
+                    .WithTitle(info["title"])
+                    .WithColor(_misc.RandomColor())
+                    .WithTimestamp(DateTime.UtcNow)
+                    .WithFooter($"Posted by {info["author"]} • From {info["sub"]}");
+
+                if (info["type"] == "image")
+                    embed = embed.WithImageUrl(info["url"]);
+                else
+                {
+                    embed = embed
+                        .WithUrl(info["url"])
+                        .WithDescription("Click the title to see the soundless video\nFor audio, replace the number in the URL (example: `720`) with `audio`.");
+                }
+                        
+                await ReplyAsync(embed: embed.Build());
             }
             catch (ArgumentNullException)
             {

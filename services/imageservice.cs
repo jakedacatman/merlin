@@ -1108,33 +1108,7 @@ namespace donniebot.services
                 if (!sub.Contains("u/"))
                     sub = $"r/{sub}";
 
-            Dictionary<string, string> info = new Dictionary<string, string>();
-
-            var accepted = new List<string>
-            {
-                "top",
-                "best",
-                "new"
-            };
-
-            if (!accepted.Contains(mode))
-                mode = "top";
-
-            while (true)
-            {
-                var post = JsonConvert.DeserializeObject<JObject>(await _misc.DownloadAsStringAsync($"https://www.reddit.com/{sub}/{mode}.json?count=100"))["data"];
-
-                var pages = new List<string> { post["before"].Value<string>(), post["after"].Value<string>() };
-
-                var postdata = post["children"].Shuffle();
-                if (GetImage(postdata, gId, nsfw, out info)) break;
-                if (postdata.Count() <= 25) throw new Exception("There are no more images.");
-                else
-                    post = JsonConvert.DeserializeObject<JObject>(await _misc.DownloadAsStringAsync($"https://www.reddit.com/{sub}/top.json?count=100&page={pages[1]}"))["data"];
-            }
-
-            info.Add("sub", sub);
-            return info;
+            return await GetRedditImageAsync(sub, gId, nsfw, mode);
         }
         public async Task<Dictionary<string, string>> GetRedditImageAsync(string sub, ulong gId, bool nsfw, string mode = "top")
         {
@@ -1156,7 +1130,7 @@ namespace donniebot.services
 
             var post = JsonConvert.DeserializeObject<JObject>(await _misc.DownloadAsStringAsync($"https://www.reddit.com/{sub}/{mode}.json?count=100"))["data"];
             var count = post.Count();
-            while (true)
+            for (int i = 0; i < 10; i++) //scan 10 pages
             {
                 var pages = new List<string> 
                 { 
@@ -1166,10 +1140,13 @@ namespace donniebot.services
 
                 var postdata = post["children"].Shuffle();
                 if (GetImage(postdata, gId, nsfw, out info)) break;
-                if (postdata.Count() < count) throw new Exception("There are no more images.");
+
+                if (postdata.Count() < count) throw new Exception("There are no more images."); //no more pages
                 else
-                    post = JsonConvert.DeserializeObject<JObject>(await _misc.DownloadAsStringAsync($"https://www.reddit.com/{sub}/top.json?page={pages[1]}"))["data"];
+                    post = JsonConvert.DeserializeObject<JObject>(await _misc.DownloadAsStringAsync($"https://www.reddit.com/{sub}/{mode}.json?count=100&page={pages[1]}"))["data"];
             }
+
+            if (info.Count == 0) throw new ArgumentNullException();
             
             info.Add("sub", sub);
             return info;
@@ -1180,17 +1157,27 @@ namespace donniebot.services
             for (int i = 0; i < postdata.Count(); i++)
             {
                 var post = postdata.ElementAt(i)["data"];
-                if (post["url"] != null && post["post_hint"] != null && post["post_hint"].Value<string>() == "image")
+                var hint = post["post_hint"];
+                if (post["url"] != null && hint != null && (hint.Value<string>() == "image" || hint.Value<string>().Contains("video")))
                 {
                     var title = post["title"].Value<string>();
                     if (title.Length > 256)
                         title = $"{title.Substring(0, 253)}...";
 
+                    string url = post["url"].Value<string>();
+                    string type = hint.Value<string>();
+                    if (type != "image")
+                    {
+                        url = post["media"]["reddit_video"]["fallback_url"].Value<string>();
+                        type = "video";
+                    }
+
                     information = new Dictionary<string, string> 
                     { 
-                        { "url", post["url"].Value<string>() }, 
+                        { "url", url }, 
                         { "author", $"u/{post["author"].Value<string>()}" },
-                        { "title", title } 
+                        { "title", title },
+                        { "type", type }
                     };
                     var postImage = new GuildImage(information["url"], gId);
                     if (!sent2.ContainsObj(postImage))
