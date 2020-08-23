@@ -12,7 +12,7 @@ namespace donniebot.commands
         [Summary("Removes the specified tag.")]
         [RequireUserPermission(GuildPermission.ManageMessages)]
         [Priority(1)]
-        public async Task RemoveCmd([Summary("The name of the tag.")] string tag)
+        public async Task RemoveCmd([Summary("The name of the tag."), Remainder] string tag)
         {
             try
             {

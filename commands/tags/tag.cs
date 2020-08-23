@@ -22,7 +22,7 @@ namespace donniebot.commands
         [Command("")]
         [Summary("Gets the specified tag.")]
         [Priority(0)]
-        public async Task TagCmd([Summary("The name of the tag.")] string tag)
+        public async Task TagCmd([Summary("The name of the tag."), Remainder] string tag)
         {
             try
             {
