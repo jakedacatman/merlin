@@ -29,15 +29,10 @@ namespace donniebot.commands
         {
             try
             {
-                await ReplyAsync(embed: (await _misc.EvaluateAsync(Context, code)).Build());
-            }
-            catch (System.Net.WebException e) when (e.Message == "The remote server returned an error: (400) Bad Request.")
-            {
-                await ReplyAsync("The pastebin returned an HTTP 400 error (bad request). Are you doing something shady? :thinking:");
-            }
-            catch (System.Net.WebException e) when (e.Message == "The remote server returned an error: (413) Payload Too Large.")
-            {
-                await ReplyAsync("The pastebin returned an HTTP 413 error (payload too large). Are you doing something shady? :thinking:");
+                if (code.Contains("--noreply"))
+                    await _misc.EvaluateAsync(Context, code.Replace("--noreply", ""));
+                else
+                    await ReplyAsync(embed: (await _misc.EvaluateAsync(Context, code)).Build());
             }
             catch (Exception e)
             {

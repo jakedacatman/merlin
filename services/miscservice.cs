@@ -261,9 +261,16 @@ namespace donniebot.services
             if (code.Length > 3 && code.Substring(0, 3) == "lua") code = code.Substring(3);
             
             var sb = new StringBuilder();
-            var script = new MoonSharp.Interpreter.Script(CoreModules.Preset_SoftSandbox | CoreModules.Debug | CoreModules.LoadMethods);
+            var script = new MoonSharp.Interpreter.Script(CoreModules.Preset_SoftSandbox);
             script.Options
                 .DebugPrint = s => sb.Append(s + "\n");
+
+            if (context.User.Id == (await _client.GetApplicationInfoAsync()).Owner.Id)
+                script.Globals["sendMessage"] = (Action<string>)(async (text) => 
+                {
+                    await context.Channel.SendMessageAsync(text);
+                    return;
+                });
 
             DynValue eval;
             Stopwatch c = Stopwatch.StartNew();
