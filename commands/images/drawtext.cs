@@ -28,7 +28,7 @@ namespace donniebot.commands
         {
             try
             {
-                url = await _img.ParseUrlAsync(url, Context);
+                url = await _img.ParseUrlAsync(url, Context.Message);
                 if (await _img.IsVideoAsync(url))
                 {
                     var path = await _img.VideoFilter(url, _img.DrawText, text, bottomText);

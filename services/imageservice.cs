@@ -1157,14 +1157,14 @@ namespace donniebot.services
             };
         }
 
-        public async Task<string> ParseUrlAsync(string url, ShardedCommandContext context)
+        public async Task<string> ParseUrlAsync(string url, SocketUserMessage msg)
         {
             if (url != null) url = url.Trim('<').Trim('>');
             if (url == null || !Uri.IsWellFormedUriString(url, UriKind.Absolute))
             {
-                if (context.Message.Attachments.Count == 0)
+                if (msg.Attachments.Count == 0)
                 {
-                    var previousmsg = await _misc.GetPreviousMessageAsync(context.Channel as SocketTextChannel);
+                    var previousmsg = await _misc.GetPreviousMessageAsync(msg.Channel as SocketTextChannel);
                     if (previousmsg.Attachments.Count > 0)
                         url = previousmsg.Attachments.First().Url;
                     else
@@ -1174,7 +1174,7 @@ namespace donniebot.services
                             throw new Exception("Try the command with a url, or attach an image.");
                 }
                 else
-                    url = context.Message.Attachments.First().Url;
+                    url = msg.Attachments.First().Url;
             }
             return url;
         }

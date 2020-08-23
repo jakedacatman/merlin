@@ -28,7 +28,7 @@ namespace donniebot.commands
         {
             try
             {
-                url = await _img.ParseUrlAsync(url, Context);
+                url = await _img.ParseUrlAsync(url, Context.Message);
                 if ((width > 0 && height > 0) && (width <= 2000 && height <= 2000))
                 {
                     var img = await _img.Resize(url.Trim('<').Trim('>'), width, height);

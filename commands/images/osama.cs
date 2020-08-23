@@ -28,8 +28,8 @@ namespace donniebot.commands
         {
             try
             {
-                url = await _img.ParseUrlAsync(url, Context);
-                var osamaUrl = await _img.ParseUrlAsync("https://i.jakedacatman.me/UfLp7.jpg", Context);
+                url = await _img.ParseUrlAsync(url, Context.Message);
+                var osamaUrl = "https://i.jakedacatman.me/UfLp7.jpg";
                 var img = await _img.Overlay(osamaUrl, url, 106, 64, 73, 48, 4f);
                 await _img.SendToChannelAsync(img, Context.Channel);
             }

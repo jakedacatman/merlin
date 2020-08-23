@@ -255,9 +255,9 @@ namespace donniebot.services
             return em;
         }
 
-        public async Task<EmbedBuilder> EvaluateLuaAsync(ShardedCommandContext context, string code)
+        public async Task<EmbedBuilder> EvaluateLuaAsync(SocketTextChannel channel, string code)
         {
-            Discord.Rest.RestUserMessage msg = await context.Channel.SendMessageAsync("Working...");
+            Discord.Rest.RestUserMessage msg = await channel.SendMessageAsync("Working...");
 
             code = code.Replace("“", "\"").Replace("‘", "\'").Replace("”", "\"").Replace("’", "\'").Trim('`');
             if (code.Length > 3 && code.Substring(0, 3) == "lua") code = code.Substring(3);
@@ -267,16 +267,9 @@ namespace donniebot.services
             script.Options
                 .DebugPrint = s => sb.Append(s + "\n");
 
-            if (context.User.Id == (await _client.GetApplicationInfoAsync()).Owner.Id)
-                script.Globals["sendMessage"] = (Action<string>)(async (text) => 
-                {
-                    await context.Channel.SendMessageAsync(text);
-                    return;
-                });
-
             script.Globals["XD"] = (Action)(async () => 
                 {
-                    await context.Channel.SendMessageAsync("XD");
+                    await channel.SendMessageAsync("XD");
                     return;
                 });
 

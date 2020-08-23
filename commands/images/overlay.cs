@@ -28,8 +28,8 @@ namespace donniebot.commands
         {
             try
             {
-                url = await _img.ParseUrlAsync(url, Context);
-                overlayUrl = await _img.ParseUrlAsync(overlayUrl, Context);
+                url = await _img.ParseUrlAsync(url, Context.Message);
+                overlayUrl = await _img.ParseUrlAsync(overlayUrl, Context.Message);
                 var img = await _img.Overlay(url, overlayUrl, x, y, width, height);
                 await _img.SendToChannelAsync(img, Context.Channel);
             }

@@ -28,7 +28,7 @@ namespace donniebot.commands
         {
             try
             {
-                url = await _img.ParseUrlAsync(url, Context);
+                url = await _img.ParseUrlAsync(url, Context.Message);
                 var img = await _img.Blur(url.Trim('<').Trim('>'), amount);
                 await _img.SendToChannelAsync(img, Context.Channel);
             }

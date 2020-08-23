@@ -30,7 +30,7 @@ namespace donniebot.commands
         {
             try
             {
-                url = await _img.ParseUrlAsync(url, Context);
+                url = await _img.ParseUrlAsync(url, Context.Message);
                 var info = await _img.GetInfo(url);
                 var em = new EmbedBuilder()
                     .WithColor(_misc.RandomColor())
