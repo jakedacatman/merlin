@@ -2,9 +2,6 @@ using System;
 using System.Threading.Tasks;
 using Discord.Commands;
 using Discord.Addons.Interactive;
-using donniebot.classes;
-using donniebot.services;
-using LiteDB;
 
 namespace donniebot.commands
 {
