@@ -67,8 +67,8 @@ namespace donniebot.commands
                     await _commands.Commands.Where(x => x.Name == "commands").First().ExecuteAsync(Context, ParseResult.FromSuccess(new List<TypeReaderResult>(), new List<TypeReaderResult>()), _services);
                     return;
                 }
-                var cmds = _commands.Commands.Where(x => x.Name == command);
-                var aliases =  _commands.Commands.Where(x => x.Aliases.Any(y => y == command));
+                var cmds = _commands.Commands.Where(x => (string.IsNullOrEmpty(x.Module.Group) ? "" : $"{x.Module.Group} " + x.Name).TrimEnd(' ') == command);
+                var aliases =  _commands.Commands.Where(x => x.Aliases.Any(y => (string.IsNullOrEmpty(x.Module.Group) ? "" : $"{x.Module.Group} " + y).TrimEnd(' ') == command));
                 if (cmds.Any())
                 {
                     var firstCmd = cmds.First();
@@ -92,9 +92,11 @@ namespace donniebot.commands
                             preconditions += $"{preconditionAliases[p.GetType()]} ({txt})\n";
                         }
 
+                    var name = (string.IsNullOrEmpty(firstCmd.Module.Group) ? "" : $"{firstCmd.Module.Group} " + firstCmd.Name).TrimEnd(' ');
+
                     var fields = new List<EmbedFieldBuilder>
                     {
-                        new EmbedFieldBuilder().WithName("Name").WithValue(firstCmd.Name).WithIsInline(true),
+                        new EmbedFieldBuilder().WithName("Name").WithValue(name).WithIsInline(true),
                         new EmbedFieldBuilder().WithName("Category").WithValue(firstCmd.Module.Name ?? "(none)").WithIsInline(true),
                         new EmbedFieldBuilder().WithName("Aliases").WithValue(firstCmd.Aliases.Count > 1 ? string.Join(", ", firstCmd.Aliases.Where(x => x != firstCmd.Name)) : "(none)").WithIsInline(true),
                         new EmbedFieldBuilder().WithName("Summary").WithValue(firstCmd.Summary ?? "(none)").WithIsInline(false),
@@ -119,7 +121,7 @@ namespace donniebot.commands
                     fields.Add(last);
 
                     EmbedBuilder embed = new EmbedBuilder()
-                        .WithTitle($"Information for {firstCmd.Name}:")
+                        .WithTitle($"Information for {name}:")
                         .WithColor(_misc.RandomColor())
                         .WithCurrentTimestamp()
                         .WithFields(fields);

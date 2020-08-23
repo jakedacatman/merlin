@@ -21,7 +21,7 @@ namespace donniebot.commands
         [Command("ping")]
         [Alias("pi")]
         [Summary("Gets the bot's latency.")]
-        public async Task CommandsCmd()
+        public async Task PingCmd()
         {
             try
             {

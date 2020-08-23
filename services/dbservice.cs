@@ -36,6 +36,45 @@ namespace donniebot.services
             }
         }
 
+        public bool AddTag(string key, string value, ulong gId)
+        {
+            using (var scope = _services.CreateScope())
+            {
+                var _db = scope.ServiceProvider.GetRequiredService<LiteDatabase>();
+                var collection = _db.GetCollection<Tag>("tags");
+                return collection.Upsert(new Tag { Key = key, Value = value, GuildId = gId });
+            }
+        }
+
+        public int RemoveTag(string key, ulong gId)
+        {
+            using (var scope = _services.CreateScope())
+            {
+                var _db = scope.ServiceProvider.GetRequiredService<LiteDatabase>();
+                var collection = _db.GetCollection<Tag>("tags");
+                return collection.Delete(Query.And(Query.Where("GuildId", x => x.AsDouble == gId), Query.Where("Key", x => x.AsString.ToLower() == key.ToLower())));
+            }
+        }
+
+        public Tag GetTag(string key, ulong gId)
+        {
+            using (var scope = _services.CreateScope())
+            {
+                var _db = scope.ServiceProvider.GetRequiredService<LiteDatabase>();
+                var collection = _db.GetCollection<Tag>("tags");
+                return collection.FindOne(Query.And(Query.Where("GuildId", x => x.AsDouble == gId), Query.Where("Key", x => x.AsString.ToLower() == key.ToLower())));
+            }
+        }
+        public IEnumerable<string> GetTags(ulong gId)
+        {
+            using (var scope = _services.CreateScope())
+            {
+                var _db = scope.ServiceProvider.GetRequiredService<LiteDatabase>();
+                var collection = _db.GetCollection<Tag>("tags");
+                return collection.Find(Query.Where("GuildId", x => x.AsDouble == gId)).Select(x => x.Key);
+            }
+        }
+
         public bool IsIn<T>(string collection, Query query, out IEnumerable<T> items)
         {
             using (var scope = _services.CreateScope())

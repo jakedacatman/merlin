@@ -272,6 +272,12 @@ namespace donniebot.services
                     return;
                 });
 
+            script.Globals["XD"] = (Action)(async () => 
+                {
+                    await context.Channel.SendMessageAsync("XD");
+                    return;
+                });
+
             DynValue eval;
             Stopwatch c = Stopwatch.StartNew();
             try

@@ -42,7 +42,7 @@ namespace donniebot.commands
                     foreach (CommandInfo cmd in module.Commands)
                     {
                         if (cmd.Summary == null) continue;
-                        if (!names.Contains(cmd.Name)) names.Add(cmd.Name);
+                        if (!names.Contains(cmd.Name)) names.Add($"{cmd.Module.Group} {cmd.Name}");
                     }
                 }
                 foreach (var module in modules)
