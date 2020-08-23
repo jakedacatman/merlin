@@ -18,6 +18,8 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using Discord.Commands;
 using MoonSharp.Interpreter;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace donniebot.services
 {
@@ -485,6 +487,24 @@ namespace donniebot.services
             {
                 var response = await _hc.GetStringAsync(url);
                 return response;
+            }
+            catch (Exception e)
+            {
+                throw e;
+            }
+        }
+
+        public async Task<Tuple<string, string>> GetWikipediaArticleAsync(string term)
+        {
+            try
+            {
+                var data = JsonConvert.DeserializeObject<JArray>(await _hc.GetStringAsync($"https://en.wikipedia.org/w/api.php?action=opensearch&search={term}&limit=1&format=json"));
+                var titleArr = data[1];
+                var urlArr = data[3];
+                if (titleArr.Count() == 0 || urlArr.Count() == 0)
+                    return new Tuple<string, string>("", "");
+                else
+                    return new Tuple<string, string>(titleArr[0].Value<string>(), urlArr[0].Value<string>());
             }
             catch (Exception e)
             {
