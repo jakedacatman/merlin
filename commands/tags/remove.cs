@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using Discord;
 using Discord.Commands;
 using Discord.Addons.Interactive;
 
@@ -9,6 +10,7 @@ namespace donniebot.commands
     {
         [Command("remove")]
         [Summary("Removes the specified tag.")]
+        [RequireUserPermission(GuildPermission.ManageMessages)]
         [Priority(1)]
         public async Task RemoveCmd([Summary("The name of the tag.")] string tag)
         {
