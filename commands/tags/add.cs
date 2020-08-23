@@ -16,6 +16,27 @@ namespace donniebot.commands
         {
             try
             {
+                if (tag.Length > 100)
+                {
+                    await ReplyAsync("Tag is too long. Limit it to 100 characters or less.");
+                    return;
+                }
+                if (value.Length > 1000)
+                {
+                    await ReplyAsync("Value is too long. Limit it to 1000 characters or less.");
+                    return;
+                }
+                if (string.IsNullOrWhiteSpace(tag))
+                {
+                    await ReplyAsync("The tag is empty.");
+                    return;
+                }
+                if (string.IsNullOrWhiteSpace(value))
+                {
+                    await ReplyAsync("The value is empty.");
+                    return;
+                }
+
                 var ct = _db.AddTag(tag, value, Context.Guild.Id);
                 if (ct)
                     await ReplyAsync($"Added tag `{tag}`.");
