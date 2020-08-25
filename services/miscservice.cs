@@ -46,6 +46,36 @@ namespace donniebot.services
             { typeof(UserData), "userdata" }
         };
 
+        private readonly Dictionary<Type, string> typeAliases = new Dictionary<Type, string>()
+        {
+            { typeof(byte), "byte" },
+            { typeof(sbyte), "sbyte" },
+            { typeof(short), "short" },
+            { typeof(ushort), "ushort" },
+            { typeof(int), "int" },
+            { typeof(uint), "uint" },
+            { typeof(long), "long" },
+            { typeof(ulong), "ulong" },
+            { typeof(float), "float" },
+            { typeof(double), "double" },
+            { typeof(decimal), "decimal" },
+            { typeof(object), "object" },
+            { typeof(bool), "bool" },
+            { typeof(char), "char" },
+            { typeof(string), "string" },
+            { typeof(void), "void" },
+            { typeof(SocketGuildUser), "user" }
+        };
+
+        private readonly Dictionary<Type, string> preconditionAliases = new Dictionary<Type, string>()
+        {
+            { typeof(RequireOwnerAttribute), "owner-only" },
+            { typeof(RequireUserPermissionAttribute), "user requires perms" },
+            { typeof(RequireNsfwAttribute), "requires nsfw channel" },
+            { typeof(RequireBotPermissionAttribute), "bot requires perms" },
+            { typeof(RequireContextAttribute), "must be invoked in a guild or dm" }
+        };
+
         public MiscService(DiscordShardedClient client, IServiceProvider services, Random random, DbService db)
         {
             _client = client;
@@ -503,6 +533,59 @@ namespace donniebot.services
             {
                 throw e;
             }
+        }
+
+        public EmbedBuilder GenerateCommandInfo(IEnumerable<CommandInfo> commands)
+        {
+            var firstCmd = commands.First();
+            string preconditions = null;
+            if (firstCmd.Preconditions.Any())
+                foreach (PreconditionAttribute p in firstCmd.Preconditions)
+                {
+                    var txt = "no info";
+                    if (p is RequireUserPermissionAttribute attr)
+                        txt = attr.GuildPermission.HasValue ? attr.GuildPermission.Value.ToString() : txt;
+                    else if (p is RequireBotPermissionAttribute attr2)
+                        txt = attr2.GuildPermission.HasValue ? attr2.GuildPermission.Value.ToString() : txt;
+
+                    preconditions += $"{preconditionAliases[p.GetType()]} ({txt})\n";
+                }
+
+            var name = ((string.IsNullOrEmpty(firstCmd.Module.Group) ? "" : $"{firstCmd.Module.Group} ") + firstCmd.Name).TrimEnd(' ');
+
+            var fields = new List<EmbedFieldBuilder>
+            {
+                new EmbedFieldBuilder().WithName("Name").WithValue(name).WithIsInline(true),
+                new EmbedFieldBuilder().WithName("Category").WithValue(firstCmd.Module.Name ?? "(none)").WithIsInline(true),
+                new EmbedFieldBuilder().WithName("Aliases").WithValue(firstCmd.Aliases.Count > 1 ? string.Join(", ", firstCmd.Aliases.Where(x => x != firstCmd.Name)) : "(none)").WithIsInline(true),
+                new EmbedFieldBuilder().WithName("Summary").WithValue(firstCmd.Summary ?? "(none)").WithIsInline(false),
+                new EmbedFieldBuilder().WithName("Preconditions").WithValue(preconditions ?? "(none)").WithIsInline(false),
+                new EmbedFieldBuilder().WithName("Parameters").WithValue(" ").WithIsInline(false)
+            };
+            int counter = 1;
+            StringBuilder sb = new StringBuilder();
+            foreach (var cmd in commands)
+            {
+                var parameters = new List<string>();
+                foreach (Discord.Commands.ParameterInfo param in cmd.Parameters)
+                    parameters.Add($"{param} ({typeAliases[param.Type]}{(param.DefaultValue != null ? ", default = " + param.DefaultValue.ToString() : "")}): {param.Summary}");
+                        
+                sb.Append($"**{counter}.**\n " + (parameters.Any() ? string.Join("\n", parameters) : "(none)") + "\n\n");
+                counter++;
+            }
+
+            var last = fields.Last();
+            fields.Remove(last);
+            last.WithValue(sb.ToString());
+            fields.Add(last);
+
+            EmbedBuilder embed = new EmbedBuilder()
+                .WithTitle($"Information for {name}:")
+                .WithColor(RandomColor())
+                .WithCurrentTimestamp()
+                .WithFields(fields);
+            
+            return embed;
         }
 
         public int RandomNumber(int min, int max) => _random.Next(min, max);

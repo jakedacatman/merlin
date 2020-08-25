@@ -115,7 +115,7 @@ namespace donniebot
 
                 if (context.User.IsBot) return;
                 await _commands.ExecuteAsync(context, argPos, _services);
-            }
+            }   
             catch (Exception e)
             {
                 Console.WriteLine(e);
