@@ -68,7 +68,7 @@ namespace donniebot.commands
                     return;
                 }
                 var cmds = _commands.Commands.Where(x => ((string.IsNullOrEmpty(x.Module.Group) ? "" : $"{x.Module.Group} ") + x.Name).TrimEnd(' ') == command);
-                var aliases =  _commands.Commands.Where(x => x.Aliases.Any(y => (string.IsNullOrEmpty(x.Module.Group) ? "" : $"{x.Module.Group} " + y).TrimEnd(' ') == command));
+                var aliases =  _commands.Commands.Where(x => x.Aliases.Any(y => ((string.IsNullOrEmpty(x.Module.Group) ? "" : $"{x.Module.Group} ") + y).TrimEnd(' ') == command));
                 if (cmds.Any())
                 {
                     var firstCmd = cmds.First();
