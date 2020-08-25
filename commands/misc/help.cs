@@ -37,10 +37,12 @@ namespace donniebot.commands
                     await _commands.Commands.Where(x => x.Name == "commands").First().ExecuteAsync(Context, ParseResult.FromSuccess(new List<TypeReaderResult>(), new List<TypeReaderResult>()), _services);
                     return;
                 }
+                
                 var cmds = _commands.Commands.Where(x => ((string.IsNullOrEmpty(x.Module.Group) ? "" : $"{x.Module.Group} ") + x.Name).TrimEnd(' ') == command);
                 var aliases =  _commands.Commands.Where(x => x.Aliases.Any(y => ((string.IsNullOrEmpty(x.Module.Group) ? "" : $"{x.Module.Group} ") + y).TrimEnd(' ') == command));
+                
                 if (cmds.Any())
-                await ReplyAsync(embed: _misc.GenerateCommandInfo(cmds).Build());
+                    await ReplyAsync(embed: _misc.GenerateCommandInfo(cmds).Build());
                 else if (aliases.Any())
                     await ReplyAsync(embed: _misc.GenerateCommandInfo(aliases).Build());
                 else
