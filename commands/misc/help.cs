@@ -67,7 +67,7 @@ namespace donniebot.commands
                     await _commands.Commands.Where(x => x.Name == "commands").First().ExecuteAsync(Context, ParseResult.FromSuccess(new List<TypeReaderResult>(), new List<TypeReaderResult>()), _services);
                     return;
                 }
-                var cmds = _commands.Commands.Where(x => (string.IsNullOrEmpty(x.Module.Group) ? "" : $"{x.Module.Group} " + x.Name).TrimEnd(' ') == command);
+                var cmds = _commands.Commands.Where(x => ((string.IsNullOrEmpty(x.Module.Group) ? "" : $"{x.Module.Group} ") + x.Name).TrimEnd(' ') == command);
                 var aliases =  _commands.Commands.Where(x => x.Aliases.Any(y => (string.IsNullOrEmpty(x.Module.Group) ? "" : $"{x.Module.Group} " + y).TrimEnd(' ') == command));
                 if (cmds.Any())
                 {
@@ -92,7 +92,7 @@ namespace donniebot.commands
                             preconditions += $"{preconditionAliases[p.GetType()]} ({txt})\n";
                         }
 
-                    var name = (string.IsNullOrEmpty(firstCmd.Module.Group) ? "" : $"{firstCmd.Module.Group} " + firstCmd.Name).TrimEnd(' ');
+                    var name = ((string.IsNullOrEmpty(firstCmd.Module.Group) ? "" : $"{firstCmd.Module.Group} ") + firstCmd.Name).TrimEnd(' ');
 
                     var fields = new List<EmbedFieldBuilder>
                     {
@@ -151,9 +151,10 @@ namespace donniebot.commands
                             preconditions += $"{preconditionAliases[p.GetType()]} ({txt})\n";
                         }
 
+                    var name = ((string.IsNullOrEmpty(firstAlias.Module.Group) ? "" : $"{firstAlias.Module.Group} ") + firstAlias.Name).TrimEnd(' ');
                     var fields = new List<EmbedFieldBuilder>
                     {
-                        new EmbedFieldBuilder().WithName("Name").WithValue(firstAlias.Name).WithIsInline(true),
+                        new EmbedFieldBuilder().WithName("Name").WithValue(name).WithIsInline(true),
                         new EmbedFieldBuilder().WithName("Category").WithValue(firstAlias.Module.Name ?? "(none)").WithIsInline(true),
                         new EmbedFieldBuilder().WithName("Aliases").WithValue(firstAlias.Aliases.Count > 1 ? string.Join(", ", firstAlias.Aliases.Where(x => x != firstAlias.Name)) : "(none)").WithIsInline(true),
                         new EmbedFieldBuilder().WithName("Summary").WithValue(firstAlias.Summary ?? "(none)").WithIsInline(false),
