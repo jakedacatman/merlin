@@ -39,16 +39,17 @@ namespace donniebot.commands
                 }
                 
                 var cmds = _commands.Commands.Where(x => ((string.IsNullOrEmpty(x.Module.Group) ? "" : $"{x.Module.Group} ") + x.Name).TrimEnd(' ') == command);
-                var aliases =  _commands.Commands.Where(x => x.Aliases.Any(y => ((string.IsNullOrEmpty(x.Module.Group) ? "" : $"{x.Module.Group} ") + y).TrimEnd(' ') == command));
                 
                 if (cmds.Any())
                     await ReplyAsync(embed: _misc.GenerateCommandInfo(cmds).Build());
-                else if (aliases.Any())
-                    await ReplyAsync(embed: _misc.GenerateCommandInfo(aliases).Build());
-                else
+                else 
                 {
-                    await ReplyAsync("This command does not exist.");
-                    return;
+                    var aliases =  _commands.Commands.Where(x => x.Aliases.Any(y => ((string.IsNullOrEmpty(x.Module.Group) ? "" : $"{x.Module.Group} ") + y).TrimEnd(' ') == command));
+                    
+                    if (aliases.Any())
+                        await ReplyAsync(embed: _misc.GenerateCommandInfo(aliases).Build());
+                    else
+                        await ReplyAsync("This command does not exist.");
                 }
             }
             catch (Exception e)

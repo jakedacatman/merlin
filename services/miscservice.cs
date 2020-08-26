@@ -560,7 +560,6 @@ namespace donniebot.services
                 new EmbedFieldBuilder().WithName("Aliases").WithValue(firstCmd.Aliases.Count > 1 ? string.Join(", ", firstCmd.Aliases.Where(x => x != firstCmd.Name)) : "(none)").WithIsInline(true),
                 new EmbedFieldBuilder().WithName("Summary").WithValue(firstCmd.Summary ?? "(none)").WithIsInline(false),
                 new EmbedFieldBuilder().WithName("Preconditions").WithValue(preconditions ?? "(none)").WithIsInline(false),
-                new EmbedFieldBuilder().WithName("Parameters").WithValue(" ").WithIsInline(false)
             };
             int counter = 1;
             StringBuilder sb = new StringBuilder();
@@ -574,10 +573,7 @@ namespace donniebot.services
                 counter++;
             }
 
-            var last = fields.Last();
-            fields.Remove(last);
-            last.WithValue(sb.ToString());
-            fields.Add(last);
+            fields.Add(new EmbedFieldBuilder().WithName("Parameters").WithValue(sb.ToString()).WithIsInline(false));
 
             EmbedBuilder embed = new EmbedBuilder()
                 .WithTitle($"Information for {name}:")
