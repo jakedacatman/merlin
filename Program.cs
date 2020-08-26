@@ -32,7 +32,7 @@ namespace donniebot
                 TotalShards = 2,
                 DefaultRetryMode = RetryMode.AlwaysRetry,
                 MessageCacheSize = 1024,
-                ExclusiveBulkDelete = true,
+                ExclusiveBulkDelete = true
             });
             _commands = new CommandService(new CommandServiceConfig
             {
@@ -78,11 +78,7 @@ namespace donniebot
             _commands.Log += Log;
 
             if (!File.Exists("nsfw.txt"))
-            {
-                var data = await _services.GetService<MiscService>().DownloadAsStringAsync("https://paste.jakedacatman.me/YU4vA");
-                var subs = data.Split('\n');
-                await File.WriteAllLinesAsync("nsfw.txt", subs);
-            }
+                await File.WriteAllTextAsync("nsfw.txt", await _services.GetService<MiscService>().DownloadAsStringAsync("https://paste.jakedacatman.me/YU4vA"));
 
             await Task.Delay(-1);
         }
@@ -114,7 +110,7 @@ namespace donniebot
                 if (!msg.HasStringPrefix(prefix, ref argPos)) return;
 
                 if (context.User.IsBot) return;
-                await _commands.ExecuteAsync(context, argPos, _services);
+                await _commands.ExecuteAsync(context, argPos, _services, MultiMatchHandling.Best);
             }   
             catch (Exception e)
             {

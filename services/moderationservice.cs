@@ -31,7 +31,7 @@ namespace donniebot.services
                 {
                     OverwritePermissions Permissions = new OverwritePermissions(addReactions: PermValue.Deny, sendMessages: PermValue.Deny, attachFiles: PermValue.Deny, useExternalEmojis: PermValue.Deny, speak: PermValue.Deny);
 
-                    role = await guild.CreateRoleAsync("Muted", GuildPermissions.None, Color.Default);
+                    role = await guild.CreateRoleAsync("Muted", GuildPermissions.None, Color.Default, false, false);
 
                     await role.ModifyAsync(x => x.Position = guild.GetUser(_client.CurrentUser.Id).Roles.OrderBy(y => y.Position).Last().Position);
 
