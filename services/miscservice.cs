@@ -27,11 +27,8 @@ namespace donniebot.services
     {
         private readonly DiscordShardedClient _client;
         private IServiceProvider _services;
+        private readonly NetService _net;
         private readonly Random _random;
-        private List<int> ids = new List<int>();
-        private readonly HttpClient _hc;
-        private readonly DbService _db;
-        private readonly string uploadKey;
 
         private readonly Dictionary<Type, string> _aliases = new Dictionary<Type, string>()
         {
@@ -76,14 +73,12 @@ namespace donniebot.services
             { typeof(RequireContextAttribute), "must be invoked in a guild or dm" }
         };
 
-        public MiscService(DiscordShardedClient client, IServiceProvider services, Random random, DbService db)
+        public MiscService(DiscordShardedClient client, IServiceProvider services, NetService net, Random random)
         {
             _client = client;
             _services = services;
             _random = random;
-            _hc = new HttpClient();
-            _db = db;
-            uploadKey = _db.GetApiKey("upload");
+            _net = net;
         }
 
         private readonly string[] errorMessages = new string[]
@@ -140,7 +135,7 @@ namespace donniebot.services
                 if (message.Length < 1000)
                     description += $"its message:\n**{message.Replace("`", @"\`")}**";
                 else
-                    description += $"a [link]({await UploadToPastebinAsync(message)} to its message.";
+                    description += $"a [link]({await _net.UploadToPastebinAsync(message)} to its message.";
 
                 description += "\nStack trace:\n";
 
@@ -150,7 +145,7 @@ namespace donniebot.services
                 if (trace.Length < 1000)
                     description += $"```{trace.Replace("`", @"\`")}```";
                 else
-                    description += $"[here]({await UploadToPastebinAsync(trace)})";
+                    description += $"[here]({await _net.UploadToPastebinAsync(trace)})";
             }
 
             EmbedBuilder embed = new EmbedBuilder()
@@ -242,7 +237,7 @@ namespace donniebot.services
             if (code.Length < 1000)
                  description = $"in: ```cs\n{code}```\nout: \n";
             else
-                description = $"in: **[input]({await UploadToPastebinAsync(code)})**\nout: \n";
+                description = $"in: **[input]({await _net.UploadToPastebinAsync(code)})**\nout: \n";
             string tostringed = result == null ? " " : result.ToString();
 
             if (result is ICollection r)
@@ -260,7 +255,7 @@ namespace donniebot.services
                 tostringed = " ";
             
             if (tostringed.Length > 1000)
-                description += $"Here is a **[link]({await UploadToPastebinAsync(tostringed)})** to the result.";
+                description += $"Here is a **[link]({await _net.UploadToPastebinAsync(tostringed)})** to the result.";
             else
                 description += $"```{tostringed}```";
 
@@ -353,7 +348,7 @@ namespace donniebot.services
             if (code.Length < 1000)
                  description = $"in: ```lua\n{code}```\nout: \n";
             else
-                description = $"in: **[input]({await UploadToPastebinAsync(code)})**\nout: \n";
+                description = $"in: **[input]({await _net.UploadToPastebinAsync(code)})**\nout: \n";
             string tostringed = (result == null) ? "nil" : result.ToString();
 
             if (result is ICollection r)
@@ -369,7 +364,7 @@ namespace donniebot.services
                 tostringed = " ";
 
             if (tostringed.Length > 1000)
-                description += $"Here is a **[link]({await UploadToPastebinAsync(tostringed)})** to the result.";
+                description += $"Here is a **[link]({await _net.UploadToPastebinAsync(tostringed)})** to the result.";
             else
                 description += $"```{tostringed}```";
 
@@ -387,7 +382,7 @@ namespace donniebot.services
                 if (sb.Length < 1000)
                     description += $"\nConsole: \n```\n{sb}\n```";
                 else
-                    description += $"\nConsole: \n[here]({await UploadToPastebinAsync(sb.ToString())})";
+                    description += $"\nConsole: \n[here]({await _net.UploadToPastebinAsync(sb.ToString())})";
             }
 
             footer += $"Return type: {(result == null ? "nil" : _aliases[result.GetType()])} • took {c.ElapsedTicks / 1000000d} ms to execute";
@@ -407,7 +402,7 @@ namespace donniebot.services
             bool doCodeBlockForIn = true;
             if (code.Length > 1000)
             {
-                code = await UploadToPastebinAsync(code);
+                code = await _net.UploadToPastebinAsync(code);
                 doCodeBlockForIn = false;
             }
             string errorMsg;
@@ -418,7 +413,7 @@ namespace donniebot.services
             bool doCodeBlockForOut = true;
             if (errorMsg.Length > 1000)
             {
-                errorMsg = await UploadToPastebinAsync(errorMsg);
+                errorMsg = await _net.UploadToPastebinAsync(errorMsg);
                 doCodeBlockForOut = false;
             }
 
@@ -446,14 +441,14 @@ namespace donniebot.services
                 msg.Append("• " + h.GetMessage() + "\n"); bool doCodeBlockForIn = true;
             if (code.Length > 1000)
             {
-                code = await UploadToPastebinAsync(code);
+                code = await _net.UploadToPastebinAsync(code);
                 doCodeBlockForIn = false;
             }
             string errorMsg = msg.ToString();
             bool doCodeBlockForOut = true;
             if (errorMsg.Length > 1000)
             {
-                errorMsg = await UploadToPastebinAsync(errorMsg);
+                errorMsg = await _net.UploadToPastebinAsync(errorMsg);
                 doCodeBlockForOut = false;
             }
 
@@ -485,54 +480,6 @@ namespace donniebot.services
             }
             yield return Assembly.GetEntryAssembly();
             yield return typeof(ILookup<string, string>).GetTypeInfo().Assembly;
-        }
-
-        public async Task<string> UploadToPastebinAsync(string stuffToUpload)
-        {
-            try
-            {
-                var sc = new FormUrlEncodedContent( new Dictionary<string, string> { { "input", stuffToUpload } } );
-                sc.Headers.ContentType = new MediaTypeHeaderValue("application/x-www-form-urlencoded");
-                sc.Headers.Add("key", uploadKey);
-
-                var request = await _hc.PostAsync("https://paste.jakedacatman.me/paste", sc);
-                return await request.Content.ReadAsStringAsync();
-            }
-            catch (Exception e) //when (e.Message == "The remote server returned an error: (520) Origin Error.")
-            {
-                throw e;
-            }
-        }
-
-        public async Task<string> DownloadAsStringAsync(string url)
-        {
-            try 
-            {
-                var response = await _hc.GetStringAsync(url);
-                return response;
-            }
-            catch (Exception e)
-            {
-                throw e;
-            }
-        }
-
-        public async Task<Tuple<string, string>> GetWikipediaArticleAsync(string term)
-        {
-            try
-            {
-                var data = JsonConvert.DeserializeObject<JArray>(await _hc.GetStringAsync($"https://en.wikipedia.org/w/api.php?action=opensearch&search={term}&limit=1&format=json"));
-                var titleArr = data[1];
-                var urlArr = data[3];
-                if (titleArr.Count() == 0 || urlArr.Count() == 0)
-                    return new Tuple<string, string>("", "");
-                else
-                    return new Tuple<string, string>(titleArr[0].Value<string>(), urlArr[0].Value<string>());
-            }
-            catch (Exception e)
-            {
-                throw e;
-            }
         }
 
         public EmbedBuilder GenerateCommandInfo(IEnumerable<CommandInfo> commands)
@@ -582,22 +529,6 @@ namespace donniebot.services
                 .WithFields(fields);
             
             return embed;
-        }
-
-        public int RandomNumber(int min, int max) => _random.Next(min, max);
-        public float RandomFloat(float max) => (float)_random.NextDouble() * max;
-        public float RandomFloat(float max, float min) => (float)_random.NextDouble() * (max - min) + min;
-
-        public int GenerateId()
-        {
-            int generated;
-            do
-            {
-                generated = _random.Next();
-            }
-            while (ids.Contains(generated));
-            ids.Add(generated);
-            return generated;
         }
 
         public async Task<IMessage> GetNthMessageAsync(SocketTextChannel channel, int pos) => (await channel.GetMessagesAsync().FlattenAsync()).OrderByDescending(x => x.Timestamp).ToArray()[pos];

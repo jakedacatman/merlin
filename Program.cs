@@ -53,6 +53,8 @@ namespace donniebot
                 .AddSingleton<InteractiveService>()
                 .AddSingleton<ImageService>()
                 .AddSingleton<ModerationService>()
+                .AddSingleton<NetService>()
+                .AddSingleton<RandomService>()
                 .BuildServiceProvider();
 
             await _commands.AddModulesAsync(Assembly.GetEntryAssembly(), _services);
@@ -78,7 +80,7 @@ namespace donniebot
             _commands.Log += Log;
 
             if (!File.Exists("nsfw.txt"))
-                await File.WriteAllTextAsync("nsfw.txt", await _services.GetService<MiscService>().DownloadAsStringAsync("https://paste.jakedacatman.me/YU4vA"));
+                await File.WriteAllTextAsync("nsfw.txt", await _services.GetService<NetService>().DownloadAsStringAsync("https://paste.jakedacatman.me/YU4vA"));
 
             await Task.Delay(-1);
         }

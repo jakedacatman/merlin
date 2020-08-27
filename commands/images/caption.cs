@@ -13,12 +13,14 @@ namespace donniebot.commands
         private readonly DiscordShardedClient _client;
         private readonly ImageService _img;
         private readonly MiscService _misc;
+        private readonly NetService _net;
 
-        public CaptionCommand(DiscordShardedClient client, ImageService img, MiscService misc)
+        public CaptionCommand(DiscordShardedClient client, ImageService img, MiscService misc, NetService net)
         {
             _client = client;
             _img = img;
             _misc = misc;
+            _net = net;
         }
 
         [Command("caption")]
@@ -29,7 +31,7 @@ namespace donniebot.commands
             try
             {
                 url = await _img.ParseUrlAsync(url, Context.Message);
-                if (await _img.IsVideoAsync(url))
+                if (await _net.IsVideoAsync(url))
                 {
                     var path = await _img.VideoFilter(url, _img.Caption, text);
                     await _img.SendToChannelAsync(path, Context.Channel);

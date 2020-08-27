@@ -11,10 +11,12 @@ namespace donniebot.commands
     [Name("Misc")]
     public class WikiCommand : InteractiveBase<ShardedCommandContext>
     {
+        private readonly NetService _net;
         private readonly MiscService _misc;
 
-        public WikiCommand(MiscService misc)
+        public WikiCommand(NetService net, MiscService misc)
         {
+            _net = net;
             _misc = misc;
         }
 
@@ -25,7 +27,7 @@ namespace donniebot.commands
         {
             try
             {
-                var data = await _misc.GetWikipediaArticleAsync(term);
+                var data = await _net.GetWikipediaArticleAsync(term);
                 if (data.Item1 == "" && data.Item2 == "")
                     await ReplyAsync("Failed to find the article.");
                 else

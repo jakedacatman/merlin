@@ -24,12 +24,9 @@ namespace donniebot.services
 {
     public class ImageService
     {
-        private readonly Random _rand;
         private readonly MiscService _misc;
-        private readonly HttpClient _hc;
-        private readonly DbService _db;
-
-        private readonly string uploadKey;
+        private readonly NetService _net;
+        private readonly RandomService _rand;
 
         private IImageFormat _format;
 
@@ -39,88 +36,11 @@ namespace donniebot.services
 
         private Regex _reg = new Regex(@"[0-9]+(\.[0-9]{1,2})? fps");
 
-        public ImageService(Random random, MiscService misc, DbService db)
+        public ImageService(MiscService misc, NetService net, RandomService rand)
         {
-            _rand = random;
             _misc = misc;
-            _hc = new HttpClient();
-            _db = db;
-            uploadKey = _db.GetApiKey("upload");
-        }
-
-        public async Task<bool> IsVideoAsync(string url)
-        {
-            url = url.Trim('<').Trim('>');
-
-            var res = await _hc.GetAsync(new Uri(url));
-
-            if (res.IsSuccessStatusCode)
-                if (res.Content.Headers.ContentType.MediaType.Contains("video"))
-                    return true;
-
-            return false;
-        }
-
-        public async Task<Image> DownloadFromUrlAsync(string url)
-        {
-            url = url.Trim('<').Trim('>');
-            if (url.Contains("giphy.com")) 
-            {
-                if (url.Contains('-'))
-                    url = $"https://i.giphy.com/media/{url.Split('-').Last()}/giphy.gif";
-                else 
-                    if (url.Contains("media.giphy.com"))
-                        url = url.Replace("media.", "i.");
-                    else
-                        url = $"https://i.giphy.com/media/{url.Split('/').Last()}/giphy.gif";
-            }
-            else if (url.Contains("tenor.com") && !url.Contains("media.tenor.com"))
-            {
-                Regex r = new Regex(@"(https:\\u002F\\u002Fmedia1\.tenor\.com[A-z0-9]+\.gif)");
-                var html = await _misc.DownloadAsStringAsync(url);
-                var match = r.Match(html);
-                if (match != null)
-                    url = match.Groups[0].Value.Replace("\\u002F", "/");
-            }
-            var response = await _hc.GetAsync(new Uri(url));
-            if (response.IsSuccessStatusCode) 
-                return Image.Load(await response.Content.ReadAsByteArrayAsync(), out _format);
-            else throw new NullReferenceException("The image could not be found.");
-        }
-        public async Task<string> DownloadToFileAsync(string url)
-        {
-            url = url.Trim('<').Trim('>');
-            if (url.Contains("giphy.com")) 
-            {
-                if (url.Contains('-'))
-                    url = $"https://i.giphy.com/media/{url.Split('-').Last()}/giphy.gif";
-                else 
-                    if (url.Contains("media.giphy.com"))
-                        url = url.Replace("media.", "i.");
-                    else
-                        url = $"https://i.giphy.com/media/{url.Split('/').Last()}/giphy.gif";
-            }
-            else if (url.Contains("tenor.com"))
-            {
-                Regex r = new Regex(@"(https:\\u002F\\u002Fmedia1\.tenor\.com[A-z0-9]+\.gif)");
-                var html = await _misc.DownloadAsStringAsync(url);
-                var match = r.Match(html);
-                if (match != null)
-                    url = match.Groups[0].Value.Replace("\\u002F", "/");
-            }
-            var response = await _hc.GetAsync(new Uri(url));
-            if (response.IsSuccessStatusCode)
-            {
-                var id = _misc.GenerateId();
-                using (var f = File.Open(id.ToString(), FileMode.OpenOrCreate))
-                {
-                    var content = await response.Content.ReadAsByteArrayAsync();
-                    await f.WriteAsync(content, 0, content.Length);
-                    await f.FlushAsync();
-                }
-                return id.ToString();
-            }
-            else return "";
+            _net = net;
+            _rand = rand;
         }
 
         public async Task<Image> Invert(string url)
@@ -513,7 +433,7 @@ namespace donniebot.services
             bg.Mutate(x => x.Resize(new ResizeOptions
             {
                 Mode = ResizeMode.Stretch,
-                Size = new Size((int)Math.Round(5d * w / 4d), (int)Math.Round((1.5f * h) + tBounds.Height + bounds.Height)),
+                Size = new Size((int)Math.Round(5d * w / 4d), (int)Math.Round((1.25f * h) + tBounds.Height + bounds.Height)),
                 Sampler = KnownResamplers.NearestNeighbor
             }));
             
@@ -521,7 +441,7 @@ namespace donniebot.services
 
             bg.Mutate(x => x.Draw(Pens.Solid(Color.White, 3), r));
 
-            var location = new PointF(bw + padding, r.Bottom + bh);
+            var location = new PointF(bw + padding, r.Bottom + (bh / 2f));
 
             var to = new TextOptions
             {
@@ -536,7 +456,7 @@ namespace donniebot.services
 
             var options = new TextGraphicsOptions(new GraphicsOptions(), to);
             bg.Mutate(x => x.DrawText(options, title, tFont, Color.White, location));
-            location.Y += bh + tBounds.Height;
+            location.Y += (bh / 2f) + tBounds.Height;
             bg.Mutate(x => x.DrawText(options, text, font, Color.White, location));
 
             if (source.Frames.Count() > 1)
@@ -557,8 +477,8 @@ namespace donniebot.services
 
         public async Task<string> VideoFilter(string url, Func<Image, string, Image> func, string arg1)
         {
-            if (!await IsVideoAsync(url)) return "";
-            var id = await DownloadToFileAsync(url);
+            if (!await _net.IsVideoAsync(url)) return "";
+            var id = await _net.DownloadToFileAsync(url);
             
             var framerate = _reg.Match(await Shell.Run($"ffprobe -hide_banner -show_streams {id}", true)).Value.Replace(" fps", "");
 
@@ -566,11 +486,13 @@ namespace donniebot.services
             await Shell.Run($"ffmpeg -i {id} -hide_banner -vn {tmp.Name}/{id}.aac", true);
             await Shell.Run($"ffmpeg -i {id} -r {framerate} -f image2 -hide_banner {tmp.Name}/frame-%d.png", true);
 
-            foreach (var f in tmp.EnumerateFiles().Where(x => x.Name.Contains(".png")))
+            var files = tmp.EnumerateFiles().Where(x => x.Name.Contains(".png"));
+            for (int i = 0; i < files.Count(); i++)
             {
+                var f = files.ElementAt(i);
                 var img = Image.Load(f.FullName);
 
-                if (img.Width > 1000 || img.Height > 1000)
+                if (i == 0 && (img.Width > 1000 || img.Height > 1000))
                     throw new Exception("Video too large.");
 
                 img = func(img, arg1);
@@ -588,8 +510,8 @@ namespace donniebot.services
         }
         public async Task<string> VideoFilter(string url, Func<Image, string, string, Image> func, string arg1, string arg2)
         {
-            if (!await IsVideoAsync(url)) return "";
-            var id = await DownloadToFileAsync(url);
+            if (!await _net.IsVideoAsync(url)) return "";
+            var id = await _net.DownloadToFileAsync(url);
             
             var framerate = _reg.Match(await Shell.Run($"ffprobe -hide_banner -show_streams {id}", true)).Value.Replace(" fps", "");
 
@@ -821,7 +743,7 @@ namespace donniebot.services
         
         public async Task<Image> VideoToGif (string url)
         {
-            if (!await IsVideoAsync(url)) throw new InvalidOperationException("Not a video.");
+            if (!await _net.IsVideoAsync(url)) throw new InvalidOperationException("Not a video.");
 
             var src = Image.Load(new byte[]
             {
@@ -841,7 +763,7 @@ namespace donniebot.services
                 66, 96, 130
             }); //1px image
 
-            var id = await DownloadToFileAsync(url);
+            var id = await _net.DownloadToFileAsync(url);
             
             var framerate = _reg.Match(await Shell.Run($"ffprobe -hide_banner -show_streams {id}", true)).Value.Replace(" fps", "");
 
@@ -1029,7 +951,7 @@ namespace donniebot.services
 
             while (true)
             {
-                var res = JsonConvert.DeserializeObject<JObject>(await _misc.DownloadAsStringAsync($"https://nekos.life/api/v2/img/{ep}"));
+                var res = JsonConvert.DeserializeObject<JObject>(await _net.DownloadAsStringAsync($"https://nekos.life/api/v2/img/{ep}"));
                 url = res["url"].Value<string>();
                 var obj = new GuildImage(url, gId);
                 if (!sentNeko.ContainsObj(obj))
@@ -1047,7 +969,7 @@ namespace donniebot.services
             string sub = "";
 
             var subs = SubredditCollection.Load($"{name}.txt", name);
-            sub = subs[_misc.RandomNumber(0, subs.Count - 1)];
+            sub = subs[_rand.RandomNumber(0, subs.Count - 1)];
             if (!sub.Contains("r/"))
                 if (!sub.Contains("u/"))
                     sub = $"r/{sub}";
@@ -1072,7 +994,7 @@ namespace donniebot.services
             if (!accepted.Contains(mode))
                 mode = "top";
 
-            var post = JsonConvert.DeserializeObject<JObject>(await _misc.DownloadAsStringAsync($"https://www.reddit.com/{sub}/{mode}.json?count=100"))["data"];
+            var post = JsonConvert.DeserializeObject<JObject>(await _net.DownloadAsStringAsync($"https://www.reddit.com/{sub}/{mode}.json?count=100"))["data"];
             var count = post.Count();
             for (int i = 0; i < 10; i++) //scan 10 pages
             {
@@ -1087,7 +1009,7 @@ namespace donniebot.services
 
                 if (postdata.Count() < count) throw new Exception("There are no more images."); //no more pages
                 else
-                    post = JsonConvert.DeserializeObject<JObject>(await _misc.DownloadAsStringAsync($"https://www.reddit.com/{sub}/{mode}.json?count=100&page={pages[1]}"))["data"];
+                    post = JsonConvert.DeserializeObject<JObject>(await _net.DownloadAsStringAsync($"https://www.reddit.com/{sub}/{mode}.json?count=100&page={pages[1]}"))["data"];
             }
 
             if (info.Count == 0) throw new ArgumentNullException();
@@ -1181,7 +1103,7 @@ namespace donniebot.services
 
         public string Save(Image source, string path = null)
         {
-            var id = _misc.GenerateId();
+            var id = _rand.GenerateId();
 
             if (path != null)
                 using (var file = File.Open(path, FileMode.OpenOrCreate))
@@ -1210,7 +1132,7 @@ namespace donniebot.services
 
         public string SaveAsJpeg(Image source, int quality)
         {
-            var id = _misc.GenerateId();
+            var id = _rand.GenerateId();
 
             string path;
             path = $"{id}.jpg";
@@ -1227,26 +1149,13 @@ namespace donniebot.services
             }
         }
 
-        private async Task<string> UploadAsync(string path, string ext)
-        {
-            using (var ct = new MultipartFormDataContent())
-            {
-                ct.Add(new ByteArrayContent(await File.ReadAllBytesAsync(path)), "file", $"temp.{ext}");
-                ct.Headers.Add("key", uploadKey);
-                var response = await _hc.PostAsync("https://i.jakedacatman.me/upload", ct);
-
-                File.Delete(path); 
-                return await response.Content.ReadAsStringAsync();
-            }
-        }
-
         public async Task SendToChannelAsync(Image img, ISocketMessageChannel ch)
         {
             var path = Save(img);
             var ext = path.Split('.')[1];
             var len = new FileInfo(path).Length;
             if (len > 8388119) //allegedly discord's limit
-                await ch.SendMessageAsync(await UploadAsync(path, ext));
+                await ch.SendMessageAsync(await _net.UploadAsync(path, ext));
             else
                 await ch.SendFileAsync(path);
             File.Delete(path);
@@ -1256,10 +1165,12 @@ namespace donniebot.services
             var ext = path.Split('.')[1];
             var len = new FileInfo(path).Length;
             if (len > 8388119) //allegedly discord's limit
-                await ch.SendMessageAsync(await UploadAsync(path, ext));
+                await ch.SendMessageAsync(await _net.UploadAsync(path, ext));
             else
                 await ch.SendFileAsync(path);
             File.Delete(path);
         }
+
+        public async Task<Image> DownloadFromUrlAsync(string url) => Image.Load(await _net.DownloadFromUrlAsync(url), out _format);
     }
 }
