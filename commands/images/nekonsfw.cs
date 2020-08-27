@@ -14,12 +14,14 @@ namespace donniebot.commands
         private readonly DiscordShardedClient _client;
         private readonly MiscService _misc;
         private readonly ImageService _img;
+        private readonly RandomService _rand;
 
-        public NekoNsfwCommand(DiscordShardedClient client, MiscService misc, ImageService img)
+        public NekoNsfwCommand(DiscordShardedClient client, MiscService misc, ImageService img, RandomService rand)
         {
             _client = client;
             _misc = misc;
             _img = img;
+            _rand = rand;
         }
 
         [Command("nekonsfw")]
@@ -35,7 +37,7 @@ namespace donniebot.commands
                     await ReplyAsync(info);
                 else
                     await ReplyAsync(embed: (new EmbedBuilder()
-                        .WithColor(_misc.RandomColor())
+                        .WithColor(_rand.RandomColor())
                         .WithImageUrl(info)
                         .WithTimestamp(DateTime.UtcNow)
                     ).Build());

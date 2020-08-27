@@ -20,6 +20,8 @@ namespace donniebot.classes
         public FakeConsole Console { get; internal set; }
         public Random Random { get; internal set; }
         public ImageService _img {get; internal set; }
+        public RandomService _rand {get; internal set; }
+        public NetService _net {get; internal set; }
         public Globals _globals { get; internal set; }
         public string[] Imports { get; internal set; } = new string[]
         {

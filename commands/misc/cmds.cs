@@ -13,11 +13,13 @@ namespace donniebot.commands
     {
         private readonly CommandService _commands;
         private readonly MiscService _misc;
+        private readonly RandomService _rand;
 
-        public CommandsCommand(CommandService commands, MiscService misc)
+        public CommandsCommand(CommandService commands, MiscService misc, RandomService rand)
         {
             _commands = commands;
             _misc = misc;
+            _rand = rand;
         }
 
         [Command("commands")]
@@ -49,7 +51,7 @@ namespace donniebot.commands
                     fields.Add(new EmbedFieldBuilder().WithIsInline(true).WithName(module.Key).WithValue($"**{string.Join(", ", module.Value)}**"));
 
                 var embed = new EmbedBuilder()
-                    .WithColor(_misc.RandomColor())
+                    .WithColor(_rand.RandomColor())
                     .WithTitle("Commands")
                     .WithFields(fields)
                     .WithCurrentTimestamp();

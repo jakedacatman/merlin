@@ -29,6 +29,7 @@ namespace donniebot.services
         private IServiceProvider _services;
         private readonly NetService _net;
         private readonly Random _random;
+        private readonly RandomService _rand;
 
         private readonly Dictionary<Type, string> _aliases = new Dictionary<Type, string>()
         {
@@ -73,12 +74,13 @@ namespace donniebot.services
             { typeof(RequireContextAttribute), "must be invoked in a guild or dm" }
         };
 
-        public MiscService(DiscordShardedClient client, IServiceProvider services, NetService net, Random random)
+        public MiscService(DiscordShardedClient client, IServiceProvider services, NetService net, Random random, RandomService rand)
         {
             _client = client;
             _services = services;
             _random = random;
             _net = net;
+            _rand = rand;
         }
 
         private readonly string[] errorMessages = new string[]
@@ -149,7 +151,7 @@ namespace donniebot.services
             }
 
             EmbedBuilder embed = new EmbedBuilder()
-                .WithColor(RandomColor())
+                .WithColor(_rand.RandomColor())
                 .WithCurrentTimestamp()
                 .WithFooter(e.GetType().ToString())
                 .WithDescription(description)
@@ -157,13 +159,6 @@ namespace donniebot.services
 
             return embed;
             
-        }
-
-        public Color RandomColor()
-        {
-            Random r = new Random();
-            uint clr = Convert.ToUInt32(r.Next(0, 0xFFFFFF));
-            return new Color(clr);
         }
 
         public async Task<EmbedBuilder> EvaluateAsync(ShardedCommandContext context, string code)
@@ -192,6 +187,8 @@ namespace donniebot.services
                 Random = _random,
                 _commands = _services.GetService<CommandService>(),
                 _img = _services.GetService<ImageService>(),
+                _net = _services.GetService<NetService>(),
+                _rand = _services.GetService<RandomService>()
             };
             globals._globals = globals;
             
@@ -524,7 +521,7 @@ namespace donniebot.services
 
             EmbedBuilder embed = new EmbedBuilder()
                 .WithTitle($"Information for {name}:")
-                .WithColor(RandomColor())
+                .WithColor(_rand.RandomColor())
                 .WithCurrentTimestamp()
                 .WithFields(fields);
             

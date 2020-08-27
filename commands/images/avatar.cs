@@ -14,12 +14,14 @@ namespace donniebot.commands
         private readonly DiscordShardedClient _client;
         private readonly ImageService _img;
         private readonly MiscService _misc;
+        private readonly RandomService _rand;
 
-        public AvatarCommand(DiscordShardedClient client, ImageService img, MiscService misc)
+        public AvatarCommand(DiscordShardedClient client, ImageService img, MiscService misc, RandomService rand)
         {
             _client = client;
             _img = img;
             _misc = misc;
+            _rand = rand;
         }
 
         [Command("avatar")]
@@ -33,7 +35,7 @@ namespace donniebot.commands
 
                 var url = user.GetAvatarUrl(size: 512);
                 await ReplyAsync(embed: new EmbedBuilder()
-                    .WithColor(_misc.RandomColor())
+                    .WithColor(_rand.RandomColor())
                     .WithImageUrl(url)
                     .WithCurrentTimestamp()
                     .Build());

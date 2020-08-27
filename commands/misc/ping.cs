@@ -12,10 +12,12 @@ namespace donniebot.commands
     public class PingCommand : InteractiveBase<ShardedCommandContext>
     {
         private readonly MiscService _misc;
+        private readonly RandomService _rand;
 
-        public PingCommand(MiscService misc)
+        public PingCommand(MiscService misc, RandomService rand)
         {
             _misc = misc;
+            _rand = rand;
         }
 
         [Command("ping")]
@@ -30,7 +32,7 @@ namespace donniebot.commands
                 s.Stop();
 
                 var embed = new EmbedBuilder()
-                    .WithColor(_misc.RandomColor())
+                    .WithColor(_rand.RandomColor())
                     .WithTitle("Ping")
                     .WithDescription($"{s.ElapsedTicks/1000000d} ms")
                     .WithCurrentTimestamp();

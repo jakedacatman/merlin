@@ -13,11 +13,13 @@ namespace donniebot.commands
     {
         private readonly NetService _net;
         private readonly MiscService _misc;
+        private readonly RandomService _rand;
 
-        public WikiCommand(NetService net, MiscService misc)
+        public WikiCommand(NetService net, MiscService misc, RandomService rand)
         {
             _net = net;
             _misc = misc;
+            _rand = rand;
         }
 
         [Command("wiki")]
@@ -35,7 +37,7 @@ namespace donniebot.commands
                         .WithTitle(data.Item1)
                         .WithUrl(data.Item2)
                         .WithDescription("Click the title to view the article!")
-                        .WithColor(_misc.RandomColor())
+                        .WithColor(_rand.RandomColor())
                     .Build());
             }
             catch (Exception e)

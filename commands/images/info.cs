@@ -15,12 +15,14 @@ namespace donniebot.commands
         private readonly DiscordShardedClient _client;
         private readonly ImageService _img;
         private readonly MiscService _misc;
+        private readonly RandomService _rand;
 
-        public ImageInfoCommand(DiscordShardedClient client, ImageService img, MiscService misc)
+        public ImageInfoCommand(DiscordShardedClient client, ImageService img, MiscService misc, RandomService rand)
         {
             _client = client;
             _img = img;
             _misc = misc;
+            _rand = rand;
         }
 
         [Command("info")]
@@ -33,7 +35,7 @@ namespace donniebot.commands
                 url = await _img.ParseUrlAsync(url, Context.Message);
                 var info = await _img.GetInfo(url);
                 var em = new EmbedBuilder()
-                    .WithColor(_misc.RandomColor())
+                    .WithColor(_rand.RandomColor())
                     .WithCurrentTimestamp()
                     .WithThumbnailUrl(url)
                     .WithFields(new List<EmbedFieldBuilder>

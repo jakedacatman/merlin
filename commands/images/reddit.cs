@@ -15,14 +15,16 @@ namespace donniebot.commands
         private readonly DiscordShardedClient _client;
         private readonly MiscService _misc;
         private readonly ImageService _img;
+        private readonly RandomService _rand;
 
         private Regex _reg = new Regex(@"[0-9a-z]{1,21}"); 
 
-        public RedditCommand(DiscordShardedClient client, MiscService misc, ImageService img)
+        public RedditCommand(DiscordShardedClient client, MiscService misc, ImageService img, RandomService rand)
         {
             _client = client;
             _misc = misc;
             _img = img;
+            _rand = rand;
         }
 
         [Command("reddit")]
@@ -38,7 +40,7 @@ namespace donniebot.commands
 
                     var embed = new EmbedBuilder()
                         .WithTitle(info["title"])
-                        .WithColor(_misc.RandomColor())
+                        .WithColor(_rand.RandomColor())
                         .WithTimestamp(DateTime.UtcNow)
                         .WithFooter($"Posted by {info["author"]} • From {info["sub"]}");
 
