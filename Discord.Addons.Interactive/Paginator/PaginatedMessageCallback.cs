@@ -115,7 +115,7 @@ namespace Discord.Addons.Interactive
                     if (request < 1 || request > pages)
                     {
                         _ = response.DeleteAsync().ConfigureAwait(false);
-                        await Interactive.ReplyAndDeleteAsync(Context, options.Stop.Name);
+                        await Interactive.ReplyAndDeleteAsync(Context, "Invalid page.");
                         return;
                     }
                     page = request;

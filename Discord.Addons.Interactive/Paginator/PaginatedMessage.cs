@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using donniebot.services;
 
 namespace Discord.Addons.Interactive
 {
@@ -25,7 +26,7 @@ namespace Discord.Addons.Interactive
         /// Author sets the <see cref="EmbedBuilder.Author"/> property directly.
         /// </summary>
         public EmbedAuthorBuilder Author { get; set; } = null;
-        public Color Color { get; set; } = Color.Default;
+        public Color Color { get; set; } = RandomService.StaticRandomColor();
         public string Title { get; set; } = "";
         /// <summary>
         /// AlternateDescription will be used as the description of the pager only when
