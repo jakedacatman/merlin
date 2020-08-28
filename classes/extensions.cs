@@ -141,7 +141,11 @@ namespace donniebot.classes
 
                     var toAppend = "  ".RepeatString(level + 1);
 
-                    var value = thing.GetValue(t);
+                    object value;
+                    if ((thing.Name.Contains("Exit") || thing.Name.Contains("Start") || thing.Name.Contains("Standard")) && t is System.Diagnostics.Process)
+                        value = "(none)";
+                    else
+                        value = thing.GetValue(t);
 
                     if (value is ICollection h)
                         toAppend += $"{thing.Name}:\n  {h.MakeString(level + 1)}";

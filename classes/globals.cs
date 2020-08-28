@@ -2,6 +2,7 @@
 using donniebot.services;
 using Discord.Commands;
 using Discord.WebSocket;
+using System.Diagnostics;
 
 namespace donniebot.classes
 {
@@ -23,6 +24,7 @@ namespace donniebot.classes
         public RandomService _rand {get; internal set; }
         public NetService _net {get; internal set; }
         public Globals _globals { get; internal set; }
+        public Process current { get; } = Process.GetCurrentProcess();
         public string[] Imports { get; internal set; } = new string[]
         {
             "System",
