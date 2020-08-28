@@ -58,7 +58,16 @@ namespace donniebot
                 .BuildServiceProvider();
 
             await _commands.AddModulesAsync(Assembly.GetEntryAssembly(), _services);
-            await _client.LoginAsync(TokenType.Bot, _services.GetService<DbService>().GetApiKey("discord"));
+
+            var db = _services.GetService<DbService>();
+            var apiKey = db.GetApiKey("discord");
+            if (apiKey == null)
+            {
+                Console.WriteLine("What is the bot's token? (only logged to database.db)");
+                apiKey = Console.ReadLine();
+                db.AddApiKey("discord", apiKey);
+            }
+            await _client.LoginAsync(TokenType.Bot, apiKey);
             await _client.StartAsync();
 
             await _client.SetActivityAsync(new Game($"myself start up {_client.Shards.Count} shards", ActivityType.Watching));

@@ -109,7 +109,7 @@ namespace donniebot.services
             {
                 var sc = new FormUrlEncodedContent( new Dictionary<string, string> { { "input", stuffToUpload } } );
                 sc.Headers.ContentType = new MediaTypeHeaderValue("application/x-www-form-urlencoded");
-                sc.Headers.Add("key", uploadKey);
+                sc.Headers.Add("key", uploadKey); //you can always do don.e _db.AddApiKey("upload", <key>) and change the host used
 
                 var request = await _hc.PostAsync("https://paste.jakedacatman.me/paste", sc);
                 return await request.Content.ReadAsStringAsync();
@@ -120,18 +120,7 @@ namespace donniebot.services
             }
         }
 
-        public async Task<string> DownloadAsStringAsync(string url)
-        {
-            try 
-            {
-                var response = await _hc.GetStringAsync(url);
-                return response;
-            }
-            catch (Exception e)
-            {
-                throw e;
-            }
-        }
+        public async Task<string> DownloadAsStringAsync(string url) => await _hc.GetStringAsync(url);
 
         public async Task<Tuple<string, string>> GetWikipediaArticleAsync(string term)
         {
