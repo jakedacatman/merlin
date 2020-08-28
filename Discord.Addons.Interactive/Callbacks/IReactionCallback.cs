@@ -11,7 +11,7 @@ namespace Discord.Addons.Interactive
         ICriterion<SocketReaction> Criterion { get; }
         TimeSpan? Timeout { get; }
         SocketCommandContext Context { get; }
-	
+
         Task<bool> HandleCallbackAsync(SocketReaction reaction);
     }
 }
