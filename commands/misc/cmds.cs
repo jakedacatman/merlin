@@ -25,12 +25,10 @@ namespace donniebot.commands
         [Command("commands")]
         [Alias("cmds")]
         [Summary("Sends a list of bot commands.")]
-        public async Task CommandsCmd()
+        public async Task CommandsCmd([Summary("Should the commands be split into pages?")] bool paged = false)
         {
             try
             {
-                var fields = new List<EmbedFieldBuilder>();
-
                 Dictionary<string, List<string>> modules = new Dictionary<string, List<string>>();
 
                 foreach (ModuleInfo module in _commands.Modules)
@@ -47,17 +45,29 @@ namespace donniebot.commands
                         if (!names.Contains($"{cmd.Module.Group} {cmd.Name}")) names.Add($"{cmd.Module.Group} {cmd.Name}");
                     }
                 }
-                foreach (var module in modules)
-                    fields.Add(new EmbedFieldBuilder().WithIsInline(true).WithName(module.Key).WithValue($"**{string.Join(", ", module.Value)}**"));
 
-                var embed = new EmbedBuilder()
-                    .WithColor(_rand.RandomColor())
-                    .WithTitle("Commands")
-                    .WithFields(fields)
-                    .WithCurrentTimestamp();
+                if (paged)
+                {
+                    var pages = new List<string>();
+                    foreach (var module in modules)
+                        pages.Add($"**{module.Key}**\n{string.Join(", ", module.Value)}");
 
-                await ReplyAsync(embed: embed.Build());
+                    await PagedReplyAsync(pages);
+                }
+                else
+                {
+                    var fields = new List<EmbedFieldBuilder>();
+                    foreach (var module in modules)
+                        fields.Add(new EmbedFieldBuilder().WithIsInline(true).WithName(module.Key).WithValue($"**{string.Join(", ", module.Value)}**"));
 
+                    var embed = new EmbedBuilder()
+                        .WithColor(_rand.RandomColor())
+                        .WithTitle("Commands")
+                        .WithFields(fields)
+                        .WithCurrentTimestamp();
+
+                    await ReplyAsync(embed: embed.Build());
+                }
             }
             catch (Exception e)
             {
