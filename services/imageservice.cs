@@ -805,6 +805,44 @@ namespace donniebot.services
             return src;
         }
 
+        public async Task<Image> PlaceBelow(string url, string belowUrl, bool resize = true)
+        {
+            Image source = await DownloadFromUrlAsync(url);
+            Image overlay = await DownloadFromUrlAsync(belowUrl);
+
+            return PlaceBelow(source, overlay, resize);
+        }
+        public Image PlaceBelow(Image source, Image below, bool resize = true)
+        {
+            var src = (Image)Image.Load(new byte[]
+            {
+                137, 80, 78, 71, 13, 
+                10, 26, 10, 0, 0, 
+                0, 13, 73, 72, 68, 
+                82, 0, 0, 0, 1, 
+                0, 0, 0, 1, 8, 
+                6, 0, 0, 0, 31, 
+                21, 196, 137, 0, 0, 
+                0, 11, 73, 68, 65, 
+                84, 8, 215, 99, 248, 
+                15, 4, 0, 9, 251, 
+                3, 253, 99, 38, 197, 
+                143, 0, 0, 0, 0, 
+                73, 69, 78, 68, 174, 
+                66, 96, 130
+            }); //1px image
+
+            if (resize)
+                below.Mutate(x => x.Resize(source.Width, source.Width));
+
+            src.Mutate(x => x.Resize(source.Width, source.Height + below.Height));
+
+            src = Overlay(src, source, new Point(0, 0), source.Size());
+            src = Overlay(src, below, new Point(0, source.Height), below.Size());
+
+            return src;
+        }
+
         public async Task<Image> DrawText(string url, string text, string topText = null)
         {
             Image source = await DownloadFromUrlAsync(url);
