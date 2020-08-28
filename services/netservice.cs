@@ -30,7 +30,7 @@ namespace donniebot.services
         {
             url = url.Trim('<').Trim('>');
 
-            var res = await _hc.GetAsync(new Uri(url));
+            var res = await _hc.SendAsync(new HttpRequestMessage(HttpMethod.Head, new Uri(url)));
 
             if (res.IsSuccessStatusCode)
                 if (res.Content.Headers.ContentType.MediaType.Contains("video"))
