@@ -122,11 +122,11 @@ namespace donniebot.services
 
         public async Task<string> DownloadAsStringAsync(string url) => await _hc.GetStringAsync(url);
 
-        public async Task<Tuple<string, string>> GetWikipediaArticleAsync(string term)
+        public async Task<Tuple<string, string>> GetMediaWikiArticleAsync(string term, string url)
         {
             try
             {
-                var data = JsonConvert.DeserializeObject<JArray>(await _hc.GetStringAsync($"https://en.wikipedia.org/w/api.php?action=opensearch&search={term}&limit=1&format=json"));
+                var data = JsonConvert.DeserializeObject<JArray>(await _hc.GetStringAsync($"https://{url}/w/api.php?action=opensearch&search={term}&limit=1&format=json"));
                 var titleArr = data[1];
                 var urlArr = data[3];
                 if (titleArr.Count() == 0 || urlArr.Count() == 0)
@@ -139,6 +139,10 @@ namespace donniebot.services
                 throw e;
             }
         }
+
+        public async Task<Tuple<string, string>> GetWikipediaArticleAsync(string term) => await GetMediaWikiArticleAsync(term, "en.wikipedia.org");
+        
+        public async Task<Tuple<string, string>> GetBulbapediaArticleAsync(string term) => await GetMediaWikiArticleAsync(term, "bulbapedia.bulbagarden.net");
 
         public async Task<string> UploadAsync(string path, string ext)
         {
