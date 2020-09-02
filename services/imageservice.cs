@@ -1124,17 +1124,12 @@ namespace donniebot.services
             return false;
         }
 
-        public async Task<Dictionary<string, string>> GetInfo(string url)
+        public async Task<ImageProperties> GetInfo(string url)
         {
             var img = await DownloadFromUrlAsync(url);
-            return new Dictionary<string, string>
-            {
-                { "width", img.Width.ToString() },
-                { "height", img.Height.ToString() },
-                { "frames", img.Frames.Count.ToString() },
-                { "bpp", img.PixelType.BitsPerPixel.ToString() },
-                { "fps", Math.Round(100d / img.Frames.RootFrame.Metadata.GetFormatMetadata(GifFormat.Instance).FrameDelay, 3).ToString() }
-            };
+            return new ImageProperties(img.Width, img.Height, img.Frames.Count, img.PixelType.BitsPerPixel, 
+            Math.Round(100d / img.Frames.RootFrame.Metadata.GetFormatMetadata(GifFormat.Instance).FrameDelay, 3), _format.DefaultMimeType,
+            Math.Round(img.Metadata.HorizontalResolution, 3), Math.Round(img.Metadata.VerticalResolution, 3));
         }
 
         public async Task<string> ParseUrlAsync(string url, SocketUserMessage msg)

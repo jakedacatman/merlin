@@ -40,12 +40,14 @@ namespace donniebot.commands
                     .WithThumbnailUrl(url)
                     .WithFields(new List<EmbedFieldBuilder>
                     {
-                        new EmbedFieldBuilder().WithName("Width").WithValue(info["width"]).WithIsInline(true),
-                        new EmbedFieldBuilder().WithName("Height").WithValue(info["height"]).WithIsInline(true),
-                        new EmbedFieldBuilder().WithName("Resolution").WithValue($"{long.Parse(info["width"]) * long.Parse(info["height"])} pixels").WithIsInline(true),
-                        new EmbedFieldBuilder().WithName("Frames").WithValue(info["frames"]).WithIsInline(true),
-                        new EmbedFieldBuilder().WithName("Color depth").WithValue(info["bpp"] + "bpp").WithIsInline(true),
-                        new EmbedFieldBuilder().WithName("Frames/second").WithValue((info["fps"] == "Infinity" ? "unknown " : info["fps"]) + "fps").WithIsInline(true),
+                        new EmbedFieldBuilder().WithName("Width").WithValue(info.Width).WithIsInline(true),
+                        new EmbedFieldBuilder().WithName("Height").WithValue(info.Height).WithIsInline(true),
+                        new EmbedFieldBuilder().WithName("Resolution").WithValue($"{(ulong)info.Width * (ulong)info.Height} pixels").WithIsInline(true),
+                        new EmbedFieldBuilder().WithName("Frames").WithValue(info.Frames).WithIsInline(true),
+                        new EmbedFieldBuilder().WithName("Color depth").WithValue(info.BitsPerPixel + "bpp").WithIsInline(true),
+                        new EmbedFieldBuilder().WithName("Frames/second").WithValue((double.IsInfinity(info.FPS) ? "unknown " : info.FPS.ToString()) + "fps").WithIsInline(true),
+                        new EmbedFieldBuilder().WithName("MIME type").WithValue(info.MimeType).WithIsInline(true),
+                        new EmbedFieldBuilder().WithName("Resolution").WithValue($"{info.HorizontalResolution}dpi * {info.VerticalResolution}dpi").WithIsInline(true),
                     });
                 await Context.Channel.SendMessageAsync(embed: em.Build());
             }
