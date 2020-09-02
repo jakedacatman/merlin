@@ -25,7 +25,7 @@ namespace donniebot.commands
         [Command("commands")]
         [Alias("cmds")]
         [Summary("Sends a list of bot commands.")]
-        public async Task CommandsCmd([Summary("Should the commands be split into pages?")] bool paged = false)
+        public async Task CommandsCmd([Summary("Should the commands be on one page?")] bool onePage = false)
         {
             try
             {
@@ -46,7 +46,7 @@ namespace donniebot.commands
                     }
                 }
 
-                if (paged)
+                if (!onePage)
                 {
                     var pages = new List<string>();
                     foreach (var module in modules)
