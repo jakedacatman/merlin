@@ -81,12 +81,12 @@ namespace donniebot
                 if (counter >= _client.Shards.Count)
                     try
                     {
-                        await UpdateStatus(counter).ConfigureAwait(false);
+                        UpdateStatus(counter);
                     }
                     catch (Exception e)
                     {
                         Console.WriteLine(e);
-                        await UpdateStatus(counter).ConfigureAwait(false);
+                        UpdateStatus(counter);
                     }
                 else   
                     counter++;
@@ -135,9 +135,9 @@ namespace donniebot
             }
         }
 
-        private async Task UpdateStatus(int counter)
+        private void UpdateStatus(int counter)
         {
-            await Task.Run(async () =>
+            Task.Run(async () =>
             {
                 while (true)
                 {
@@ -146,7 +146,7 @@ namespace donniebot
                     await _client.SetActivityAsync(new Game($"don.help", ActivityType.Playing));
                     await Task.Delay(5000);
                 }
-            }).ConfigureAwait(false);
+            });
         }
     }
 }
