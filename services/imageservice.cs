@@ -938,6 +938,26 @@ namespace donniebot.services
             return source;
         }
 
+        public async Task<Image> Reverse(string url) => Reverse(await DownloadFromUrlAsync(url));
+        public Image Reverse(Image source)
+        {
+            var ct = source.Frames.Count;
+            for (int i = 0; i < ct / 2; i++)
+            {
+                var newIn = ct - 1 - i;
+                var newF = source.Frames.CloneFrame(i).Frames[0];
+                var f = source.Frames.CloneFrame(newIn).Frames[0];
+
+                source.Frames.RemoveFrame(i);
+                source.Frames.InsertFrame(i, f);
+                
+                source.Frames.RemoveFrame(newIn);
+                source.Frames.InsertFrame(newIn, newF);
+            }
+
+            return source;
+        }
+
         public async Task<string> GetNekoImageAsync(bool nsfw, ulong gId, string ep = "neko")
         {
             var url = "";
