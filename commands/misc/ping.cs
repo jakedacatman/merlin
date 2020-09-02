@@ -34,7 +34,7 @@ namespace donniebot.commands
                 var embed = new EmbedBuilder()
                     .WithColor(_rand.RandomColor())
                     .WithTitle("Ping")
-                    .WithDescription($"{s.ElapsedTicks/1000000d} ms")
+                    .WithDescription($"{s.ElapsedTicks/1000000d} ms (calculated)\n{Context.Client.GetShardFor(Context.Guild).Latency} ms (estimated)")
                     .WithCurrentTimestamp();
 
                 await msg.ModifyAsync(x => 

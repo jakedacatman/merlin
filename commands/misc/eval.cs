@@ -29,10 +29,9 @@ namespace donniebot.commands
         {
             try
             {
-                if (code.Contains("--noreply"))
-                    await _misc.EvaluateAsync(Context, code.Replace("--noreply", ""));
-                else
-                    await ReplyAsync(embed: (await _misc.EvaluateAsync(Context, code)).Build());
+                var msg = await _misc.EvaluateAsync(Context, code.Replace("--noreply", ""));
+                if (!code.Contains("--noreply"))
+                    await ReplyAsync(embed: msg.Build());
             }
             catch (Exception e)
             {

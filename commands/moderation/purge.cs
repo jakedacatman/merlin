@@ -34,6 +34,26 @@ namespace donniebot.commands
                 if (ct > 0)
                     await ReplyAsync($"Purged {ct} {(ct > 1 ? "messages" : "message")}.");
                 else
+                    await ReplyAsync("Failed to purge the channel (purged 0 messages).");
+            }
+            catch (Exception e)
+            {
+                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
+            }
+        }
+
+        [Command("purge")]
+        [Alias("prune")]
+        [RequireUserPermission(GuildPermission.ManageMessages)]
+        [Summary("Deletes up to 1000 messages from a user in the current channel.")]
+        public async Task PurgeCmd([Summary("The user to purge messages from.")]SocketGuildUser user, [Summary("The amount of messages to delete.")] int count = 100)
+        {
+            try
+            {
+                var ct = await _mod.TryPurgeMessagesAsync(Context.Channel as SocketTextChannel, count, user);
+                if (ct > 0)
+                    await ReplyAsync($"Purged {ct} {(ct > 1 ? "messages" : "message")}.");
+                else
                     await ReplyAsync("Failed to purge the channel.");
             }
             catch (Exception e)

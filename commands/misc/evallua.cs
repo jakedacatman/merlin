@@ -29,10 +29,9 @@ namespace donniebot.commands
             try
             {
                 var channel = Context.Channel as SocketTextChannel;
-                if (code.Contains("--noreply"))
-                    await _misc.EvaluateLuaAsync(channel, code.Replace("--noreply", ""));
-                else
-                await ReplyAsync(embed: (await _misc.EvaluateLuaAsync(channel, code)).Build());
+                var msg = await _misc.EvaluateLuaAsync(channel, code.Replace("--noreply", ""));
+                if (!code.Contains("--noreply"))
+                    await ReplyAsync(embed: msg.Build());
             }
             catch (Exception e)
             {
