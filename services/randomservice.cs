@@ -13,7 +13,7 @@ namespace donniebot.services
 
         public int RandomNumber(int min, int max) => _random.Next(min, max);
         public float RandomFloat(float max) => (float)_random.NextDouble() * max;
-        public float RandomFloat(float max, float min) => (float)_random.NextDouble() * (max - min) + min;
+        public float RandomFloat(float min, float max) => (float)_random.NextDouble() * (max - min) + min;
 
         public Color RandomColor()
         {

@@ -76,6 +76,7 @@ namespace donniebot
             _client.MessageReceived += MsgReceived;
 
             int counter = 1;
+            #pragma warning disable CS1998 //async no await thing
             _client.ShardConnected += async (DiscordSocketClient client) =>
             {
                 if (counter >= _client.Shards.Count)
@@ -91,6 +92,7 @@ namespace donniebot
                 else   
                     counter++;
             };
+            #pragma warning restore CS1998 //async no await thing
 
             _commands.Log += Log;
 

@@ -99,9 +99,9 @@ namespace donniebot.services
             try
             {
                 if (count < 1) count = 1;
-                if (count > 1000) count = 1000;
+                if (count > 100) count = 100;
 
-                var msgs = (await channel.GetMessagesAsync(1000).FlattenAsync()).Where(x => x.Author == user).OrderByDescending(x => x.CreatedAt).Take(count);
+                var msgs = (await channel.GetMessagesAsync(100).FlattenAsync()).Where(x => x.Author == user).OrderByDescending(x => x.CreatedAt).Take(count);
                 await channel.DeleteMessagesAsync(msgs);
 
                 return msgs.Count();
