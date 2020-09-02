@@ -524,7 +524,7 @@ namespace donniebot.services
                 var img = Image.Load(f.FullName);
 
                 if (img.Width > 1000 || img.Height > 1000)
-                    throw new Exception("Video too large.");
+                    throw new VideoException("Video too large.");
 
                 img = func(img, arg1, arg2);
 
@@ -781,7 +781,7 @@ namespace donniebot.services
                 if (i == 0)
                 {
                     if (img.Width > 1000 || img.Height > 1000)
-                        throw new Exception("Video too large.");
+                        throw new VideoException("Video too large.");
 
                     src.Mutate(x => x.Resize(new ResizeOptions
                     {
@@ -856,7 +856,7 @@ namespace donniebot.services
         public Image DrawText(Image source, string text, string bottomText = null)
         {
             if (string.IsNullOrEmpty(text) && string.IsNullOrEmpty(bottomText))
-                throw new Exception("Text cannot be blank.");
+                throw new ImageException("Text cannot be blank.");
             
             var size = Math.Min(source.Height / 10, source.Width / 10);
             Font f = SystemFonts.CreateFont("Impact", size);
@@ -1045,7 +1045,7 @@ namespace donniebot.services
                 var postdata = post["children"].Shuffle();
                 if (GetImage(postdata, gId, nsfw, out info)) break;
 
-                if (postdata.Count() < count) throw new Exception("There are no more images."); //no more pages
+                if (postdata.Count() < count) throw new ImageException("There are no more images."); //no more pages
                 else
                     post = JsonConvert.DeserializeObject<JObject>(await _net.DownloadAsStringAsync($"https://www.reddit.com/{sub}/{mode}.json?count=100&page={pages[1]}"))["data"];
             }
@@ -1131,7 +1131,7 @@ namespace donniebot.services
                         if (Uri.IsWellFormedUriString(previousmsg.Content, UriKind.Absolute))
                             url = previousmsg.Content;
                         else
-                            throw new Exception("Try the command with a url, or attach an image.");
+                            throw new ImageException("Try the command with a url, or attach an image.");
                 }
                 else
                     url = msg.Attachments.First().Url;

@@ -118,21 +118,23 @@ namespace donniebot.services
         public async Task<EmbedBuilder> GenerateErrorMessage(Exception e)
         {
             var description = "";
-            if (e.Message == "The server responded with error 40005: Request entity too large")
+            if (e is Discord.Net.HttpException ex && ex.DiscordCode == 40005)
                 description = "The resulting file was too large to upload to Discord.";
-            else if (e.Message == "Try the command with a url, or attach an image." || e.Message == "Text cannot be blank.")
-                description = e.Message;
-            else if (e.Message == "Name or service not known")
-                description = "That website does not exist.";
+            else if (e is ImageException ie)
+                description = ie.Message;
+            else if (e is VideoException ve)
+                description = ve.Message;
+            else if (e is HttpRequestException he)
+                description = $"An exception occurred when making an HTTP request ({he.Message})";
             else if (e is SixLabors.ImageSharp.UnknownImageFormatException)
                 description = "The image format was not valid.";
             else
             {
                 description = "This command has thrown an exception. Here is ";
 
-                var ie = e.InnerException;
+                var inex = e.InnerException;
                 string message = e.Message;
-                if (ie != null) message += $"\n*(inner: {ie.Message})*";
+                if (inex != null) message += $"\n*(inner: {inex.Message})*";
 
                 if (message.Length < 1000)
                     description += $"its message:\n**{message.Replace("`", @"\`")}**";
@@ -142,7 +144,7 @@ namespace donniebot.services
                 description += "\nStack trace:\n";
 
                 string trace = e.StackTrace;
-                if (ie != null) trace += $"\ninner: {ie.StackTrace}";
+                if (inex != null) trace += $"\ninner: {inex.StackTrace}";
 
                 if (trace.Length < 1000)
                     description += $"```{trace.Replace("`", @"\`")}```";
