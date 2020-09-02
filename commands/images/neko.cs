@@ -27,7 +27,7 @@ namespace donniebot.commands
         [Command("neko")]
         [Alias("ne", "nek")]
         [Summary("Grabs an image from the nekos.life API.")]
-        public async Task NekoCmd([Summary("The endpoint to pull from.")] string ep = "neko")
+        public async Task NekoCmd([Summary("The endpoint to pull from. Do `don.ne list` for a list of endpoints.")] string ep = "neko")
         {
             try
             {

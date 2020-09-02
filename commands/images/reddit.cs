@@ -30,7 +30,7 @@ namespace donniebot.commands
         [Command("reddit")]
         [Alias("red", "rd")]
         [Summary("Grabs a random image from Reddit.")]
-        public async Task RedditCmd([Summary("The subreddit to pull from.")]string sub = null, [Summary("The optional sort mode in lowercase.")]string mode = "top")
+        public async Task RedditCmd([Summary("The subreddit to pull from.")]string sub = null, [Summary("The optional sort mode in lowercase. Accepts \"top\", \"best\", and \"new\".")]string mode = "top")
         {
             try
             {

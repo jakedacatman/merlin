@@ -28,7 +28,7 @@ namespace donniebot.commands
         [Alias("nen", "nekon", "nekn")]
         [RequireNsfw]
         [Summary("Grabs an NSFW image from the nekos.life API.")]
-        public async Task NekoNSFWCmd([Summary("The endpoint to pull from.")] string ep = "nsfw_neko_gif")
+        public async Task NekoNSFWCmd([Summary("The endpoint to pull from. Do `don.nen list` for a list of endpoints.")] string ep = "nsfw_neko_gif")
         {
             try
             {
