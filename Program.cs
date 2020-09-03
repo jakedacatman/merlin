@@ -76,25 +76,29 @@ namespace donniebot
             _client.MessageReceived += MsgReceived;
 
             int counter = 1;
-            #pragma warning disable CS1998 //async no await thing
-            _client.ShardConnected += async (DiscordSocketClient client) =>
+
+            _client.ShardConnected += (DiscordSocketClient client) =>
             {
                 if (counter >= _client.Shards.Count)
                 {
                     try
                     {
                         UpdateStatus(counter);
+                        return Task.CompletedTask;
                     }
                     catch (Exception e)
                     {
                         Console.WriteLine(e);
                         UpdateStatus(counter);
+                        return Task.CompletedTask;
                     }
                 }
-                else   
+                else
+                {   
                     counter++;
+                    return Task.CompletedTask;
+                }
             };
-            #pragma warning restore CS1998 //async no await thing
 
             _commands.Log += Log;
 
