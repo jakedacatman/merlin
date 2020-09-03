@@ -19,7 +19,7 @@ namespace donniebot.services
             _db = db;
         }
 
-        public async Task<bool> TryMuteUserAsync(SocketGuild guild, SocketGuildUser moderator, SocketGuildUser user)
+        public async Task<bool> TryMuteUserAsync(SocketGuild guild, SocketGuildUser moderator, SocketGuildUser user, TimeSpan period, string reason = null)
         {
             try
             {

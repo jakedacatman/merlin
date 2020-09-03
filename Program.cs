@@ -80,6 +80,7 @@ namespace donniebot
             _client.ShardConnected += async (DiscordSocketClient client) =>
             {
                 if (counter >= _client.Shards.Count)
+                {
                     try
                     {
                         UpdateStatus(counter);
@@ -89,6 +90,7 @@ namespace donniebot
                         Console.WriteLine(e);
                         UpdateStatus(counter);
                     }
+                }
                 else   
                     counter++;
             };

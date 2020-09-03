@@ -46,6 +46,25 @@ namespace donniebot.services
             }
         }
 
+        public bool AddAction(ModerationAction action)
+        {
+            using (var scope = _services.CreateScope())
+            {
+                var _db = scope.ServiceProvider.GetRequiredService<LiteDatabase>();
+                var collection = _db.GetCollection<ModerationAction>("actions");
+                return collection.Upsert(action);
+            }
+        }
+        public int RemoveAction(ModerationAction action)
+        {
+            using (var scope = _services.CreateScope())
+            {
+                var _db = scope.ServiceProvider.GetRequiredService<LiteDatabase>();
+                var collection = _db.GetCollection<ModerationAction>("actions");
+                return collection.Delete(Query.And(Query.EQ("GuildId", action.GuildId), Query.EQ("ModeratorId", action.ModeratorId), Query.EQ("UserId", action.UserId), Query.EQ("Type", (int)action.Type)));
+            }
+        }
+
         public int RemoveTag(string key, ulong gId)
         {
             using (var scope = _services.CreateScope())
