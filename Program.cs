@@ -9,6 +9,8 @@ using donniebot.services;
 using Discord.Addons.Interactive;
 using LiteDB;
 using System.IO;
+using donniebot.classes;
+using System.Linq;
 
 namespace donniebot
 {
@@ -42,6 +44,7 @@ namespace donniebot
                 DefaultRunMode = RunMode.Async,
                 IgnoreExtraArgs = false
             });
+
 
             _services = new ServiceCollection()
                 .AddSingleton(_client)

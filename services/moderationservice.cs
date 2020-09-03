@@ -19,7 +19,7 @@ namespace donniebot.services
             _db = db;
         }
 
-        public async Task<bool> TryMuteUserAsync(SocketGuild guild, SocketGuildUser moderator, SocketGuildUser user, TimeSpan period, string reason = null)
+        public async Task<bool> TryMuteUserAsync(SocketGuild guild, SocketGuildUser moderator, SocketGuildUser user)
         {
             try
             {
@@ -43,6 +43,7 @@ namespace donniebot.services
                 if (user.Roles.Contains(role)) return false;
 
                 await user.AddRoleAsync(role);
+                
                 //await user.ModifyAsync(x => x.Mute = true);
                 return true;
             }
@@ -66,8 +67,8 @@ namespace donniebot.services
                 if (!user.Roles.Contains(role)) return false;
 
                 await user.RemoveRoleAsync(role);
-                //await user.ModifyAsync(x => x.Mute = false);
 
+                //await user.ModifyAsync(x => x.Mute = false);
                 return true;
             }
             catch (Exception e)
@@ -110,25 +111,6 @@ namespace donniebot.services
             {
                 Console.WriteLine(e);
                 return 0;
-            }
-        }
-
-        public bool LogToChannel(SocketTextChannel channel, LogLevel level)
-        {
-            if (_db.IsIn<LogChannel>("logchannels", Query.Where("_id", x => (ulong)x.RawValue == channel.Id), out var items))
-            {
-                var item = items.First();
-                item.Level = LogLevel.All;
-                return _db.AddItem<LogChannel>("logchannels", item);
-            }
-            else
-            {
-                var item = new LogChannel
-                {
-                    Id = channel.Id,
-                    Level = LogLevel.All
-                };
-                return _db.AddItem<LogChannel>("logchannels", item);
             }
         }
     }

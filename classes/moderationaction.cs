@@ -5,16 +5,17 @@ namespace donniebot.classes
 {
     public class ModerationAction
     {
-        public string Reason { get; }
-        public ulong UserId { get; }
-        public ulong ModeratorId { get; }
-        public ulong GuildId { get; }
-        public bool Active { get; set; }
-        public ActionType Type { get; }
-        public DateTime Timestamp { get; } = DateTime.Now;
-        public TimeSpan ActivePeriod { get; }
+        public string Reason { get; set; }
+        public ulong UserId { get; set; }
+        public ulong ModeratorId { get; set; }
+        public ulong GuildId { get; set; }
+        public ActionType Type { get; set; }
+        public DateTime Timestamp { get; set; } = DateTime.Now;
+        public TimeSpan ActivePeriod { get; set; }
         [BsonId]
         public int Id { get; set; }
+
+        public ModerationAction() { }
 
         public ModerationAction(string reason, ulong uId, ulong mId, ulong gId, ActionType type, TimeSpan period)
         {
@@ -22,7 +23,6 @@ namespace donniebot.classes
             UserId = uId;
             ModeratorId = mId;
             GuildId = gId;
-            Active = true;
             Type = type;
             ActivePeriod = period;
         }
