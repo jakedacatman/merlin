@@ -42,7 +42,9 @@ namespace donniebot.services
             {
                 var _db = scope.ServiceProvider.GetRequiredService<LiteDatabase>();
                 var collection = _db.GetCollection<Tag>("tags");
-                return collection.Upsert(new Tag { Key = key, Value = value, GuildId = gId });
+                if (GetTag(key, gId) == null)
+                    return collection.Upsert(new Tag { Key = key, Value = value, GuildId = gId });
+                else return false;
             }
         }
 
