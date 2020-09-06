@@ -28,7 +28,7 @@ namespace donniebot.commands
             {
                 var found = _db.GetTag(tag, Context.Guild.Id);
                 if (found != null)
-                    await ReplyAsync(found.Value);
+                    await Context.Channel.SendMessageAsync(found.Value, allowedMentions: Discord.AllowedMentions.None);
                 else
                     await ReplyAsync("Failed to find tag.");
             }

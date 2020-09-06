@@ -33,6 +33,7 @@ namespace donniebot.services
         private List<GuildImage> sent = new List<GuildImage>();
         private List<GuildImage> sent2 = new List<GuildImage>();
         private List<GuildImage> sentNeko = new List<GuildImage>();
+        private List<GuildImage> sentBooru = new List<GuildImage>();
 
         private Regex _reg = new Regex(@"[0-9]+(\.[0-9]{1,2})? fps");
 
@@ -1020,6 +1021,41 @@ namespace donniebot.services
             }
             
             return url;
+        }
+
+        public async Task<Dictionary<string, string>> GetBooruImageAsync(ulong gId, string query)
+        {
+            var info = new Dictionary<string, string>();
+
+            for (int i = 0; i < 10; i++)
+            {
+                var res = JsonConvert.DeserializeObject<JObject>(await _net.DownloadAsStringAsync($"https://cure.ninja/booru/api/json/{i}?f=e&s=50&o=r&q={query}"));               
+                if (GetBooruImage(res["results"], gId, query, out info)) break;
+            }
+
+            return info;
+        }
+        private bool GetBooruImage(IEnumerable<JToken> data, ulong gId, string query, out Dictionary<string, string> information)
+        {
+            for (int i = 0; i < data.Count(); i++)
+            {
+                var r = data.ElementAt(i);
+                var url = r["url"].Value<string>();
+                information = new Dictionary<string, string> 
+                { 
+                    { "url", url }, 
+                    { "author", r["userName"].Value<string>() },
+                    { "source", r["sourceURL"].Value<string>() }
+                };
+                var obj = new GuildImage(url, gId);
+                if (!sentBooru.Contains(obj))
+                {
+                    sentBooru.Add(obj);
+                    return true;
+                }
+            }
+            information = new Dictionary<string, string>();
+            return false;
         }
 
         public async Task<Dictionary<string, string>> GetRedditImageAsync(ulong gId, string name, bool nsfw, string mode = "top")
