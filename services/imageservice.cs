@@ -1040,15 +1040,17 @@ namespace donniebot.services
             {
                 var r = data.ElementAt(i);
                 var url = r["url"].Value<string>();
-                information = new Dictionary<string, string> 
-                { 
-                    { "url", url }, 
-                    { "author", r["userName"].Value<string>() },
-                    { "source", r["sourceURL"].Value<string>() }
-                };
+                var un = r["userName"].Value<string>();
+                var s = r["sourceURL"].Value<string>();
                 var obj = new GuildImage(url, gId);
-                if (!sentBooru.Contains(obj))
+                if (!sentBooru.Contains(obj) && !string.IsNullOrWhiteSpace(un) && !string.IsNullOrWhiteSpace(s))
                 {
+                    information = new Dictionary<string, string> 
+                    { 
+                        { "url", url }, 
+                        { "author", un },
+                        { "source", s }
+                    };
                     sentBooru.Add(obj);
                     return true;
                 }
