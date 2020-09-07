@@ -5,6 +5,7 @@ using Discord;
 using Discord.WebSocket;
 using Discord.Commands;
 using donniebot.services;
+using donniebot.classes;
 using Discord.Addons.Interactive;
 
 namespace donniebot.commands
@@ -36,20 +37,25 @@ namespace donniebot.commands
             {
                 if (_reg.Match(sub).Success)
                 {
-                    var info = await _img.GetRedditImageAsync(sub, Context.Guild.Id, false, mode);
+                    var img = await _img.GetRedditImageAsync(sub, Context.Guild.Id, false, mode);
+                    if (img.Url == null)
+                    {
+                        await ReplyAsync("An image could not be located.");
+                        return;
+                    }
 
                     var embed = new EmbedBuilder()
-                        .WithTitle(info["title"])
+                        .WithTitle(img.Title)
                         .WithColor(_rand.RandomColor())
                         .WithTimestamp(DateTime.UtcNow)
-                        .WithFooter($"Posted by {info["author"]} • From {info["sub"]}");
+                        .WithFooter($"Posted by {img.Author} • From {img.Subreddit}");
 
-                    if (info["type"] == "image")
-                        embed = embed.WithImageUrl(info["url"]);
+                    if (img.Type == "image")
+                        embed = embed.WithImageUrl(img.Url);
                     else
                     {
                         embed = embed
-                            .WithUrl(info["url"])
+                            .WithUrl(img.Url)
                             .WithDescription("Click the title to see the soundless video\nFor audio, replace the number in the URL (example: `720`) with `audio`.");
                     }
                         
@@ -60,11 +66,7 @@ namespace donniebot.commands
                     await ReplyAsync("Invalid subreddit.");
                 }
             }
-            catch (ArgumentNullException)
-            {
-                await ReplyAsync("An image could not be located.");
-            }
-            catch (Exception e) when (e.Message == "There are no more images.")
+            catch (ImageException e) when (e.Message == "There are no more images.")
             {
                 await ReplyAsync(e.Message);
             }

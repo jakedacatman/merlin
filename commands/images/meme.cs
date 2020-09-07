@@ -34,11 +34,11 @@ namespace donniebot.commands
 
                 if (string.IsNullOrEmpty(previousMsg.Content)) return;
 
-                var url = (await _img.GetRedditImageAsync("earthporn", Context.Guild.Id, false))["url"];   
+                var url = (await _img.GetRedditImageAsync("earthporn", Context.Guild.Id, false)).Url;   
                 var img = await _img.DrawText(url, previousMsg.Content.Replace("\\", ""));
                 img = _img.BackgroundColor(img, _rand.RandomNumber(0, 255), _rand.RandomNumber(0, 255), _rand.RandomNumber(0, 255));
                 img = _img.Saturate(img, _rand.RandomFloat(5));
-                img = _img.Brightness(img, _rand.RandomFloat(5, 1));
+                img = _img.Brightness(img, _rand.RandomFloat(1, 5));
                 img = _img.Blur(img, _rand.RandomFloat(5));
                 img = _img.Pixelate(img, _rand.RandomNumber(1, 4));
                 img = _img.Sharpen(img, _rand.RandomFloat(5));

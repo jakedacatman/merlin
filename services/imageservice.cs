@@ -29,10 +29,7 @@ namespace donniebot.services
 
         private IImageFormat _format;
 
-        private List<GuildImage> sent = new List<GuildImage>();
-        private List<GuildImage> sent2 = new List<GuildImage>();
-        private List<GuildImage> sentNeko = new List<GuildImage>();
-        private List<GuildImage> sentBooru = new List<GuildImage>();
+        private List<GuildImage> sentImages = new List<GuildImage>();
 
         private Regex _reg = new Regex(@"[0-9]+(\.[0-9]{1,2})? fps");
 
@@ -1012,9 +1009,9 @@ namespace donniebot.services
                 var res = JsonConvert.DeserializeObject<JObject>(await _net.DownloadAsStringAsync($"https://nekos.life/api/v2/img/{ep}"));
                 url = res["url"].Value<string>();
                 var obj = new GuildImage(url, gId);
-                if (!sentNeko.ContainsObj(obj))
+                if (!sentImages.ContainsObj(obj))
                 {
-                    sentNeko.Add(obj);
+                    sentImages.Add(obj);
                     break;
                 }
             }
@@ -1022,19 +1019,19 @@ namespace donniebot.services
             return url;
         }
 
-        public async Task<Dictionary<string, string>> GetBooruImageAsync(ulong gId, string query)
+        public async Task<GuildImage> GetBooruImageAsync(ulong gId, string query)
         {
-            var info = new Dictionary<string, string>();
+            var img = new GuildImage(null, gId);
 
             for (int i = 0; i < 10; i++)
             {
                 var res = JsonConvert.DeserializeObject<JObject>(await _net.DownloadAsStringAsync($"https://cure.ninja/booru/api/json/{i}?f=e&s=50&o=r&q={WebUtility.UrlEncode(query)}"));               
-                if (GetBooruImage(res["results"], gId, query, out info)) break;
+                if (GetBooruImage(res["results"], gId, query, out img)) break;
             }
 
-            return info;
+            return img;
         }
-        private bool GetBooruImage(IEnumerable<JToken> data, ulong gId, string query, out Dictionary<string, string> information)
+        private bool GetBooruImage(IEnumerable<JToken> data, ulong gId, string query, out GuildImage image)
         {
             for (int i = 0; i < data.Count(); i++)
             {
@@ -1042,24 +1039,21 @@ namespace donniebot.services
                 var url = r["url"].Value<string>();
                 var un = r["userName"].Value<string>();
                 var s = r["sourceURL"].Value<string>();
-                var obj = new GuildImage(url, gId);
-                if (!sentBooru.Contains(obj) && !string.IsNullOrWhiteSpace(un) && !string.IsNullOrWhiteSpace(s))
+                s = string.IsNullOrWhiteSpace(s) ? s : "unknown";
+                
+                image = new GuildImage(url, gId, s, un, title: $"{r["id"].Value<string>()} - {r["source"].Value<string>()}");
+
+                if (!sentImages.ContainsObj(image) && !string.IsNullOrWhiteSpace(un))
                 {
-                    information = new Dictionary<string, string> 
-                    { 
-                        { "url", url }, 
-                        { "author", un },
-                        { "source", s }
-                    };
-                    sentBooru.Add(obj);
+                    sentImages.Add(image);
                     return true;
                 }
             }
-            information = new Dictionary<string, string>();
+            image = new GuildImage(null, gId);
             return false;
         }
 
-        public async Task<Dictionary<string, string>> GetRedditImageAsync(ulong gId, string name, bool nsfw, string mode = "top")
+        public async Task<GuildImage> GetRedditImageAsync(ulong gId, string name, bool nsfw, string mode = "top")
         {
             string sub = "";
 
@@ -1071,13 +1065,13 @@ namespace donniebot.services
 
             return await GetRedditImageAsync(sub, gId, nsfw, mode);
         }
-        public async Task<Dictionary<string, string>> GetRedditImageAsync(string sub, ulong gId, bool nsfw, string mode = "top")
+        public async Task<GuildImage> GetRedditImageAsync(string sub, ulong gId, bool nsfw, string mode = "top")
         {
             if (!sub.Contains("r/"))
                 if (!sub.Contains("u/"))
-                    sub = $"r/{sub}";  
+                    sub = $"r/{sub}";
 
-            Dictionary<string, string> info = new Dictionary<string, string>();
+            var img = new GuildImage(null, gId);
 
             var accepted = new List<string>
             {
@@ -1098,22 +1092,20 @@ namespace donniebot.services
                     post["before"].Value<string>(), 
                     post["after"].Value<string>() 
                 };
-
+ 
                 var postdata = post["children"].Shuffle();
-                if (GetImage(postdata, gId, nsfw, out info)) break;
+                if (GetImage(postdata, gId, nsfw, out img)) break;
 
                 if (postdata.Count() < count) throw new ImageException("There are no more images."); //no more pages
                 else
                     post = JsonConvert.DeserializeObject<JObject>(await _net.DownloadAsStringAsync($"https://www.reddit.com/{sub}/{mode}.json?count=100&page={pages[1]}"))["data"];
             }
-
-            if (info.Count == 0) throw new ArgumentNullException();
             
-            info.Add("sub", sub);
-            return info;
+            img.Subreddit = sub;
+            return img;
         }
 
-        private bool GetImage(IEnumerable<JToken> postdata, ulong gId, bool nsfw, out Dictionary<string, string> information)
+        private bool GetImage(IEnumerable<JToken> postdata, ulong gId, bool nsfw, out GuildImage image)
         {
             for (int i = 0; i < postdata.Count(); i++)
             {
@@ -1133,31 +1125,25 @@ namespace donniebot.services
                         type = "video";
                     }
 
-                    information = new Dictionary<string, string> 
-                    { 
-                        { "url", url }, 
-                        { "author", $"u/{post["author"].Value<string>()}" },
-                        { "title", title },
-                        { "type", type }
-                    };
-                    var postImage = new GuildImage(information["url"], gId);
-                    if (!sent2.ContainsObj(postImage))
+                    image = new GuildImage(url, gId, author: $"u/{post["author"].Value<string>()}", title: title, type: type);
+
+                    if (!sentImages.ContainsObj(image))
                     {
-                        if (nsfw)
+                        if (nsfw && post["over_18"].Value<bool>())
                         {
-                            sent2.Add(postImage);
+                            sentImages.Add(image);
                             return true;
                         }
-                        else if (!post["over_18"].Value<bool>())
+                        else if (!nsfw && !post["over_18"].Value<bool>())
                         {
-                            sent2.Add(postImage);
+                            sentImages.Add(image);
                             return true;
                         }
                             
                     }
                 }
             }
-            information = new Dictionary<string, string>();
+            image = new GuildImage(null, gId);
             return false;
         }
 

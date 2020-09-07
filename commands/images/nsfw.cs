@@ -6,6 +6,7 @@ using Discord;
 using Discord.WebSocket;
 using Discord.Commands;
 using donniebot.services;
+using donniebot.classes;
 using Discord.Addons.Interactive;
 
 namespace donniebot.commands
@@ -36,39 +37,41 @@ namespace donniebot.commands
         {
             try
             {
-                Dictionary<string, string> info;
+                GuildImage img;
                 if (sub == null)
-                    info = await _img.GetRedditImageAsync(Context.Guild.Id, "nsfw", true, mode);
+                    img = await _img.GetRedditImageAsync(Context.Guild.Id, "nsfw", true, mode);
                 else if (_reg.Match(sub).Success)
-                    info = await _img.GetRedditImageAsync(sub, Context.Guild.Id, true, mode);
+                    img = await _img.GetRedditImageAsync(sub, Context.Guild.Id, true, mode);
                 else
                 {
                     await ReplyAsync("Invalid subreddit.");
                     return;
                 }
 
+                if (img.Url == null)
+                {
+                    await ReplyAsync("An image could not be located.");
+                    return;
+                }
+
                 var embed = new EmbedBuilder()
-                    .WithTitle(info["title"])
+                    .WithTitle(img.Title)
                     .WithColor(_rand.RandomColor())
                     .WithTimestamp(DateTime.UtcNow)
-                    .WithFooter($"Posted by {info["author"]} • From {info["sub"]}");
+                    .WithFooter($"Posted by {img.Author} • From {img.Subreddit}");
 
-                if (info["type"] == "image")
-                    embed = embed.WithImageUrl(info["url"]);
+                if (img.Type == "image")
+                    embed = embed.WithImageUrl(img.Url);
                 else
                 {
                     embed = embed
-                        .WithUrl(info["url"])
+                        .WithUrl(img.Url)
                         .WithDescription("Click the title to see the soundless video\nFor audio, replace the number in the URL (example: `720`) with `audio`.");
                 }
                         
                 await ReplyAsync(embed: embed.Build());
             }
-            catch (ArgumentNullException)
-            {
-                await ReplyAsync("An image could not be located.");
-            }
-            catch (Exception e) when (e.Message == "There are no more images.")
+            catch (ImageException e) when (e.Message == "There are no more images.")
             {
                 await ReplyAsync(e.Message);
             }

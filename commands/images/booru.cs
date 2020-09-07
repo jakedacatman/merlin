@@ -32,20 +32,20 @@ namespace donniebot.commands
         {
             try
             {
-                var info = await _img.GetBooruImageAsync(Context.Guild.Id, query);
+                var img = await _img.GetBooruImageAsync(Context.Guild.Id, query);
 
-                if (info.Count == 0)
+                if (img.Url == null)
                 {
                     await ReplyAsync("There are no more images.");
                     return;
                 }
 
                 var embed = new EmbedBuilder()
-                    .WithTitle(info["source"])
-                    .WithImageUrl(info["url"])
+                    .WithTitle(img.Title)
+                    .WithImageUrl(img.Url)
                     .WithColor(_rand.RandomColor())
                     .WithTimestamp(DateTime.UtcNow)
-                    .WithFooter($"Posted by {info["author"]}");
+                    .WithFooter($"Posted by {img.Author}");
                         
                 await ReplyAsync(embed: embed.Build());
             }
