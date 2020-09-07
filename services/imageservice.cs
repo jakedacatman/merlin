@@ -1096,7 +1096,7 @@ namespace donniebot.services
                 var postdata = post["children"].Shuffle();
                 if (GetImage(postdata, gId, nsfw, out img)) break;
 
-                if (postdata.Count() < count) throw new ImageException("There are no more images."); //no more pages
+                if (postdata.Count() < count) return img; //no more pages
                 else
                     post = JsonConvert.DeserializeObject<JObject>(await _net.DownloadAsStringAsync($"https://www.reddit.com/{sub}/{mode}.json?count=100&page={pages[1]}"))["data"];
             }
@@ -1138,8 +1138,7 @@ namespace donniebot.services
                         {
                             sentImages.Add(image);
                             return true;
-                        }
-                            
+                        } 
                     }
                 }
             }

@@ -66,10 +66,6 @@ namespace donniebot.commands
                     await ReplyAsync("Invalid subreddit.");
                 }
             }
-            catch (ImageException e) when (e.Message == "There are no more images.")
-            {
-                await ReplyAsync(e.Message);
-            }
             catch(System.Net.Http.HttpRequestException)
             {
                 await ReplyAsync("Invalid subreddit.");

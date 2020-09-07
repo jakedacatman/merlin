@@ -1,6 +1,5 @@
 using System;
 using System.Text.RegularExpressions;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
@@ -70,10 +69,6 @@ namespace donniebot.commands
                 }
                         
                 await ReplyAsync(embed: embed.Build());
-            }
-            catch (ImageException e) when (e.Message == "There are no more images.")
-            {
-                await ReplyAsync(e.Message);
             }
             catch(System.Net.Http.HttpRequestException)
             {
