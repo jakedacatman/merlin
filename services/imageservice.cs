@@ -10,11 +10,10 @@ using SixLabors.ImageSharp.Formats.Jpeg;
 using SixLabors.ImageSharp.Formats.Gif;
 using SixLabors.ImageSharp.PixelFormats;
 using donniebot.classes;
-using System.Net.Http;
+using System.Net;
 using System.Threading.Tasks;
 using System.IO;
 using Discord.WebSocket;
-using Discord.Commands;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Newtonsoft.Json;
@@ -1029,7 +1028,7 @@ namespace donniebot.services
 
             for (int i = 0; i < 10; i++)
             {
-                var res = JsonConvert.DeserializeObject<JObject>(await _net.DownloadAsStringAsync($"https://cure.ninja/booru/api/json/{i}?f=e&s=50&o=r&q={query}"));               
+                var res = JsonConvert.DeserializeObject<JObject>(await _net.DownloadAsStringAsync($"https://cure.ninja/booru/api/json/{i}?f=e&s=50&o=r&q={WebUtility.UrlEncode(query)}"));               
                 if (GetBooruImage(res["results"], gId, query, out info)) break;
             }
 

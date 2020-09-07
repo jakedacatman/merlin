@@ -1,6 +1,4 @@
 using System;
-using System.Text.RegularExpressions;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
@@ -30,7 +28,7 @@ namespace donniebot.commands
         [Alias("r34", "bo")]
         [Summary("Grabs a random NSFW image from several *booru websites.")]
         [RequireNsfw]
-        public async Task BooruCmd([Summary("The search query.")] string query)
+        public async Task BooruCmd([Summary("The search query."), Remainder] string query)
         {
             try
             {
