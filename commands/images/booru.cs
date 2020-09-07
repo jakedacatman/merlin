@@ -34,6 +34,12 @@ namespace donniebot.commands
             {
                 var info = await _img.GetBooruImageAsync(Context.Guild.Id, query);
 
+                if (info.Count == 0)
+                {
+                    await ReplyAsync("There are no more images.");
+                    return;
+                }
+
                 var embed = new EmbedBuilder()
                     .WithTitle(info["source"])
                     .WithImageUrl(info["url"])
