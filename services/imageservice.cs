@@ -1104,6 +1104,7 @@ namespace donniebot.services
                     post = JsonConvert.DeserializeObject<JObject>(await _net.DownloadAsStringAsync($"https://www.reddit.com/{sub}/{mode}.json?limit=50&page={pages[1]}"))["data"];
             }
             
+            img.Subreddit = sub;
             return img;
         }
 
