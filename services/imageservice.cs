@@ -1071,20 +1071,23 @@ namespace donniebot.services
                 if (!sub.Contains("u/"))
                     sub = $"r/{sub}";
 
-            var img = new GuildImage(null, gId);
+            var img = new GuildImage(null, gId, sub: sub);
 
             var accepted = new List<string>
             {
                 "top",
                 "best",
-                "new"
+                "new",
+                "rising",
+                "hot",
+                "controversial"
             };
 
             if (!accepted.Contains(mode))
                 mode = "top";
 
-            var post = JsonConvert.DeserializeObject<JObject>(await _net.DownloadAsStringAsync($"https://www.reddit.com/{sub}/{mode}.json?count=100"))["data"];
-            var count = post.Count();
+            var post = JsonConvert.DeserializeObject<JObject>(await _net.DownloadAsStringAsync($"https://www.reddit.com/{sub}/{mode}.json?limit=50"))["data"];
+            var count = post["children"].Count();
             for (int i = 0; i < 10; i++) //scan 10 pages
             {
                 var pages = new List<string> 
@@ -1098,10 +1101,9 @@ namespace donniebot.services
 
                 if (postdata.Count() < count) return img; //no more pages
                 else
-                    post = JsonConvert.DeserializeObject<JObject>(await _net.DownloadAsStringAsync($"https://www.reddit.com/{sub}/{mode}.json?count=100&page={pages[1]}"))["data"];
+                    post = JsonConvert.DeserializeObject<JObject>(await _net.DownloadAsStringAsync($"https://www.reddit.com/{sub}/{mode}.json?limit=50&page={pages[1]}"))["data"];
             }
             
-            img.Subreddit = sub;
             return img;
         }
 
@@ -1129,12 +1131,12 @@ namespace donniebot.services
 
                     if (!sentImages.ContainsObj(image))
                     {
-                        if (nsfw && post["over_18"].Value<bool>())
+                        if (nsfw)
                         {
                             sentImages.Add(image);
                             return true;
                         }
-                        else if (!nsfw && !post["over_18"].Value<bool>())
+                        else if (!post["over_18"].Value<bool>())
                         {
                             sentImages.Add(image);
                             return true;

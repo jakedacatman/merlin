@@ -80,26 +80,24 @@ namespace donniebot
 
             int counter = 1;
 
-            _client.ShardConnected += (DiscordSocketClient client) =>
+            _client.ShardConnected += async (DiscordSocketClient client) =>
             {
                 if (counter >= _client.Shards.Count)
                 {
                     try
                     {
-                        UpdateStatus(counter);
-                        return Task.CompletedTask;
+                        await UpdateStatus(counter);
                     }
                     catch (Exception e)
                     {
                         Console.WriteLine(e);
-                        UpdateStatus(counter);
-                        return Task.CompletedTask;
+                        await UpdateStatus(counter);
                     }
                 }
                 else
                 {   
                     counter++;
-                    return Task.CompletedTask;
+                    return;
                 }
             };
 
@@ -146,18 +144,6 @@ namespace donniebot
             }
         }
 
-        private void UpdateStatus(int counter)
-        {
-            Task.Run(async () =>
-            {
-                while (true)
-                {
-                    await _client.SetActivityAsync(new Game($"over {counter} out of {_client.Shards.Count} shards", ActivityType.Watching));
-                    await Task.Delay(5000);
-                    await _client.SetActivityAsync(new Game($"don.help", ActivityType.Playing));
-                    await Task.Delay(5000);
-                }
-            });
-        }
+        private async Task UpdateStatus(int counter) => await _client.SetActivityAsync(new Game($"over {counter} out of {_client.Shards.Count} shards", ActivityType.Watching));
     }
 }
