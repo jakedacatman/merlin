@@ -9,7 +9,7 @@ using donniebot.services;
 using Discord.Addons.Interactive;
 using LiteDB;
 using System.IO;
-using donniebot.classes;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace donniebot
@@ -131,6 +131,13 @@ namespace donniebot
             {
                 if (!(_msg is SocketUserMessage msg) || _msg == null || string.IsNullOrEmpty(msg.Content)) return;
                 ShardedCommandContext context = new ShardedCommandContext(_client, msg);
+
+                int mentPos = 0;
+                if (msg.HasMentionPrefix(_client.CurrentUser, ref mentPos))
+                {
+                    var parseResult = ParseResult.FromSuccess(new List<TypeReaderValue> { new TypeReaderValue(msg.Content.Substring(mentPos), 1f) }, new List<TypeReaderValue>() );
+                    await _commands.Commands.Where(x => x.Name == "" && x.Module.Group == "tag").First().ExecuteAsync(context, parseResult, _services);
+                }
 
                 int argPos = prefix.Length - 1;
                 if (!msg.HasStringPrefix(prefix, ref argPos)) return;
