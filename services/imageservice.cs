@@ -916,10 +916,9 @@ namespace donniebot.services
             return source;
         }
 
-        public async Task<Image> SpeedUp(string url, double speed)
+        public async Task<Image> SpeedUp(string url, double speed) => SpeedUp(await DownloadFromUrlAsync(url), 2);
+        public Image SpeedUp(Image source, double speed)
         {
-            Image source = await DownloadFromUrlAsync(url);
-
             if (speed > 1000 || speed <= 0) speed = 2;
             
             var delay = source.Frames.RootFrame.Metadata.GetFormatMetadata(GifFormat.Instance).FrameDelay;
@@ -934,6 +933,7 @@ namespace donniebot.services
 
             return source;
         }
+        
 
         public async Task<Image> Reverse(string url) => Reverse(await DownloadFromUrlAsync(url));
         public Image Reverse(Image source)
