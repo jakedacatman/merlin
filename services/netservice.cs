@@ -1,8 +1,6 @@
 using System;
 using System.Net.Http;
 using System.Threading.Tasks;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Formats;
 using System.Text.RegularExpressions;
 using System.Linq;
 using System.IO;
@@ -10,6 +8,7 @@ using System.Collections.Generic;
 using System.Net.Http.Headers;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using donniebot.classes;
 
 namespace donniebot.services
 {
@@ -122,7 +121,7 @@ namespace donniebot.services
 
         public async Task<string> DownloadAsStringAsync(string url) => await _hc.GetStringAsync(url);
 
-        public async Task<Tuple<string, string>> GetMediaWikiArticleAsync(string term, string url)
+        public async Task<Article> GetMediaWikiArticleAsync(string term, string url)
         {
             try
             {
@@ -130,9 +129,9 @@ namespace donniebot.services
                 var titleArr = data[1];
                 var urlArr = data[3];
                 if (titleArr.Count() == 0 || urlArr.Count() == 0)
-                    return new Tuple<string, string>("", "");
+                    return new Article("", "");
                 else
-                    return new Tuple<string, string>(titleArr[0].Value<string>(), urlArr[0].Value<string>());
+                    return new Article(titleArr[0].Value<string>(), urlArr[0].Value<string>());
             }
             catch (Exception e)
             {
@@ -140,9 +139,9 @@ namespace donniebot.services
             }
         }
 
-        public async Task<Tuple<string, string>> GetWikipediaArticleAsync(string term) => await GetMediaWikiArticleAsync(term, "en.wikipedia.org");
+        public async Task<Article> GetWikipediaArticleAsync(string term) => await GetMediaWikiArticleAsync(term, "en.wikipedia.org");
         
-        public async Task<Tuple<string, string>> GetBulbapediaArticleAsync(string term) => await GetMediaWikiArticleAsync(term, "bulbapedia.bulbagarden.net");
+        public async Task<Article> GetBulbapediaArticleAsync(string term) => await GetMediaWikiArticleAsync(term, "bulbapedia.bulbagarden.net");
 
         public async Task<string> UploadAsync(string path, string ext)
         {

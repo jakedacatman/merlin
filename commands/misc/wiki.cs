@@ -29,13 +29,13 @@ namespace donniebot.commands
         {
             try
             {
-                var data = await _net.GetWikipediaArticleAsync(term);
-                if (data.Item1 == "" && data.Item2 == "")
+                var article = await _net.GetWikipediaArticleAsync(term);
+                if (article.Title == "" && article.Url == "")
                     await ReplyAsync("Failed to find the article.");
                 else
                     await ReplyAsync(embed: new EmbedBuilder()
-                        .WithTitle(data.Item1)
-                        .WithUrl(data.Item2)
+                        .WithTitle(article.Title)
+                        .WithUrl(article.Url)
                         .WithDescription("Click the title to view the article!")
                         .WithColor(_rand.RandomColor())
                     .Build());
