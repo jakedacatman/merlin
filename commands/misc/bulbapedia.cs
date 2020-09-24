@@ -3,7 +3,6 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Discord.Addons.Interactive;
-using System.Diagnostics;
 using donniebot.services;
 
 namespace donniebot.commands

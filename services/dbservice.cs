@@ -96,6 +96,35 @@ namespace donniebot.services
             }
         }
 
+        public bool AddHost(string name, string url)
+        {
+            using (var scope = _services.CreateScope())
+            {
+                var _db = scope.ServiceProvider.GetRequiredService<LiteDatabase>();
+                var collection = _db.GetCollection<Host>("hosts");
+                return collection.Upsert(new Host { Name = name, Url = url });
+            }
+        }
+        public bool AddHost(Host host)
+        {
+            using (var scope = _services.CreateScope())
+            {
+                var _db = scope.ServiceProvider.GetRequiredService<LiteDatabase>();
+                var collection = _db.GetCollection<Host>("hosts");
+                return collection.Upsert(host);
+            }
+        }
+        public string GetHost(string name)
+        {
+            using (var scope = _services.CreateScope())
+            {
+                var _db = scope.ServiceProvider.GetRequiredService<LiteDatabase>();
+                var collection = _db.GetCollection<Host>("hosts");
+                var host = collection.FindOne(Query.Where("Name", x => x.AsString == name));
+                return host == null ? null : host.Url;
+            }
+        }
+
         public bool IsIn<T>(string collection, Query query, out IEnumerable<T> items)
         {
             using (var scope = _services.CreateScope())
@@ -105,7 +134,7 @@ namespace donniebot.services
             }
         }
 
-        public IEnumerable<object> GetItems(string collection, Query query)
+        public IEnumerable<Object> GetItems(string collection, Query query)
         {
             using (var scope = _services.CreateScope())
                 return scope.ServiceProvider.GetRequiredService<LiteDatabase>().GetCollection(collection).Find(query);

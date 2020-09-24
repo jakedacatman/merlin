@@ -17,20 +17,41 @@ namespace donniebot.services
         private readonly HttpClient _hc;
         private readonly RandomService _rand;
         private readonly string uploadKey;
+        private readonly string pasteHost;
+        private readonly string imageHost;
 
         public NetService(DbService db, RandomService rand)
         {
             _hc = new HttpClient();
             _rand = rand;
             uploadKey = db.GetApiKey("upload");
+            pasteHost = db.GetHost("pastebin");
+            if (pasteHost == null)
+            {
+                Console.WriteLine("What is your preferred pastebin upload endpoint? (only logged to database.db)");
+                pasteHost = Console.ReadLine() ?? "https://paste.jakedacatman.me/paste";
+                db.AddHost("pastebin", pasteHost);
+            }
+            imageHost = db.GetHost("imageHost");
+            if (imageHost == null)
+            {
+                Console.WriteLine("What is your preferred image host upload endpoint? (only logged to database.db)");
+                imageHost = Console.ReadLine() ?? "https://i.jakedacatman.me/upload";
+                db.AddHost("imageHost", imageHost);
+            }
         }
 
         public async Task<bool> IsVideoAsync(string url)
         {
-            url = url.Trim('<').Trim('>');
+            url = ParseUrl(url);
 
             var res = await _hc.SendAsync(new HttpRequestMessage(HttpMethod.Head, new Uri(url)));
 
+            if (res.IsSuccessStatusCode)
+                if (res.Content.Headers.ContentType.MediaType.Contains("video"))
+                    return true;
+
+            res = await _hc.SendAsync(new HttpRequestMessage(HttpMethod.Get, new Uri(url)));
             if (res.IsSuccessStatusCode)
                 if (res.Content.Headers.ContentType.MediaType.Contains("video"))
                     return true;
@@ -40,7 +61,7 @@ namespace donniebot.services
 
         public async Task<byte[]> DownloadFromUrlAsync(string url)
         {
-            url = url.TrimStart('<').TrimEnd('>');
+            url = ParseUrl(url);
             if (url.Contains("giphy.com")) 
             {
                 if (url.Contains('-'))
@@ -68,7 +89,7 @@ namespace donniebot.services
         }
         public async Task<string> DownloadToFileAsync(string url)
         {
-            url = url.Trim('<').Trim('>');
+            url = ParseUrl(url);
             if (url.Contains("giphy.com")) 
             {
                 if (url.Contains('-'))
@@ -87,6 +108,7 @@ namespace donniebot.services
                 if (match != null)
                     url = match.Groups[0].Value.Replace("\\u002F", "/");
             }
+            
             var response = await _hc.GetAsync(new Uri(url));
             if (response.IsSuccessStatusCode)
             {
@@ -110,10 +132,10 @@ namespace donniebot.services
                 sc.Headers.ContentType = new MediaTypeHeaderValue("application/x-www-form-urlencoded");
                 sc.Headers.Add("key", uploadKey); //you can always do don.e _db.AddApiKey("upload", <key>) and change the host used
 
-                var request = await _hc.PostAsync("https://paste.jakedacatman.me/paste", sc);
+                var request = await _hc.PostAsync(pasteHost, sc);
                 return await request.Content.ReadAsStringAsync();
             }
-            catch (Exception e) //when (e.Message == "The remote server returned an error: (520) Origin Error.")
+            catch (Exception e)
             {
                 throw e;
             }
@@ -138,9 +160,7 @@ namespace donniebot.services
                 throw e;
             }
         }
-
-        public async Task<Article> GetWikipediaArticleAsync(string term) => await GetMediaWikiArticleAsync(term, "en.wikipedia.org");
-        
+        public async Task<Article> GetWikipediaArticleAsync(string term) => await GetMediaWikiArticleAsync(term, "en.wikipedia.org");  
         public async Task<Article> GetBulbapediaArticleAsync(string term) => await GetMediaWikiArticleAsync(term, "bulbapedia.bulbagarden.net");
 
         public async Task<string> UploadAsync(string path, string ext)
@@ -149,11 +169,13 @@ namespace donniebot.services
             {
                 ct.Add(new ByteArrayContent(await File.ReadAllBytesAsync(path)), "file", $"temp.{ext}");
                 ct.Headers.Add("key", uploadKey);
-                var response = await _hc.PostAsync("https://i.jakedacatman.me/upload", ct);
+                var response = await _hc.PostAsync(imageHost, ct);
 
                 File.Delete(path); 
                 return await response.Content.ReadAsStringAsync();
             }
         }
+
+        private string ParseUrl(string url) => url.TrimStart('<').TrimEnd('>');
     }
 }

@@ -70,6 +70,7 @@ namespace donniebot
                 apiKey = Console.ReadLine();
                 db.AddApiKey("discord", apiKey);
             }
+
             await _client.LoginAsync(TokenType.Bot, apiKey);
             await _client.StartAsync();
 
