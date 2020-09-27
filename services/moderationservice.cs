@@ -38,6 +38,10 @@ namespace donniebot.services
                     foreach (var channel in (guild as SocketGuild).TextChannels)
                         if (!channel.PermissionOverwrites.Select(x => x.Permissions).Contains(Permissions))
                             await channel.AddPermissionOverwriteAsync(role, Permissions);
+
+                    foreach (var channel in (guild as SocketGuild).VoiceChannels)
+                        if (!channel.PermissionOverwrites.Select(x => x.Permissions).Contains(Permissions))
+                            await channel.AddPermissionOverwriteAsync(role, Permissions);
                 }
 
                 if (user.Roles.Contains(role)) return false;

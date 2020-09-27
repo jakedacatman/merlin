@@ -18,6 +18,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System.Globalization;
 
 namespace donniebot.services
 {
@@ -40,11 +41,7 @@ namespace donniebot.services
             _rand = rand;
         }
 
-        public async Task<Image> Invert(string url)
-        {
-            Image source = await DownloadFromUrlAsync(url);
-            return Invert(source);
-        }
+        public async Task<Image> Invert(string url) => Invert(await DownloadFromUrlAsync(url));
         public Image Invert(Image source)
         {
             if (source.Frames.Count > 1)
@@ -54,11 +51,7 @@ namespace donniebot.services
             return source;
         }
 
-        public async Task<Image> Brightness(string url, float brightness)
-        {
-            Image source = await DownloadFromUrlAsync(url);
-            return Brightness(source, brightness);
-        }
+        public async Task<Image> Brightness(string url, float brightness) => Brightness(await DownloadFromUrlAsync(url), brightness);
         public Image Brightness(Image source, float brightness)
         {
             if (source.Frames.Count > 1)
@@ -68,11 +61,7 @@ namespace donniebot.services
             return source;
         }
 
-        public async Task<Image> Blur(string url, float amount)
-        {
-            Image source = await DownloadFromUrlAsync(url);
-            return Blur(source, amount);
-        }
+        public async Task<Image> Blur(string url, float amount) => Blur(await DownloadFromUrlAsync(url), amount);
         public Image Blur(Image source, float amount)
         {
             if (source.Frames.Count > 1)
@@ -82,11 +71,7 @@ namespace donniebot.services
             return source;
         }
 
-        public async Task<Image> Greyscale(string url)
-        {
-            Image source = await DownloadFromUrlAsync(url);
-            return Greyscale(source);
-        }
+        public async Task<Image> Greyscale(string url) => Greyscale(await DownloadFromUrlAsync(url));
         public Image Greyscale(Image source)
         {
             if (source.Frames.Count > 1)
@@ -96,11 +81,7 @@ namespace donniebot.services
             return source;
         }
 
-        public async Task<Image> Edges(string url)
-        {
-            Image source = await DownloadFromUrlAsync(url);
-            return Edges(source);
-        }
+        public async Task<Image> Edges(string url) => Edges(await DownloadFromUrlAsync(url));
         public Image Edges(Image source)
         {
             if (source.Frames.Count > 1)
@@ -110,11 +91,7 @@ namespace donniebot.services
             return source;
         }
 
-        public async Task<Image> Contrast(string url, float amount)
-        {
-            Image source = await DownloadFromUrlAsync(url);
-            return Contrast(source, amount);
-        }
+        public async Task<Image> Contrast(string url, float amount) => Contrast(await DownloadFromUrlAsync(url), amount);
         public Image Contrast(Image source, float amount)
         {
             if (source.Frames.Count > 1)
@@ -124,11 +101,7 @@ namespace donniebot.services
             return source;
         }
 
-        public async Task<Image> Sharpen(string url, float amount)
-        {
-            Image source = await DownloadFromUrlAsync(url);
-            return Sharpen(source, amount);
-        }
+        public async Task<Image> Sharpen(string url, float amount) => Sharpen(await DownloadFromUrlAsync(url), amount);
         public Image Sharpen(Image source, float amount)
         {
             if (source.Frames.Count > 1)
@@ -138,11 +111,7 @@ namespace donniebot.services
             return source;
         }
 
-        public async Task<Image> Pixelate(string url, int size)
-        {
-            Image source = await DownloadFromUrlAsync(url);
-            return Pixelate(source, size);
-        }
+        public async Task<Image> Pixelate(string url, int size) => Pixelate(await DownloadFromUrlAsync(url), size);
         public Image Pixelate(Image source, int size)
         {
             if (source.Frames.Count > 1)
@@ -152,11 +121,8 @@ namespace donniebot.services
             return source;
         }
         
-        public async Task<Image> Hue(string url, float amount)
-        {
-            Image source = await DownloadFromUrlAsync(url);
-            return Hue(source, amount);
-        }
+        public async Task<Image> Hue(string url, float amount) => Hue(await DownloadFromUrlAsync(url), amount);
+
         public Image Hue(Image source, float amount)
         {
             if (source.Frames.Count > 1)
@@ -166,11 +132,7 @@ namespace donniebot.services
             return source;
         }
 
-        public async Task<Image> BackgroundColor(string url, int r, int g, int b)
-        {
-            Image source = await DownloadFromUrlAsync(url);
-            return BackgroundColor(source, r, g, b);
-        }
+        public async Task<Image> BackgroundColor(string url, int r, int g, int b) => BackgroundColor(await DownloadFromUrlAsync(url), r, g, b);
         public Image BackgroundColor(Image source, int r, int g, int b)
         {
             if (source.Frames.Count > 1)
@@ -180,11 +142,7 @@ namespace donniebot.services
             return source;
         }
 
-        public async Task<Image> Rotate(string url, float r)
-        {
-            Image source = await DownloadFromUrlAsync(url);
-            return Rotate(source, r);
-        }
+        public async Task<Image> Rotate(string url, float r) => Rotate(await DownloadFromUrlAsync(url), r);
         public Image Rotate(Image source, float r)
         {
             if (source.Frames.Count > 1)
@@ -194,11 +152,7 @@ namespace donniebot.services
             return source;
         }
 
-        public async Task<Image> Caption(string url, string text)
-        {
-            Image source = await DownloadFromUrlAsync(url);
-            return Caption(source, text);
-        }
+        public async Task<Image> Caption(string url, string text) => Caption(await DownloadFromUrlAsync(url), text);
         public Image Caption(Image source, string text)
         {
             var img = Image.Load(new byte[]
@@ -220,6 +174,7 @@ namespace donniebot.services
             });
 
             var font = SystemFonts.Collection.CreateFont("LimerickCdSerial-Xbold", source.Width / 12f, FontStyle.Bold);
+            //var font = SystemFonts.Collection.CreateFont("Twemoji", source.Width / 12f, FontStyle.Regular);
             float padding = 0.05f * source.Width;
             float wrap = source.Width - (2 * padding);
 
@@ -242,6 +197,7 @@ namespace donniebot.services
                 FallbackFonts = 
                 {
                     SystemFonts.Find("Twemoji")
+                    //SystemFonts.Find("LimerickCdSerial-Xbold")
                 }
             };
 
@@ -304,11 +260,7 @@ namespace donniebot.services
             return source;
         }
 
-        public async Task<Image> Saturate(string url, float amount)
-        {
-            Image source = await DownloadFromUrlAsync(url);
-            return Saturate(source, amount);
-        }
+        public async Task<Image> Saturate(string url, float amount) => Saturate(await DownloadFromUrlAsync(url), amount);
         public Image Saturate(Image source, float amount)
         {
             if (source.Frames.Count > 1)
@@ -318,11 +270,7 @@ namespace donniebot.services
             return source;
         }
 
-        public async Task<Image> Glow(string url)
-        {
-            Image source = await DownloadFromUrlAsync(url);
-            return Glow(source);
-        }
+        public async Task<Image> Glow(string url) => Glow(await DownloadFromUrlAsync(url));
         public Image Glow(Image source)
         {
             if (source.Frames.Count > 1)
@@ -332,11 +280,7 @@ namespace donniebot.services
             return source;
         }
 
-        public async Task<Image> Polaroid(string url)
-        {
-            Image source = await DownloadFromUrlAsync(url);
-            return Polaroid(source);
-        }
+        public async Task<Image> Polaroid(string url) => Polaroid(await DownloadFromUrlAsync(url));
         public Image Polaroid(Image source)
         {
             if (source.Frames.Count > 1)
@@ -346,11 +290,7 @@ namespace donniebot.services
             return source;
         }
 
-        public async Task<Image> Jpeg(string url, int quality)
-        {
-            Image source = await DownloadFromUrlAsync(url);
-            return Jpeg(source, quality);
-        }
+        public async Task<Image> Jpeg(string url, int quality)=> Jpeg(await DownloadFromUrlAsync(url), quality);
         public Image Jpeg(Image source, int quality)
         {
             if (source.Frames.Count > 1)
@@ -366,12 +306,7 @@ namespace donniebot.services
             return source;
         }
 
-        public async Task<Image> Demotivational(string url, string title, string text)
-        {
-            Image source = await DownloadFromUrlAsync(url);
-            return Demotivational(source, title, text);
-        }
-
+        public async Task<Image> Demotivational(string url, string title, string text) => Demotivational(await DownloadFromUrlAsync(url), title, text);
         public Image Demotivational(Image source, string title, string text)
         {
             Image bg = Image.Load(new byte[]
@@ -802,13 +737,7 @@ namespace donniebot.services
             return src;
         }
 
-        public async Task<Image> PlaceBelow(string url, string belowUrl, bool resize = true)
-        {
-            Image source = await DownloadFromUrlAsync(url);
-            Image overlay = await DownloadFromUrlAsync(belowUrl);
-
-            return PlaceBelow(source, overlay, resize);
-        }
+        public async Task<Image> PlaceBelow(string url, string belowUrl, bool resize = true) => PlaceBelow(await DownloadFromUrlAsync(url), await DownloadFromUrlAsync(belowUrl), resize);
         public Image PlaceBelow(Image source, Image below, bool resize = true)
         {
             var src = (Image)Image.Load(new byte[]
@@ -840,67 +769,58 @@ namespace donniebot.services
             return src;
         }
 
-        public async Task<Image> DrawText(string url, string text, string topText = null)
-        {
-            Image source = await DownloadFromUrlAsync(url);
-            if (source.Frames.Count > 1)
-                GifFilter(source, text, topText, DrawText);
-            else
-                source = DrawText(source, text, topText);
-
-            return source;
-        }
+        public async Task<Image> DrawText(string url, string text, string topText = null) => DrawText(await DownloadFromUrlAsync(url), text, topText);
         public Image DrawText(Image source, string text, string bottomText = null)
         {
-            if (string.IsNullOrEmpty(text) && string.IsNullOrEmpty(bottomText))
-                throw new ImageException("Text cannot be blank.");
-            
-            var size = Math.Min(source.Height / 10, source.Width / 10);
-            Font f = SystemFonts.CreateFont("Impact", size);
-
-            float padding = 0.05f * source.Width;
-            float width = source.Width - (2 * padding);
-
-            var to = new TextOptions
-            {
-                HorizontalAlignment = HorizontalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Bottom,
-                WrapTextWidth = width,
-                FallbackFonts = 
-                {
-                    SystemFonts.Find("Twemoji")
-                }
-            };
-
-            var options = new TextGraphicsOptions(new GraphicsOptions(), to);
-
-            PointF location = new PointF(padding, .95f * source.Height);
-
-            float pSize = Math.Max(size / 10f, 1f);
-
-            if (bottomText == null)
-            {
-                source.Mutate(x => x.DrawText(options, text, f, Pens.Solid(Color.Black, pSize), location));
-                source.Mutate(x => x.DrawText(options, text, f, Color.White, location));
-            }
+            if (source.Frames.Count > 1)
+                return GifFilter(source, text, bottomText, DrawText);
             else
             {
-                source.Mutate(x => x.DrawText(options, bottomText, f, Pens.Solid(Color.Black, pSize), location));
-                source.Mutate(x => x.DrawText(options, bottomText, f, Color.White, location));
-                options.TextOptions.VerticalAlignment = VerticalAlignment.Top;
-                location = new PointF(padding, .05f * source.Height);
-                source.Mutate(x => x.DrawText(options, text, f, Pens.Solid(Color.Black, pSize), location));
-                source.Mutate(x => x.DrawText(options, text, f, Color.White, location));
+                if (string.IsNullOrEmpty(text) && string.IsNullOrEmpty(bottomText))
+                    throw new ImageException("Text cannot be blank.");
+            
+                var size = Math.Min(source.Height / 10, source.Width / 10);
+                Font f = SystemFonts.CreateFont("Impact", size);
+
+                float padding = 0.05f * source.Width;
+                float width = source.Width - (2 * padding);
+
+                var to = new TextOptions
+                {
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    VerticalAlignment = VerticalAlignment.Bottom,
+                    WrapTextWidth = width,
+                    FallbackFonts = 
+                    {
+                        SystemFonts.Find("Twemoji")
+                    }
+                };
+
+                var options = new TextGraphicsOptions(new GraphicsOptions(), to);
+
+                PointF location = new PointF(padding, .95f * source.Height);
+
+                float pSize = Math.Max(size / 10f, 1f);
+
+                if (bottomText == null)
+                {
+                    source.Mutate(x => x.DrawText(options, text, f, Pens.Solid(Color.Black, pSize), location));
+                    source.Mutate(x => x.DrawText(options, text, f, Color.White, location));
+                }
+                else
+                {
+                    source.Mutate(x => x.DrawText(options, bottomText, f, Pens.Solid(Color.Black, pSize), location));
+                    source.Mutate(x => x.DrawText(options, bottomText, f, Color.White, location));
+                    options.TextOptions.VerticalAlignment = VerticalAlignment.Top;
+                    location = new PointF(padding, .05f * source.Height);
+                    source.Mutate(x => x.DrawText(options, text, f, Pens.Solid(Color.Black, pSize), location));
+                    source.Mutate(x => x.DrawText(options, text, f, Color.White, location));
+                }
+                return source;
             }
-
-            return source;
         }
 
-        public async Task<Image> Resize(string url, int x, int y)
-        {
-            Image source = await DownloadFromUrlAsync(url);
-            return Resize(source, x, y);
-        }
+        public async Task<Image> Resize(string url, int x, int y) => Resize(await DownloadFromUrlAsync(url), x, y);
         public Image Resize(Image source, int x, int y)
         {
             if (source.Frames.Count > 1)

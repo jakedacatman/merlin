@@ -297,6 +297,11 @@ namespace donniebot.services
                     await channel.SendMessageAsync("XD");
                     return;
                 });
+            script.Globals["sendMessage"] = (Action<string>)(async (string text) => 
+            {
+                await channel.SendMessageAsync(text);
+                return;
+            });
 
             DynValue eval;
             Stopwatch c = Stopwatch.StartNew();
