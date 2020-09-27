@@ -938,9 +938,20 @@ namespace donniebot.services
             {
                 var r = data.ElementAt(i);
                 var url = r["url"].Value<string>();
-                var un = r["userName"].Value<string>();
-                var s = r["sourceURL"].Value<string>();
-                s = string.IsNullOrWhiteSpace(s) ? s : "unknown";
+                var un = r["userName"].Value<string>() ?? "unknown";
+                var s = r["sourceURL"].Value<string>() ?? "unknown";
+
+                //temporary fix until the website is functional
+                if (r["source"].Value<string>() == "Gelbooru")
+                {
+                    var fn = url.Split('/').Last();
+                    url = $"https://img2.gelbooru.com/images/{fn.Substring(0, 2)}/{fn.Substring(2, 2)}/{fn}";
+                }
+                else if (r["source"].Value<string>() == "Danbooru")
+                {
+                    var fn = url.Split('/').Last();
+                    url = $"https://cdn.donmai.us/original/{fn.Substring(0, 2)}/{fn.Substring(2, 2)}/{fn}";
+                }
                 
                 image = new GuildImage(url, gId, s, un, title: $"{r["id"].Value<string>()} - {r["source"].Value<string>()}");
 

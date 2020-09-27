@@ -26,7 +26,7 @@ namespace donniebot.commands
 
         [Command("booru")]
         [Alias("r34", "bo")]
-        [Summary("Grabs a random NSFW image from several *booru websites.")]
+        [Summary("Grabs a random NSFW image from any of several *booru websites.")]
         [RequireNsfw]
         public async Task BooruCmd([Summary("The search query."), Remainder] string query)
         {
@@ -42,6 +42,7 @@ namespace donniebot.commands
 
                 var embed = new EmbedBuilder()
                     .WithTitle(img.Title)
+                    .WithUrl(img.Url)
                     .WithImageUrl(img.Url)
                     .WithColor(_rand.RandomColor())
                     .WithTimestamp(DateTime.UtcNow)
