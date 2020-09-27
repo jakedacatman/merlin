@@ -32,15 +32,18 @@ namespace donniebot.commands
         {
             try
             {
+                if (ep == "list")
+                {
+                    await ReplyAsync(_img.GetNekoEndpoints(true));
+                    return;
+                }
+
                 var info = await _img.GetNekoImageAsync(true, Context.Guild.Id, ep);
-                if (info.Substring(0, 5) == "NSFW:")
-                    await ReplyAsync(info);
-                else
-                    await ReplyAsync(embed: (new EmbedBuilder()
-                        .WithColor(_rand.RandomColor())
-                        .WithImageUrl(info)
-                        .WithTimestamp(DateTime.UtcNow)
-                    ).Build());
+                await ReplyAsync(embed: (new EmbedBuilder()
+                    .WithColor(_rand.RandomColor())
+                    .WithImageUrl(info)
+                    .WithTimestamp(DateTime.UtcNow)
+                ).Build());
             }
             catch (Exception e)
             {

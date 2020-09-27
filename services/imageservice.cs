@@ -18,7 +18,6 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using System.Globalization;
 
 namespace donniebot.services
 {
@@ -29,16 +28,16 @@ namespace donniebot.services
         private readonly RandomService _rand;
 
         private IImageFormat _format;
-
         private List<GuildImage> sentImages = new List<GuildImage>();
+        private readonly Regex _reg = new Regex(@"[0-9]+(\.[0-9]{1,2})? fps");
+        private readonly NekoEndpoints _nkeps;
 
-        private Regex _reg = new Regex(@"[0-9]+(\.[0-9]{1,2})? fps");
-
-        public ImageService(MiscService misc, NetService net, RandomService rand)
+        public ImageService(MiscService misc, NetService net, RandomService rand, NekoEndpoints nkeps)
         {
             _misc = misc;
             _net = net;
             _rand = rand;
+            _nkeps = nkeps;
         }
 
         public async Task<Image> Invert(string url) => Invert(await DownloadFromUrlAsync(url));
@@ -875,58 +874,40 @@ namespace donniebot.services
             return source;
         }
 
+        public string GetNekoEndpoints(bool nsfw)
+        {
+            if (nsfw)
+                return $"NSFW: {string.Join(", ", _nkeps.Nsfw.Keys)}";
+            else
+                return $"SFW: {string.Join(", ", _nkeps.Sfw.Keys)}"; 
+        }
         public async Task<string> GetNekoImageAsync(bool nsfw, ulong gId, string ep = "neko")
         {
             var url = "";
+            
+            Dictionary<string, string> endpoints;
 
-            var accepted = new List<string>
+            if (nsfw)
             {
-                "tickle", "slap", "poke",
-                "pat", "neko", "meow",
-                "lizard", "kiss", "hug",
-                "fox_girl","feed", "cuddle", 
-                "ngif", "kemonomimi", "holo",
-                "smug", "baka", "woof",
-                "wallpaper", "goose", "gecg",
-                "avatar", "waifu"
-            };
+                endpoints = _nkeps.Nsfw;
+                if (!endpoints.ContainsKey(ep)) 
+                    ep = endpoints["nekoGif"];
+                else
+                    ep = endpoints[ep];
 
-            var acceptedNsfw = new List<string>
-            {
-                "Random_hentai_gif",  "pussy",  "nsfw_neko_gif", 
-                "lewd", "les", "kuni", 
-                "cum", "classic", "boobs", 
-                "bj", "anal", "nsfw_avatar", 
-                "yuri", "trap", "tits", "solog", "solo", 
-                "pwankg", "pussy_jpg", "lewdkemo", 
-                "lewdk", "keta", "hololewd", 
-                "holoero", "hentai", "futanari", 
-                "femdom", "feetg", "erofeet", 
-                "feet", "ero", "erok", 
-                "erokemo", "eron", "eroyuri", 
-                "cum_jpg", "blowjob", "spank", 
-                "gasm"
-            };
-
-
-            if (!nsfw)
-            {
-                if (ep == "list")
-                    return $"SFW: {string.Join(", ", accepted)}";
-                else if (!accepted.Contains(ep))
-                    ep = "neko";
             }
             else
             {
-                if (ep == "list")
-                    return $"NSFW: {string.Join(", ", acceptedNsfw)}";
-                else if (!acceptedNsfw.Contains(ep))
-                    ep = "nsfw_neko_gif";
+                endpoints = _nkeps.Sfw;
+                if (!endpoints.ContainsKey(ep)) 
+                    ep = endpoints["neko"];
+                else
+                    ep = endpoints[ep];
             }
 
             while (true)
             {
-                var res = JsonConvert.DeserializeObject<JObject>(await _net.DownloadAsStringAsync($"https://nekos.life/api/v2/img/{ep}"));
+                var res = JsonConvert.DeserializeObject<JObject>(await _net.DownloadAsStringAsync($"https://nekos.life/api/v2{ep}"));
                 url = res["url"].Value<string>();
                 var obj = new GuildImage(url, gId);
                 if (!sentImages.ContainsObj(obj))

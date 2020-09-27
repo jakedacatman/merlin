@@ -11,6 +11,10 @@ using LiteDB;
 using System.IO;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using donniebot.classes;
 
 namespace donniebot
 {
@@ -45,7 +49,10 @@ namespace donniebot
                 IgnoreExtraArgs = false
             });
 
-
+            NekoEndpoints nekoEndpoints;
+            using (var hc = new HttpClient())
+                nekoEndpoints = new NekoEndpoints(JsonConvert.DeserializeObject<JObject>(await hc.GetStringAsync("https://raw.githubusercontent.com/Nekos-life/nekos-dot-life/master/endpoints.json")));
+            
             _services = new ServiceCollection()
                 .AddSingleton(_client)
                 .AddSingleton(_commands)
@@ -56,6 +63,7 @@ namespace donniebot
                 .AddSingleton<InteractiveService>()
                 .AddSingleton<ImageService>()
                 .AddSingleton<ModerationService>()
+                .AddSingleton(nekoEndpoints)
                 .AddSingleton<NetService>()
                 .AddSingleton<RandomService>()
                 .BuildServiceProvider();
