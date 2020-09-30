@@ -17,8 +17,7 @@
 
   <ItemGroup>
     <PackageReference Include="Discord.Addons.Interactive" Version="2.0.0" />
-    <!-- latest version of the library (you can clone the repo and change the path or do whatever) -->
-    <Reference Include="../repos/ImageSharp.Drawing/src/ImageSharp.Drawing/bin/Release/netstandard2.0/SixLabors.ImageSharp.Drawing.dll" />
+    <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="1.0.0-unstable0456" />
     <PackageReference Include="Discord.Net" Version="2.3.0-dev-*" />
     <PackageReference Include="LiteDB" Version="4.1.4" />
     <PackageReference Include="Microsoft.CodeAnalysis" Version="3.3.1" />
