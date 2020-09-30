@@ -41,7 +41,25 @@ namespace donniebot.commands
                 if (ct)
                     await ReplyAsync($"Added tag `{tag}`.");
                 else
-                    await ReplyAsync("Failed to add the tag.");
+                {
+                    if (_db.GetTag(tag, Context.Guild.Id) == null) await ReplyAsync("Failed to add the tag.");
+                    else
+                    {
+                        var msg = await ReplyAsync($"A tag already exists with the name \"{tag}\". Remove it?");
+                        var reply = await NextMessageAsync(timeout: TimeSpan.FromSeconds(10));
+
+                        if (reply.Content.ToLower() == "yes" || reply.Content.ToLower() == "y")
+                        {
+                            _db.RemoveTag(tag, Context.Guild.Id);
+                            ct = _db.AddTag(tag, value, Context.Guild.Id);
+
+                            if (!ct) await ReplyAsync("Failed to add the tag.");
+                        }
+                        
+                        await msg.DeleteAsync();
+                        await reply.DeleteAsync();
+                    }
+                }
             }
             catch (Exception e)
             {
