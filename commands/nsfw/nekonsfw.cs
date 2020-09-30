@@ -8,7 +8,7 @@ using Discord.Addons.Interactive;
 
 namespace donniebot.commands
 {
-    [Name("Image")]
+    [Name("Nsfw")]
     public class NekoNsfwCommand : InteractiveBase<ShardedCommandContext>
     {
         private readonly DiscordShardedClient _client;
