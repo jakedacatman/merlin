@@ -1,5 +1,6 @@
 ﻿﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
@@ -25,7 +26,7 @@ namespace donniebot.commands
         [Command("commands")]
         [Alias("cmds")]
         [Summary("Sends a list of bot commands.")]
-        public async Task CommandsCmd([Summary("Should the commands be on one page?")] bool onePage = false)
+        public async Task CommandsCmd([Summary("The category to view the commands of.")] string category = null)
         {
             try
             {
@@ -46,7 +47,7 @@ namespace donniebot.commands
                     }
                 }
 
-                if (!onePage)
+                if (string.IsNullOrEmpty(category))
                 {
                     var pages = new List<string>();
                     foreach (var module in modules)
@@ -56,9 +57,8 @@ namespace donniebot.commands
                 }
                 else
                 {
-                    var fields = new List<EmbedFieldBuilder>();
-                    foreach (var module in modules)
-                        fields.Add(new EmbedFieldBuilder().WithIsInline(true).WithName(module.Key).WithValue($"**{string.Join(", ", module.Value)}**"));
+                    var module = modules.Where(x => x.Key.ToLower() == category.ToLower()).First();
+                    var fields = new List<EmbedFieldBuilder> { new EmbedFieldBuilder().WithIsInline(true).WithName(module.Key).WithValue($"**{string.Join(", ", module.Value)}**") };
 
                     var embed = new EmbedBuilder()
                         .WithColor(_rand.RandomColor())
