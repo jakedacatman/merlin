@@ -386,10 +386,13 @@ namespace donniebot.services
                 Size = new Size((int)Math.Round(5d * w / 4d), (int)Math.Round((1.2f * h) + height + bounds.Height)),
                 Sampler = KnownResamplers.NearestNeighbor
             }));
-            
-            var r = new Rectangle(bw - 5, bh - 5, w + 10, h + 10);
 
-            bg.Mutate(x => x.Draw(Pens.Solid(Color.White, 3), r));
+            var rWidth = Math.Max(0.05f * bw, 3f);
+            var offset = rWidth + 2;
+            
+            var r = new RectangleF(bw - offset, bh - offset, w + (2 * offset), h + (2 * offset));
+
+            bg.Mutate(x => x.Draw(Pens.Solid(Color.White, rWidth), r));
 
             var location = new PointF(bw + padding, r.Bottom + (.6f * bh));
 
