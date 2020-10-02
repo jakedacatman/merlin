@@ -338,23 +338,42 @@ namespace donniebot.services
             float padding = 0.05f * source.Width;
             float wrap = source.Width - (2 * padding);
 
-            TextMeasurer.TryMeasureCharacterBounds(text, new RendererOptions(font) 
+            var bounds = TextMeasurer.Measure(text, new RendererOptions(font) 
             { 
                 WrappingWidth = wrap, 
                 HorizontalAlignment = HorizontalAlignment.Center, 
-                VerticalAlignment = VerticalAlignment.Center 
-            }, out var bnds);
+                VerticalAlignment = VerticalAlignment.Center
+            });
 
-            var bounds = bnds.Any() ? bnds.OrderByDescending(x => x.Bounds.Height).Select(x => x.Bounds).First() : new FontRectangle(0, 0, 0, 0);
-            
-            TextMeasurer.TryMeasureCharacterBounds(title, new RendererOptions(tFont) 
-            { 
-                WrappingWidth = wrap, 
+            var tBounds = TextMeasurer.Measure(title, new RendererOptions(tFont) 
+            {
                 HorizontalAlignment = HorizontalAlignment.Center, 
-                VerticalAlignment = VerticalAlignment.Center 
-            }, out var tbnds);
+                VerticalAlignment = VerticalAlignment.Center
+            });
 
-            var tBounds = tbnds.Any() ?  tbnds.OrderByDescending(x => x.Bounds.Height).Select(x => x.Bounds).First() : new FontRectangle(0, 0, 0, 0);
+            if (tBounds.Width > wrap) // will the title fit on one line? if not, scale both down
+            {
+                var ratio = wrap / tBounds.Width;
+                var size = tFont.Size * ratio;
+
+                tFont = SystemFonts.Collection.CreateFont("Linux Libertine", size, FontStyle.Regular);;
+
+                tBounds = TextMeasurer.Measure(title, new RendererOptions(tFont) 
+                { 
+                    WrappingWidth = wrap, 
+                    HorizontalAlignment = HorizontalAlignment.Center, 
+                    VerticalAlignment = VerticalAlignment.Center
+                });
+
+                font = SystemFonts.Collection.CreateFont("Linux Libertine", size / 2, FontStyle.Regular);;
+
+                bounds = TextMeasurer.Measure(title, new RendererOptions(font) 
+                { 
+                    WrappingWidth = wrap, 
+                    HorizontalAlignment = HorizontalAlignment.Center, 
+                    VerticalAlignment = VerticalAlignment.Center
+                });
+            }
 
             var bw = (int)Math.Round(w / 8d);
             var bh = (int)Math.Round(h / 8d);
@@ -364,7 +383,7 @@ namespace donniebot.services
             bg.Mutate(x => x.Resize(new ResizeOptions
             {
                 Mode = ResizeMode.Stretch,
-                Size = new Size((int)Math.Round(5d * w / 4d), (int)Math.Round((1.3f * h) + height + bounds.Height)),
+                Size = new Size((int)Math.Round(5d * w / 4d), (int)Math.Round((1.2f * h) + height + bounds.Height)),
                 Sampler = KnownResamplers.NearestNeighbor
             }));
             
@@ -372,7 +391,7 @@ namespace donniebot.services
 
             bg.Mutate(x => x.Draw(Pens.Solid(Color.White, 3), r));
 
-            var location = new PointF(bw + padding, r.Bottom + (.65f * bh));
+            var location = new PointF(bw + padding, r.Bottom + (.6f * bh));
 
             var to = new TextOptions
             {
@@ -387,7 +406,7 @@ namespace donniebot.services
 
             var options = new TextGraphicsOptions(new GraphicsOptions(), to);
             bg.Mutate(x => x.DrawText(options, title, tFont, Color.White, location));
-            location.Y += (.65f * bh) + tBounds.Height;
+            location.Y += (.25f * bh) + tBounds.Height;
             bg.Mutate(x => x.DrawText(options, text, font, Color.White, location));
 
             if (source.Frames.Count() > 1)
@@ -424,7 +443,7 @@ namespace donniebot.services
                 var img = Image.Load(f.FullName);
 
                 if (i == 0 && (img.Width > 1000 || img.Height > 1000))
-                    throw new Exception("Video too large.");
+                    throw new VideoException("Video too large.");
 
                 img = func(img, arg1);
 
@@ -672,7 +691,7 @@ namespace donniebot.services
             return newImg;
         }
         
-        public async Task<Image> VideoToGif (string url)
+        public async Task<Image> VideoToGif(string url)
         {
             if (!await _net.IsVideoAsync(url)) throw new InvalidOperationException("Not a video.");
 
@@ -698,7 +717,7 @@ namespace donniebot.services
             
             var framerate = _reg.Match(await Shell.Run($"ffprobe -hide_banner -show_streams {id}", true)).Value.Replace(" fps", "");
 
-            var delay = Math.Max((int)Math.Round(100d / int.Parse(framerate)), 1);
+            var delay = Math.Max((int)Math.Round(100d / double.Parse(framerate)), 2);
 
             var tmp = Directory.CreateDirectory($"tmp-{id}");
             await Shell.Run($"ffmpeg -i {id} -r {framerate} -f image2 -hide_banner {tmp.Name}/frame-%04d.png", true);

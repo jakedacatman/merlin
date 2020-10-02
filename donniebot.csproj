@@ -30,7 +30,7 @@
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
     <PackageReference Include="SixLabors.Fonts" Version="1.0.0-beta0013" />
     <PackageReference Include="SixLabors.ImageSharp" Version="1.0.1" />
-    <PackageReference Include="SixLabors.Shapes" Version="1.0.0-beta0009" />
+    <PackageReference Include="SixLabors.Shapes" Version="1.0.0-dev000133" />
   </ItemGroup>
 
 </Project>
