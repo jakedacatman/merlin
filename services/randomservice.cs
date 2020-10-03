@@ -20,12 +20,6 @@ namespace donniebot.services
             uint clr = Convert.ToUInt32(_random.Next(0, 0xFFFFFF));
             return new Color(clr);
         }
-        public static Color StaticRandomColor()
-        {
-            var r = new Random();
-            uint clr = Convert.ToUInt32(r.Next(0, 0xFFFFFF));
-            return new Color(clr);
-        }
 
         public int GenerateId()
         {

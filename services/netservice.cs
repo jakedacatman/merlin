@@ -17,14 +17,18 @@ namespace donniebot.services
         private readonly HttpClient _hc;
         private readonly RandomService _rand;
         private readonly string uploadKey;
-        private readonly string pasteHost;
+        private readonly string pasteKey;
         private readonly string imageHost;
+        private readonly string pasteHost;
 
         public NetService(DbService db, RandomService rand)
         {
             _hc = new HttpClient();
             _rand = rand;
+
             uploadKey = db.GetApiKey("upload");
+            pasteKey = db.GetApiKey("pasteKey") ?? uploadKey;
+
             pasteHost = db.GetHost("pastebin");
             if (pasteHost == null)
             {
@@ -130,7 +134,9 @@ namespace donniebot.services
             {
                 var sc = new FormUrlEncodedContent( new Dictionary<string, string> { { "input", stuffToUpload } } );
                 sc.Headers.ContentType = new MediaTypeHeaderValue("application/x-www-form-urlencoded");
-                sc.Headers.Add("key", uploadKey); //you can always do don.e _db.AddApiKey("upload", <key>) and change the host used
+
+                if (!string.IsNullOrEmpty(uploadKey))
+                    sc.Headers.Add("key", uploadKey); //you can always do don.e _db.AddApiKey("upload", <key>) (and additionally change the host used)
 
                 var request = await _hc.PostAsync(pasteHost, sc);
                 return await request.Content.ReadAsStringAsync();
@@ -168,7 +174,10 @@ namespace donniebot.services
             using (var ct = new MultipartFormDataContent())
             {
                 ct.Add(new ByteArrayContent(await File.ReadAllBytesAsync(path)), "file", $"temp.{ext}");
-                ct.Headers.Add("key", uploadKey);
+
+                if (!string.IsNullOrEmpty(pasteKey))
+                    ct.Headers.Add("key", pasteKey); //you can always do don.e _db.AddApiKey("pasteKey", <key>) (and additionally change the host used)
+
                 var response = await _hc.PostAsync(imageHost, ct);
 
                 File.Delete(path); 

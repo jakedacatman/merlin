@@ -32,7 +32,9 @@ namespace donniebot.services
             {
                 var _db = scope.ServiceProvider.GetRequiredService<LiteDatabase>();
                 var collection = _db.GetCollection<ApiKey>("apikeys");
-                return collection.FindOne(Query.Where("Service", x => x.AsString == service)).Key;
+
+                var apiKey = collection.FindOne(Query.Where("Service", x => x.AsString == service));
+                return apiKey != null ? apiKey.Key : null;
             }
         }
 
