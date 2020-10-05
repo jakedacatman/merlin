@@ -26,7 +26,7 @@ namespace donniebot.commands
         [Command("demotivational")]
         [Alias("de", "dm")]
         [Summary("Creates a demotivational poster from an image and some text.")]
-        public async Task DemotivationalCmd([Summary("The text to write.")]string text, [Summary("The text to put above.")]string title = null, [Summary("The image to create a poster of.")] string url = null)
+        public async Task DemotivationalCmd([Summary("The text to write.")]string text, [Summary("The text to put above.")]string title, [Summary("The image to create a poster of.")] string url = null)
         {
             try
             {
