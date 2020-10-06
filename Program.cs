@@ -145,7 +145,15 @@ namespace donniebot
                 if (msg.HasMentionPrefix(_client.CurrentUser, ref mentPos))
                 {
                     var parseResult = ParseResult.FromSuccess(new List<TypeReaderValue> { new TypeReaderValue(msg.Content.Substring(mentPos), 1f) }, new List<TypeReaderValue>() );
+
                     await _commands.Commands.Where(x => x.Name == "" && x.Module.Group == "tag").First().ExecuteAsync(context, parseResult, _services);
+                    return;
+                }
+                else if (msg.Content == _client.CurrentUser.Mention)
+                {
+                    var parseResult = ParseResult.FromSuccess(new List<TypeReaderValue> { new TypeReaderValue(_client.CurrentUser.Mention, 1f) }, new List<TypeReaderValue>() );
+                    await _commands.Commands.Where(x => x.Name == "" && x.Module.Group == "tag").First().ExecuteAsync(context, parseResult, _services);
+                    return;
                 }
 
                 int argPos = prefix.Length - 1;
