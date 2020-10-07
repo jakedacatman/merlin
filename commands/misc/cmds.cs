@@ -53,7 +53,13 @@ namespace donniebot.commands
                     foreach (var module in modules)
                         pages.Add($"**{module.Key}**\n{string.Join(", ", module.Value)}");
 
-                    await PagedReplyAsync(pages);
+                    await PagedReplyAsync(new PaginatedMessage 
+                    { 
+                        Pages = pages, 
+                        Color = _rand.RandomColor(), 
+                        Title = "Commands", 
+                        AlternateDescription = "A list of commands" 
+                    });
                 }
                 else
                 {

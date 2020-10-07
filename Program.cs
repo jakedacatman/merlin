@@ -140,6 +140,7 @@ namespace donniebot
             {
                 if (!(_msg is SocketUserMessage msg) || _msg == null || string.IsNullOrEmpty(msg.Content)) return;
                 ShardedCommandContext context = new ShardedCommandContext(_client, msg);
+                if (context.User.IsBot) return;
 
                 int mentPos = 0;
                 if (msg.HasMentionPrefix(_client.CurrentUser, ref mentPos))
@@ -159,7 +160,6 @@ namespace donniebot
                 int argPos = prefix.Length - 1;
                 if (!msg.HasStringPrefix(prefix, ref argPos)) return;
 
-                if (context.User.IsBot) return;
                 await _commands.ExecuteAsync(context, argPos, _services, MultiMatchHandling.Best);
             }   
             catch (Exception e)

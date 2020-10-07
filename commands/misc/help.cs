@@ -34,7 +34,7 @@ namespace donniebot.commands
             {
                 if (command == null)
                 {
-                    await _commands.Commands.Where(x => x.Name == "commands").First().ExecuteAsync(Context, ParseResult.FromSuccess(new List<TypeReaderValue> { new TypeReaderValue(false, 1f)}, new List<TypeReaderValue>()), _services);
+                    await _commands.Commands.Where(x => x.Name == "commands").First().ExecuteAsync(Context, ParseResult.FromSuccess(new List<TypeReaderValue> { new TypeReaderValue(null, 1f) }, new List<TypeReaderValue>()), _services);
                     return;
                 }
                 
