@@ -16,14 +16,14 @@ namespace donniebot.commands
         {
             try
             {
-                if (tag.Length > 100)
+                if (tag.Length > 150)
                 {
-                    await ReplyAsync("Tag is too long. Limit it to 100 characters or less.");
+                    await ReplyAsync("Tag is too long. Limit it to 150 characters or less.");
                     return;
                 }
-                if (value.Length > 1000)
+                if (value.Length > 1500)
                 {
-                    await ReplyAsync("Value is too long. Limit it to 1000 characters or less.");
+                    await ReplyAsync("Value is too long. Limit it to 1500 characters or less.");
                     return;
                 }
                 if (string.IsNullOrWhiteSpace(tag))
@@ -47,6 +47,14 @@ namespace donniebot.commands
                     {
                         var msg = await ReplyAsync($"A tag already exists with the name \"{tag}\". Remove it?");
                         var reply = await NextMessageAsync(timeout: TimeSpan.FromSeconds(10));
+                        
+                        if (reply == null)
+                        {
+                            await msg.DeleteAsync();
+                            return;
+                        }
+                        else
+                            await reply.DeleteAsync();
 
                         if (reply.Content.ToLower() == "yes" || reply.Content.ToLower() == "y")
                         {
@@ -54,10 +62,11 @@ namespace donniebot.commands
                             ct = _db.AddTag(tag, value, Context.Guild.Id);
 
                             if (!ct) await ReplyAsync("Failed to add the tag.");
+                            else 
+                                await ReplyAsync($"Added tag `{tag}`.");
                         }
                         
                         await msg.DeleteAsync();
-                        await reply.DeleteAsync();
                     }
                 }
             }

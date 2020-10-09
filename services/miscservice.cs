@@ -299,6 +299,9 @@ namespace donniebot.services
                 });
             script.Globals["sendMessage"] = (Action<string>)(async (string text) => 
             {
+                if (text.Length > 1000)
+                    text = $"Message too long; here is a link to it: {await _net.UploadToPastebinAsync(text)}";
+
                 await channel.SendMessageAsync(text);
                 return;
             });
