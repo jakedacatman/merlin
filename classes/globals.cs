@@ -23,6 +23,7 @@ namespace donniebot.classes
         public ImageService _img {get; internal set; }
         public RandomService _rand {get; internal set; }
         public NetService _net {get; internal set; }
+        public AudioService _audio {get; internal set; }
         public Globals _globals { get; internal set; }
         public Process current { get; } = Process.GetCurrentProcess();
         public string[] Imports { get; internal set; } = new string[]

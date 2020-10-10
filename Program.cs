@@ -66,6 +66,7 @@ namespace donniebot
                 .AddSingleton(nekoEndpoints)
                 .AddSingleton<NetService>()
                 .AddSingleton<RandomService>()
+                .AddSingleton<AudioService>()
                 .BuildServiceProvider();
 
             await _commands.AddModulesAsync(Assembly.GetEntryAssembly(), _services);
@@ -113,7 +114,7 @@ namespace donniebot
             _commands.Log += Log;
 
             if (!File.Exists("nsfw.txt"))
-                await File.WriteAllTextAsync("nsfw.txt", await _services.GetService<NetService>().DownloadAsStringAsync("https://paste.jakedacatman.me/YU4vA"));
+                await File.WriteAllTextAsync("nsfw.txt", await _services.GetService<NetService>().DownloadAsStringAsync("https://paste.jakedacatman.me/raw/YU4vA"));
 
             await Task.Delay(-1);
         }

@@ -191,7 +191,8 @@ namespace donniebot.services
                 _commands = _services.GetService<CommandService>(),
                 _img = _services.GetService<ImageService>(),
                 _net = _services.GetService<NetService>(),
-                _rand = _services.GetService<RandomService>()
+                _rand = _services.GetService<RandomService>(),
+                _audio = _services.GetService<AudioService>()
             };
             globals._globals = globals;
             
