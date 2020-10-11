@@ -5,6 +5,7 @@ using System.Net;
 using System.Linq;
 using Discord.Audio;
 using Discord.WebSocket;
+using donniebot.classes;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Collections.Generic;
@@ -14,16 +15,15 @@ namespace donniebot.services
 {
     public class AudioService
     {
-        private ConcurrentDictionary<ulong, IAudioClient> _connections;
+        private List<AudioPlayer> _connections = new List<AudioPlayer>();
         private readonly DiscordShardedClient _client;
 
         public AudioService(DiscordShardedClient client)
         {
-            _connections = new ConcurrentDictionary<ulong, IAudioClient>();
             _client = client;
         }
 
-        public async Task<bool> ConnectAsync(SocketVoiceChannel channel)
+        public async Task ConnectAsync(SocketVoiceChannel channel)
         {
             var id = channel.Guild.Id;
 
@@ -32,23 +32,28 @@ namespace donniebot.services
             
             var connection = await channel.ConnectAsync(true, false, true);
 
-            if (!_connections.ContainsKey(id))
-                return _connections.TryAdd(channel.Guild.Id, connection);
+            if (!HasConnection(id))
+                _connections.Add(new AudioPlayer(id, connection));
             else
-                return (_connections.TryRemove(id, out var _) && _connections.TryAdd(id, connection));
+            {
+                var curr = GetConnection(id);
+                _connections.Remove(curr);
+                _connections.Add(new AudioPlayer(id, connection));
+            }
         }
 
-        public async Task<bool> DisconnectAsync(SocketVoiceChannel channel)
+        public async Task DisconnectAsync(SocketVoiceChannel channel)
         {
             var id = channel.Guild.Id;
 
             await channel.DisconnectAsync();
 
-            if (!_connections.TryGetValue(id, out var connection))
-                return false;
-            connection.Dispose();
-
-            return _connections.TryRemove(id, out var _);
+            if (HasConnection(id))
+            {
+                var connection = GetConnection(id);
+                _connections.Remove(connection);
+                connection.Dispose();
+            }
         }
 
 
@@ -61,8 +66,10 @@ namespace donniebot.services
         {
             try
             {
-                if (!_connections.TryGetValue(id, out var connection))
+                if (!HasConnection(id))
                     throw new InvalidOperationException("Not connected to a voice channel.");
+
+                var connection = GetConnection(id);
 
                 var audioUrl = GetUrl(url);
 
@@ -75,7 +82,7 @@ namespace donniebot.services
                 using (var output = ffmpeg.StandardOutput.BaseStream)
                 using (var input = ffmpeg.StandardInput.BaseStream)
 
-                using (var discord = connection.CreatePCMStream(AudioApplication.Mixed))
+                using (var discord = connection.Stream)
                 {
                     try
                     {
@@ -96,6 +103,7 @@ namespace donniebot.services
                         await discord.FlushAsync();
                     }
                 }
+                connection.UpdateStream();
             }
             catch (Exception e)
             {
@@ -105,7 +113,6 @@ namespace donniebot.services
 
         public string GetUrl(string ytUrl)
         {
-
             var info = new ProcessStartInfo
             {
                 FileName = "youtube-dl",
@@ -146,5 +153,9 @@ namespace donniebot.services
                 RedirectStandardOutput = true
             });
         }
+
+        private AudioPlayer GetConnection(ulong id) => _connections.First(x => x.GuildId == id);
+
+        private bool HasConnection(ulong id) => _connections.Any(x => x.GuildId == id);
     }
 }
