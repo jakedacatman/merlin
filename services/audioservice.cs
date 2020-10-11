@@ -81,18 +81,32 @@ namespace donniebot.services
                 {
                     try
                     {
-                        var buffer = new byte[4096];
+                        var bufferRead = new byte[4096];
+                        var bufferWrite = new byte[4096];
                         var bytesRead = 0;
                         var bytesConverted = 0;
 
-                        do
+                        var read = Task.Run(async () => 
                         {
-                            bytesRead = await str.ReadAsync(buffer, 0, 4096);
-                            await input.WriteAsync(buffer, 0, bytesRead);
-                            bytesConverted = await output.ReadAsync(buffer, 0, bytesRead);
-                            await discord.WriteAsync(buffer, 0, bytesConverted);
-                        }
-                        while (bytesRead > 0);
+                            do
+                            {
+                                bytesRead = await str.ReadAsync(bufferRead, 0, 4096);
+                                await input.WriteAsync(bufferRead, 0, bytesRead);
+                            }
+                            while (bytesRead > 0);
+                        });
+
+                        var write = Task.Run(async () => 
+                        {
+                            do 
+                            {
+                                bytesConverted = await output.ReadAsync(bufferWrite, 0, 4096);
+                                await discord.WriteAsync(bufferWrite, 0, bytesConverted);
+                            }
+                            while (bytesConverted > 0);
+                        });
+
+                        Task.WaitAll(read, write);
                     }
                     finally 
                     {

@@ -19,6 +19,9 @@ namespace donniebot.commands
             _misc = misc;
         }
 
+        [Command("join")]
+        [Alias("jo")]
+        [Summary("Joins the current voice channel.")]
         public async Task JoinCmd()
         {
             try
