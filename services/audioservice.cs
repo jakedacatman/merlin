@@ -44,5 +44,41 @@ namespace donniebot.services
 
             return _connections.TryRemove(id, out var _);
         }
+
+        public async Task PlayAsync(ulong id, string url)
+        {
+            if (!_connections.TryGetValue(id, out var connection))
+                throw new InvalidOperationException("Not connected to a voice channel.");
+
+            var audioUrl = await GetUrlAsync(url);
+        }
+
+        public async Task<string> GetUrlAsync(string ytUrl)
+        {
+            var proc = Process.Start(new ProcessStartInfo
+            {
+                FileName = "youtube-dl",
+                Arguments = $"--no-cache-dir -g",
+                UseShellExecute = false,
+                RedirectStandardOutput = true
+            });
+
+            var lines = (await proc.StandardOutput.ReadToEndAsync()).Split('\n');
+            var url = lines[lines.Length - 1];
+            Console.WriteLine(url);
+            return url; //last one (audio)
+        }
+
+        private Process CreateStream(string path)
+        {
+            return Process.Start(new ProcessStartInfo
+            {
+                FileName = "ffmpeg",
+                Arguments = "-hide_banner -loglevel panic -i pipe:0 -ac 2 -f s16le -ar 48000 pipe:1",
+                UseShellExecute = false,
+                RedirectStandardInput = true,
+                RedirectStandardOutput = true
+            });
+        }
     }
 }
