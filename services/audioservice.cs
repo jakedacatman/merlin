@@ -1,10 +1,8 @@
 using System;
-using Discord;
 using System.IO;
-using System.Net;
 using System.Linq;
-using Discord.Audio;
 using YoutubeExplode;
+using Nerdbank.Streams;
 using Discord.WebSocket;
 using donniebot.classes;
 using System.Diagnostics;
@@ -73,6 +71,7 @@ namespace donniebot.services
                 var connection = GetConnection(id);
 
                 using (var str = await GetAudioAsync(url))
+                using (var downloadStream = new SimplexStream())
                 using (var ffmpeg = CreateStream())
                 using (var output = ffmpeg.StandardOutput.BaseStream)
                 using (var input = ffmpeg.StandardInput.BaseStream)
@@ -81,16 +80,33 @@ namespace donniebot.services
                 {
                     try
                     {
-                        var bufferRead = new byte[4096];
-                        var bufferWrite = new byte[4096];
+                        int block_size = 4096;
+
+                        var bufferDown = new byte[block_size];
+                        var bufferRead = new byte[block_size];
+                        var bufferWrite = new byte[block_size];
+
+                        var bytesDown = 0;
                         var bytesRead = 0;
                         var bytesConverted = 0;
+                        
+                        var download = Task.Run(async () => 
+                        {
+                            do
+                            {
+                                bytesDown = await str.ReadAsync(bufferDown, 0, block_size);
+                                await downloadStream.WriteAsync(bufferDown, 0, bytesDown);
+                            }
+                            while (bytesDown > 0);
+
+                            downloadStream.CompleteWriting();
+                        });
 
                         var read = Task.Run(async () => 
                         {
                             do
                             {
-                                bytesRead = await str.ReadAsync(bufferRead, 0, 4096);
+                                bytesRead = await downloadStream.ReadAsync(bufferRead, 0, block_size);
                                 await input.WriteAsync(bufferRead, 0, bytesRead);
                             }
                             while (bytesRead > 0);
@@ -100,13 +116,14 @@ namespace donniebot.services
                         {
                             do 
                             {
-                                bytesConverted = await output.ReadAsync(bufferWrite, 0, 4096);
+                                bytesConverted = await output.ReadAsync(bufferWrite, 0, block_size);
                                 await discord.WriteAsync(bufferWrite, 0, bytesConverted);
                             }
                             while (bytesConverted > 0);
                         });
 
-                        Task.WaitAll(read, write);
+                        Task.WaitAll(download, read, write);
+
                     }
                     finally 
                     {
@@ -124,7 +141,7 @@ namespace donniebot.services
         public async Task<Stream> GetAudioAsync(string ytUrl)
         {
             var yt = new YoutubeClient();
-            var info = await yt.Videos.Streams.GetManifestAsync(new YoutubeExplode.Videos.VideoId(ytUrl));
+            var info = await yt.Videos.Streams.GetManifestAsync(new VideoId(ytUrl));
             
             return await yt.Videos.Streams.GetAsync(info.GetAudioOnly().OrderByDescending(x => x.Bitrate).First());
         }

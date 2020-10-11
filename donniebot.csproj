@@ -17,6 +17,7 @@
 
   <ItemGroup>
     <!--> <ProjectReference Include="Discord.Addons.Interactive/Discord.Addons.Interactive.csproj"/> <!-->
+    <PackageReference Include="Nerdbank.Streams" Version="2.6.81" />
     <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="1.0.0-unstable0456" />
     <PackageReference Include="Discord.Net" Version="2.3.0-dev-*" />
     <PackageReference Include="LiteDB" Version="4.1.4" />
