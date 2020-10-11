@@ -4,12 +4,13 @@ using System.IO;
 using System.Net;
 using System.Linq;
 using Discord.Audio;
+using YoutubeExplode;
 using Discord.WebSocket;
 using donniebot.classes;
 using System.Diagnostics;
+using YoutubeExplode.Videos;
 using System.Threading.Tasks;
 using System.Collections.Generic;
-using System.Collections.Concurrent;
 
 namespace donniebot.services
 {
@@ -30,7 +31,7 @@ namespace donniebot.services
             await channel.ConnectAsync(true);
             await channel.DisconnectAsync();
             
-            var connection = await channel.ConnectAsync(true, false, true);
+            var connection = await channel.ConnectAsync(true, false);
 
             if (!HasConnection(id))
                 _connections.Add(new AudioPlayer(id, connection));
@@ -71,13 +72,7 @@ namespace donniebot.services
 
                 var connection = GetConnection(id);
 
-                var audioUrl = GetUrl(url);
-
-                var req = WebRequest.Create(audioUrl);
-
-                using (var response = await req.GetResponseAsync())
-                using (var str = response.GetResponseStream())
-
+                using (var str = await GetAudioAsync(url))
                 using (var ffmpeg = CreateStream())
                 using (var output = ffmpeg.StandardOutput.BaseStream)
                 using (var input = ffmpeg.StandardInput.BaseStream)
@@ -90,13 +85,14 @@ namespace donniebot.services
                         var bytesRead = 0;
                         var bytesConverted = 0;
 
-                        while (str.Position <= str.Length)
+                        do
                         {
-                            bytesRead += await str.ReadAsync(buffer, bytesRead, 4096);
-                            await input.WriteAsync(buffer, bytesRead, 4096);
-                            bytesConverted += await output.ReadAsync(buffer, bytesConverted, 4096);
-                            await discord.ReadAsync(buffer, bytesConverted, 4096);
+                            bytesRead = await str.ReadAsync(buffer, 0, 4096);
+                            await input.WriteAsync(buffer, 0, bytesRead);
+                            bytesConverted = await output.ReadAsync(buffer, 0, bytesRead);
+                            await discord.WriteAsync(buffer, 0, bytesConverted);
                         }
+                        while (bytesRead > 0);
                     }
                     finally 
                     {
@@ -111,35 +107,12 @@ namespace donniebot.services
             }
         }
 
-        public string GetUrl(string ytUrl)
+        public async Task<Stream> GetAudioAsync(string ytUrl)
         {
-            var info = new ProcessStartInfo
-            {
-                FileName = "youtube-dl",
-                Arguments = $"--no-cache-dir -g {ytUrl}",
-                UseShellExecute = false,
-                RedirectStandardOutput = true
-            };
-            var proc = new Process
-            {
-                EnableRaisingEvents = true,
-                StartInfo = info
-            };
-
-            var urls = new List<string>();
-            proc.OutputDataReceived += new DataReceivedEventHandler((s, e) =>
-            {
-                if (!string.IsNullOrWhiteSpace(e.Data))
-                    urls.Add(e.Data);
-            });
-
-            proc.Start();
-            proc.BeginOutputReadLine();
-            proc.WaitForExit(); //blocks :( (good thing we run in RunMode.Async)
+            var yt = new YoutubeClient();
+            var info = await yt.Videos.Streams.GetManifestAsync(new YoutubeExplode.Videos.VideoId(ytUrl));
             
-            var query = urls.Where(x => x.Contains("mime=audio"));
-            var url = query.Any() ? query.First() : urls.LastOrDefault();
-            return url;
+            return await yt.Videos.Streams.GetAsync(info.GetAudioOnly().OrderByDescending(x => x.Bitrate).First());
         }
 
         private Process CreateStream()
