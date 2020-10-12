@@ -16,10 +16,12 @@ namespace donniebot.services
     {
         private List<AudioPlayer> _connections = new List<AudioPlayer>();
         private readonly DiscordShardedClient _client;
+        private readonly NetService _net;
 
-        public AudioService(DiscordShardedClient client)
+        public AudioService(DiscordShardedClient client, NetService net)
         {
             _client = client;
+            _net = net;
         }
 
         public async Task ConnectAsync(SocketVoiceChannel channel)
@@ -55,7 +57,11 @@ namespace donniebot.services
             }
         }
 
-
+        public async Task PlayAsync(SocketVoiceChannel channel, Song song)
+        {
+            await ConnectAsync(channel);
+            await PlayAsync(channel.Guild.Id, song.Url);
+        }
         public async Task PlayAsync(SocketVoiceChannel channel, string url)
         {
             await ConnectAsync(channel);
@@ -138,12 +144,27 @@ namespace donniebot.services
             }
         }
 
-        public async Task<Stream> GetAudioAsync(string ytUrl)
+        private async Task<Stream> GetAudioAsync(string ytUrl)
         {
             var yt = new YoutubeClient();
             var info = await yt.Videos.Streams.GetManifestAsync(new VideoId(ytUrl));
             
             return await yt.Videos.Streams.GetAsync(info.GetAudioOnly().OrderByDescending(x => x.Bitrate).First());
+        }
+        public async Task<Song> CreateSongAsync(string queryOrUrl, ulong guildId, ulong userId)
+        {
+            SongInfo info;
+            if (!Uri.IsWellFormedUriString(queryOrUrl, UriKind.Absolute) || !new Uri(queryOrUrl).Host.Contains("youtube"))
+                info = await _net.GetSongInfoAsync(queryOrUrl);
+            else
+            {
+                var yt = new YoutubeClient();
+
+                var video = await yt.Videos.GetAsync(new VideoId(queryOrUrl));
+                info = new SongInfo(video.Title, queryOrUrl, video.Thumbnails.MediumResUrl, video.Author);
+            }
+
+            return new Song(info, userId, guildId);
         }
 
         private Process CreateStream()
@@ -157,6 +178,8 @@ namespace donniebot.services
                 RedirectStandardOutput = true
             });
         }
+
+        public bool IsConnected(ulong id) => HasConnection(id);
 
         private AudioPlayer GetConnection(ulong id) => _connections.First(x => x.GuildId == id);
 

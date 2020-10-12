@@ -28,7 +28,7 @@ namespace donniebot.commands
         {
             try
             {
-                var article = await _net.GetWikipediaArticleAsync(term);
+                var article = await _net.GetBulbapediaArticleAsync(term);
                 if (article.Title == "" && article.Url == "")
                     await ReplyAsync("Failed to find the article.");
                 else

@@ -10,8 +10,8 @@ namespace donniebot.commands
     [Name("Audio")]
     public class JoinCommand : InteractiveBase<ShardedCommandContext>
     {
-        private AudioService _audio;
-        private MiscService _misc;
+        private readonly AudioService _audio;
+        private readonly MiscService _misc;
 
         public JoinCommand(AudioService audio, MiscService misc)
         {
