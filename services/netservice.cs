@@ -159,24 +159,6 @@ namespace donniebot.services
 
         public async Task<string> DownloadAsStringAsync(string url) => await _hc.GetStringAsync(url);
 
-        public async Task<SongInfo> GetSongInfoAsync(string query)
-        {
-            var data = JsonConvert.DeserializeObject<JObject>(await _hc.GetStringAsync($"https://www.googleapis.com/youtube/v3/search?part=snippet&maxresults=1&q={query}&key={ytApiKey}"));
-
-            if (data.ContainsKey("error"))
-                throw new Exception(data["error"]["message"].Value<string>());
-
-            var item = data["items"].First();
-            var snippet = item["snippet"];
-
-            return new SongInfo(
-                snippet["title"].Value<string>(), 
-                $"https://www.youtube.com/watch?v={item["id"].Value<string>()}",
-                snippet["thumbnails"]["default"]["url"].Value<string>(), 
-                snippet["channelTitle"].Value<string>()
-            );
-        }
-
         public async Task<Article> GetMediaWikiArticleAsync(string term, string url)
         {
             try

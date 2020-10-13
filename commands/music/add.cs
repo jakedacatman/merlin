@@ -56,7 +56,7 @@ namespace donniebot.commands
                     .WithCurrentTimestamp()
                 .Build());
 
-                await _audio.PlayAsync(id, song.Url); //todo: add queue
+                await _audio.Enqueue(vc, song); //todo: add queue
             }
             catch (Exception e)
             {
