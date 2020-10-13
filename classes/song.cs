@@ -10,6 +10,7 @@ namespace donniebot.classes
         public string ThumbnailUrl { get; }
         public ulong QueuerId { get; }
         public ulong GuildId { get; }
+        public TimeSpan Length { get; }
 
         public Song(SongInfo info, ulong queuerId, ulong guildId)
         {
@@ -19,6 +20,7 @@ namespace donniebot.classes
             ThumbnailUrl = info.ThumbnailUrl;
             QueuerId = queuerId;
             GuildId = guildId;
+            Length = info.Length;
         }
     }
 }

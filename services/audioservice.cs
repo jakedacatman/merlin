@@ -132,6 +132,9 @@ namespace donniebot.services
                     var bytesDown = 0;
                     var bytesRead = 0;
                     var bytesConverted = 0;
+
+                    var cts = new CancellationTokenSource();
+                    cts.CancelAfter(song.Length + TimeSpan.FromSeconds(3));
                         
                     var download = Task.Run(async () => 
                     {
@@ -175,7 +178,13 @@ namespace donniebot.services
                         {
                             do 
                             {
-                                bytesConverted = await output.ReadAsync(bufferWrite, 0, block_size);
+                                if (cts.Token.IsCancellationRequested)
+                                {
+                                    ffmpeg.Kill();
+                                    break;
+                                }
+
+                                bytesConverted = await output.ReadAsync(bufferWrite, 0, block_size, cts.Token);
                                 await discord.WriteAsync(bufferWrite, 0, bytesConverted);
                             }
                             while (bytesConverted > 0);
@@ -215,7 +224,7 @@ namespace donniebot.services
             else
                 video = await yt.Videos.GetAsync(new VideoId(queryOrUrl));
 
-            var info = new SongInfo(video.Title, video.Url, video.Thumbnails.MediumResUrl, video.Author);
+            var info = new SongInfo(video.Title, video.Url, video.Thumbnails.MediumResUrl, video.Author, video.Duration);
 
             return new Song(info, userId, guildId);
         }
