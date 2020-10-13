@@ -132,9 +132,6 @@ namespace donniebot.services
                     var bytesDown = 0;
                     var bytesRead = 0;
                     var bytesConverted = 0;
-
-                    var cts = new CancellationTokenSource();
-                    cts.CancelAfter(song.Length + TimeSpan.FromSeconds(3));
                         
                     var download = Task.Run(async () => 
                     {
@@ -178,13 +175,7 @@ namespace donniebot.services
                         {
                             do 
                             {
-                                if (cts.Token.IsCancellationRequested)
-                                {
-                                    ffmpeg.Kill();
-                                    break;
-                                }
-
-                                bytesConverted = await output.ReadAsync(bufferWrite, 0, block_size, cts.Token);
+                                bytesConverted = await output.ReadAsync(bufferWrite, 0, block_size);
                                 await discord.WriteAsync(bufferWrite, 0, bytesConverted);
                             }
                             while (bytesConverted > 0);
