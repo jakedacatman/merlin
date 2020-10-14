@@ -1,5 +1,7 @@
 using System;
+using System.Linq;
 using Discord.Audio;
+using Discord.WebSocket;
 using System.Collections.Generic;
 
 namespace donniebot.classes
@@ -8,13 +10,17 @@ namespace donniebot.classes
     {
         public ulong GuildId { get; }
         public IAudioClient Connection { get; }
+        public SocketVoiceChannel Channel { get; }
         public AudioOutStream Stream { get; set; }
         public List<Song> Queue { get; set; }
         public bool IsPlaying { get; set; } = false;
+        public bool IsSkipping { get; set; } = false;
+        private int _skips = 0; 
 
-        public AudioPlayer(ulong id, IAudioClient client)
+        public AudioPlayer(ulong id, SocketVoiceChannel channel, IAudioClient client)
         {
             GuildId= id;
+            Channel = channel;
             Connection = client;
             Stream = client.CreatePCMStream(AudioApplication.Mixed);
             Queue = new List<Song>();
@@ -34,6 +40,41 @@ namespace donniebot.classes
         }
 
         public void UpdateStream() => Stream = Connection.CreatePCMStream(AudioApplication.Mixed);
+
+        public int Skip(SocketGuildUser skipper)
+        {
+            if (!IsPlaying)
+                return 0;
+
+            var listeningUsers = Channel.Users.Where(x => 
+                !x.IsBot && 
+                !x.IsDeafened &&
+                !x.IsSelfDeafened);
+
+            if (skipper.GuildPermissions.MuteMembers)
+            {
+                _skips = 0;
+                IsSkipping = true;
+                return 0;
+            }
+
+            if (listeningUsers.Count() == 1 && listeningUsers.First() == skipper)
+            {
+                _skips = 0;
+                IsSkipping = true;
+                return 0;
+            }
+
+            if (_skips == (int)Math.Round(.75f * listeningUsers.Count()))
+            {
+                _skips = 0;
+                IsSkipping = true;
+                return 0;
+            }
+
+            _skips++;
+            return _skips;
+        }
 
         public void Dispose()
         {
