@@ -113,17 +113,17 @@ namespace donniebot.services
 
                 var connection = GetConnection(id);
 
+                var discord = connection.Stream;
+
                 using (var str = await GetAudioAsync(song.Url))
                 using (var downloadStream = new SimplexStream())
                 using (var ffmpeg = CreateStream())
                 using (var output = ffmpeg.StandardOutput.BaseStream)
                 using (var input = ffmpeg.StandardInput.BaseStream)
-
-                using (var discord = connection.Stream)
                 {
                     player.IsPlaying = true;
 
-                    int block_size = 4096;
+                    const int block_size = 4096; //4 KiB
 
                     var bufferDown = new byte[block_size];
                     var bufferRead = new byte[block_size];
@@ -132,6 +132,8 @@ namespace donniebot.services
                     var bytesDown = 0;
                     var bytesRead = 0;
                     var bytesConverted = 0;
+
+                    var isWriting = false;
                         
                     var download = Task.Run(async () => 
                     {
@@ -175,6 +177,11 @@ namespace donniebot.services
                         {
                             do 
                             {
+                                if (isWriting && bytesConverted < block_size) //if bytesConverted is less than here, then the last (small) chunk is done
+                                    break;
+
+                                isWriting = true;
+
                                 bytesConverted = await output.ReadAsync(bufferWrite, 0, block_size);
                                 await discord.WriteAsync(bufferWrite, 0, bytesConverted);
                             }
@@ -186,10 +193,9 @@ namespace donniebot.services
                         }
                     });
 
-                    Task.WaitAll(download, read, write);
+                    await Task.WhenAll(download, read, write);
                 }
 
-                connection.UpdateStream();
                 player.IsPlaying = false;
 
                 SongEnded?.Invoke(connection);

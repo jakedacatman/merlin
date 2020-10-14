@@ -21,8 +21,6 @@ namespace donniebot.services
         private readonly string imageHost;
         private readonly string pasteHost;
 
-        private readonly string ytApiKey;
-
         public NetService(DbService db, RandomService rand)
         {
             _hc = new HttpClient();
@@ -44,14 +42,6 @@ namespace donniebot.services
                 Console.WriteLine("What is your preferred image host upload endpoint? (only logged to database.db)");
                 imageHost = Console.ReadLine() ?? "https://i.jakedacatman.me/upload";
                 db.AddHost("imageHost", imageHost);
-            }
-
-            ytApiKey = db.GetApiKey("youtube");
-            if (ytApiKey == null)
-            {
-                Console.WriteLine("What is your YouTube Data API key? (only logged to database.db)");
-                ytApiKey = Console.ReadLine();
-                db.AddHost("youtube", ytApiKey);
             }
         }
 
