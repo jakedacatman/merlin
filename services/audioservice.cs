@@ -126,10 +126,7 @@ namespace donniebot.services
             if (!HasConnection(id))
                 return;
 
-            var queue = GetConnection(id).Queue;
-            if (!queue.Any()) return;
-
-            queue.Shuffle();
+            GetConnection(id).Shuffle();
         }
 
         public async Task OnSongAdded(ulong id, AudioPlayer player, Song s)

@@ -43,6 +43,12 @@ namespace donniebot.classes
                 Queue.RemoveAt(id);
         }
 
+        public void Shuffle()
+        {
+            if (Queue.Any())
+                Queue = Queue.Shuffle().ToList();
+        }
+
         public void UpdateStream() => Stream = Connection.CreatePCMStream(AudioApplication.Mixed);
 
         public int Skip(SocketGuildUser skipper)
