@@ -2,9 +2,11 @@ using System;
 using Discord;
 using System.Linq;
 using Discord.Commands;
+using donniebot.classes;
 using Discord.WebSocket;
 using donniebot.services;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 using Discord.Addons.Interactive;
 
 namespace donniebot.commands
@@ -36,15 +38,23 @@ namespace donniebot.commands
                 if (!queue.Any())
                 {
                     await ReplyAsync("There are no songs in the queue. Try adding some with `don.add`!");
+                    return;
                 }
-                else
-                    await ReplyAsync(embed: new EmbedBuilder()
-                        .WithColor(_rand.RandomColor())
-                        .WithTitle($"Queue for `{guild.Name}`")
-                        .WithThumbnailUrl(guild.IconUrl)
-                        .WithDescription(string.Join("\n", queue))
-                        .WithCurrentTimestamp()
-                        .Build());
+
+                var chunks = queue.ChunkBy(10);
+
+                var items = new List<string>();
+
+                foreach (var h in chunks)
+                    items.Add(string.Join('\n', h));
+
+                await PagedReplyAsync(new PaginatedMessage 
+                { 
+                    Pages = items, 
+                    Color = _rand.RandomColor(),
+                    Title = $"Queue for `{guild.Name}`", 
+                    AlternateDescription = "The queue"
+                });
             }
             catch (Exception e)
             {

@@ -9,6 +9,7 @@ using donniebot.classes;
 using System.Diagnostics;
 using YoutubeExplode.Videos;
 using System.Threading.Tasks;
+using YoutubeExplode.Playlists;
 using System.Collections.Generic;
 
 namespace donniebot.services
@@ -30,7 +31,7 @@ namespace donniebot.services
         }
 
         public event Func<ulong, AudioPlayer, Song, Task> SongAdded;
-        public event Func<AudioPlayer, Task> SongEnded;
+        public event Func<Song, AudioPlayer, Task> SongEnded;
 
         public async Task ConnectAsync(SocketVoiceChannel channel)
         {
@@ -73,7 +74,7 @@ namespace donniebot.services
             try
             {
                 var id = vc.Guild.Id;
-                if (!_connections.Any(x => x.GuildId == id))
+                if (!HasConnection(id))
                     await ConnectAsync(vc);
                 
                 var player = _connections.First(x => x.GuildId == id);
@@ -85,6 +86,49 @@ namespace donniebot.services
                 enq.Release(); 
             }
         }
+        public async Task EnqueueMany(SocketVoiceChannel vc, IEnumerable<Song> songs)
+        {
+            await enq.WaitAsync();
+            try
+            {
+                var id = vc.Guild.Id;
+                if (!HasConnection(id))
+                    await ConnectAsync(vc);
+                
+                var player = _connections.First(x => x.GuildId == id);
+                player.EnqueueMany(songs);
+                SongAdded?.Invoke(id, player, songs.First());
+            }
+            finally 
+            {
+                enq.Release(); 
+            }
+        }
+
+        public void RemoveAt(ulong id, int index)
+        {
+            if (!HasConnection(id))
+                return;
+
+            var queue = GetConnection(id).Queue;
+
+            if (index < 0 || index >= queue.Count)
+                return;
+
+            queue.RemoveAt(index);
+        }
+
+        public void Shuffle(ulong id)
+        {
+
+            if (!HasConnection(id))
+                return;
+
+            var queue = GetConnection(id).Queue;
+            if (!queue.Any()) return;
+
+            queue.Shuffle();
+        }
 
         public async Task OnSongAdded(ulong id, AudioPlayer player, Song s)
         {
@@ -92,12 +136,19 @@ namespace donniebot.services
                 await PlayAsync(player);
         }
 
-        public async Task OnSongEnded(AudioPlayer player)
+        public async Task OnSongEnded(Song s, AudioPlayer player)
         {
             if (player.Queue.Count > 0)
                 await PlayAsync(player);
         }
 
+        public async Task PlayAsync(ulong id)
+        {
+            if (!HasConnection(id))
+                throw new InvalidOperationException("Not connected to a voice channel.");
+
+            await PlayAsync(GetConnection(id));
+        }
         public async Task PlayAsync(AudioPlayer player)
         {
             try
@@ -106,12 +157,19 @@ namespace donniebot.services
                 if (!player.Queue.Any())
                     return;
 
-                var song = player.Queue.First();
+                var song = player.Pop();
+                player.Current = song;
 
                 if (!HasConnection(id))
                     throw new InvalidOperationException("Not connected to a voice channel.");
 
                 var connection = GetConnection(id);
+                var channel = connection.Channel;
+                if (channel.Guild.CurrentUser.VoiceChannel != channel)
+                    await ConnectAsync(channel);
+
+                if (connection.IsPlaying)
+                    return;
 
                 var discord = connection.Stream;
 
@@ -134,6 +192,9 @@ namespace donniebot.services
                     var bytesConverted = 0;
 
                     var isWriting = false;
+
+                    var skipCts = new CancellationTokenSource();
+                    var token = skipCts.Token;
                         
                     var download = Task.Run(async () => 
                     {
@@ -141,10 +202,17 @@ namespace donniebot.services
                         {
                             do
                             {
-                                bytesDown = await str.ReadAsync(bufferDown, 0, block_size);
-                                await downloadStream.WriteAsync(bufferDown, 0, bytesDown);
+                                if (player.IsSkipping)
+                                {
+                                    downloadStream.CompleteWriting();
+                                    skipCts.Cancel();
+                                    break;
+                                }
+                                
+                                bytesDown = await str.ReadAsync(bufferDown, 0, block_size, token);
+                                await downloadStream.WriteAsync(bufferDown, 0, bytesDown, token);
                             }
-                            while (bytesDown > 0 && !player.IsSkipping);
+                            while (bytesDown > 0);
                         }
                         finally
                         {
@@ -160,10 +228,16 @@ namespace donniebot.services
                         {
                             do
                             {
-                                bytesRead = await downloadStream.ReadAsync(bufferRead, 0, block_size);
-                                await input.WriteAsync(bufferRead, 0, bytesRead);
+                                if (player.IsSkipping)
+                                {
+                                    skipCts.Cancel();
+                                    break;
+                                }
+                                
+                                bytesRead = await downloadStream.ReadAsync(bufferRead, 0, block_size, token);
+                                await input.WriteAsync(bufferRead, 0, bytesRead, token);
                             }
-                            while (bytesRead > 0 && !player.IsSkipping);
+                            while (bytesRead > 0);
                         }
                         finally
                         {
@@ -179,19 +253,25 @@ namespace donniebot.services
                         {
                             do 
                             {
+                                if (player.IsSkipping)
+                                {
+                                    skipCts.Cancel();
+                                    break;
+                                }
+
                                 if (isWriting && hasHadFullChunkYet && bytesConverted < block_size) //if bytesConverted is less than here, then the last (small) chunk is done
                                     break;
 
                                 isWriting = true;
 
-                                bytesConverted = await output.ReadAsync(bufferWrite, 0, block_size);
+                                bytesConverted = await output.ReadAsync(bufferWrite, 0, block_size, token);
 
                                 if (bytesConverted == block_size)
                                     hasHadFullChunkYet = true;
 
-                                await discord.WriteAsync(bufferWrite, 0, bytesConverted);
+                                await discord.WriteAsync(bufferWrite, 0, bytesConverted, token);
                             }
-                            while (bytesConverted > 0 && !player.IsSkipping);
+                            while (bytesConverted > 0);
                         }
                         finally 
                         {
@@ -199,14 +279,15 @@ namespace donniebot.services
                         }
                     });
 
-                    await Task.WhenAll(download, read, write);
+                    Task.WaitAll(download, read, write);
+
+                    player.IsPlaying = false;
+                    player.IsSkipping = false;
+                    player.Current = null;
+
+                    var finished = player.Pop();
+                    SongEnded?.Invoke(finished, connection);
                 }
-
-                player.IsPlaying = false;
-                player.IsSkipping = false;
-                player.Pop();
-
-                SongEnded?.Invoke(connection);
             }
             catch (Exception e)
             {
@@ -233,6 +314,26 @@ namespace donniebot.services
 
             return new Song(info, userId, guildId);
         }
+        public async Task<classes.Playlist> GetPlaylistAsync(string playlistId, ulong guildId, ulong userId)
+        {
+            var songs = new List<Song>();
+            var id = new PlaylistId(playlistId);
+
+            var data = await yt.Playlists.GetAsync(id);
+            var videos = await yt.Playlists.GetVideosAsync(id);
+
+            foreach (var video in videos)
+                songs.Add(new Song(
+                    new SongInfo(video.Title, 
+                        video.Url, 
+                        video.Thumbnails.MediumResUrl, 
+                        video.Author, 
+                        video.Duration),
+                    userId, 
+                    guildId));
+
+            return new classes.Playlist(songs, data.Title, data.Author, data.Url, data.Thumbnails.MediumResUrl, userId, guildId);
+        }
 
         private Process CreateStream()
         {
@@ -249,6 +350,8 @@ namespace donniebot.services
         private async Task<Video> GetVideoAsync(string query) => await yt.Search.GetVideosAsync(query).FirstAsync();
 
         public bool IsConnected(ulong id) => HasConnection(id);
+
+        public bool HasSongs(ulong id) => (HasConnection(id) && GetConnection(id).Queue.Any());
 
         private AudioPlayer GetConnection(ulong id) => _connections.First(x => x.GuildId == id);
 
@@ -267,10 +370,19 @@ namespace donniebot.services
 
             if (HasConnection(id))
             {
-                var queue = GetConnection(id).Queue;
+                var connection = GetConnection(id);
+                var queue = connection.Queue;
 
-                for (int i = 0; i < queue.Count; i++)
-                    items.Add($"**{i+1}**: {queue[i].Title} (queued by {queue[i].QueuerId})");
+                if (connection.Current != null) 
+                {
+                    items.Add($"**{1}**: {connection.Current.Title} (queued by {connection.Current.QueuerId})");
+
+                    for (int i = 1; i < queue.Count; i++)
+                        items.Add($"**{i+1}**: {queue[i].Title} (queued by {queue[i].QueuerId})");
+                }
+                else
+                    for (int i = 0; i < queue.Count; i++)
+                        items.Add($"**{i+1}**: {queue[i].Title} (queued by {queue[i].QueuerId})");
             }
 
             return items;

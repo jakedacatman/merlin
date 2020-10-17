@@ -12,6 +12,7 @@ namespace donniebot.classes
         public IAudioClient Connection { get; }
         public SocketVoiceChannel Channel { get; }
         public AudioOutStream Stream { get; set; }
+        public Song Current { get; set; } = null;
         public List<Song> Queue { get; set; }
         public bool IsPlaying { get; set; } = false;
         public bool IsSkipping { get; set; } = false;
@@ -27,6 +28,9 @@ namespace donniebot.classes
         }
 
         public void Enqueue(Song s) => Queue.Add(s);
+
+        public void EnqueueMany(IEnumerable<Song> s) => Queue.AddRange(s);
+
         public Song Pop()
         {
             var song = Queue[0];
@@ -65,7 +69,7 @@ namespace donniebot.classes
                 return 0;
             }
 
-            if (_skips == (int)Math.Round(.75f * listeningUsers.Count()))
+            if (_skips >= (int)Math.Floor(.75f * listeningUsers.Count()))
             {
                 _skips = 0;
                 IsSkipping = true;

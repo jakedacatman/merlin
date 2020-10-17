@@ -55,7 +55,10 @@ namespace donniebot.classes
             "LiteDB",
             "Microsoft.Extensions.DependencyInjection",
             "SixLabors.ImageSharp",
-            "SixLabors.ImageSharp.Processing"
+            "SixLabors.ImageSharp.Processing",
+            "YoutubeExplode",
+            "YoutubeExplode.Videos",
+            "YoutubeExplode.Playlists"
         };
     }
 }

@@ -811,10 +811,7 @@ namespace donniebot.services
                     HorizontalAlignment = HorizontalAlignment.Center,
                     VerticalAlignment = VerticalAlignment.Bottom,
                     WrapTextWidth = width,
-                    FallbackFonts = 
-                    {
-                        SystemFonts.Find("Twemoji")
-                    }
+                    FallbackFonts = { SystemFonts.Find("Twemoji") }
                 };
 
                 var options = new TextGraphicsOptions(new GraphicsOptions(), to);
@@ -1048,7 +1045,7 @@ namespace donniebot.services
             {
                 var post = postdata.ElementAt(i)["data"];
                 var hint = post["post_hint"];
-                if (post["url"] != null && hint != null && (hint.Value<string>() == "image" || hint.Value<string>() == "hosted:video"))
+                if (post["url"] != null && (hint?.Value<string>() == "image" || hint?.Value<string>() == "hosted:video"))
                 {
                     var title = post["title"].Value<string>();
                     if (title.Length > 256)
@@ -1122,7 +1119,7 @@ namespace donniebot.services
                     source.SaveAsPng(file);
             else
             {
-                if ((_format != null && _format.DefaultMimeType == "image/gif") || source.Frames.Count > 1) 
+                if ((_format?.DefaultMimeType == "image/gif") || source.Frames.Count > 1) 
                 {
                     source.Metadata.GetFormatMetadata(GifFormat.Instance).ColorTableMode = GifColorTableMode.Local;
                     source.Metadata.GetFormatMetadata(GifFormat.Instance).RepeatCount = 0;
@@ -1151,10 +1148,7 @@ namespace donniebot.services
 
             using (var file = File.Open(path, FileMode.OpenOrCreate))
             {
-                JpegEncoder s = new JpegEncoder
-                {
-                    Quality = quality,
-                };
+                JpegEncoder s = new JpegEncoder { Quality = quality };
                 source.SaveAsJpeg(file, s);
                 source.Dispose();
                 return path;
