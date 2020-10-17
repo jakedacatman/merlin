@@ -28,6 +28,8 @@ namespace donniebot.services
 
             SongAdded += OnSongAdded;
             SongEnded += OnSongEnded;
+
+            _client.UserVoiceStateUpdated += OnVoiceUpdate;
         }
 
         public event Func<ulong, AudioPlayer, Song, Task> SongAdded;
@@ -140,6 +142,17 @@ namespace donniebot.services
         {
             if (player.Queue.Count > 0)
                 await PlayAsync(player);
+        }
+
+        public Task OnVoiceUpdate(SocketUser user, SocketVoiceState oldS, SocketVoiceState newS)
+        {
+            if (newS.VoiceChannel == null)
+            {
+                var queue = GetConnection(newS.VoiceChannel.Id).Queue;
+                queue.RemoveRange(0, queue.Count);
+            }
+
+            return Task.CompletedTask;
         }
 
         public async Task PlayAsync(ulong id)
