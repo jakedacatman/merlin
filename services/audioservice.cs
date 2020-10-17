@@ -375,10 +375,10 @@ namespace donniebot.services
 
                 if (connection.Current != null) 
                 {
-                    items.Add($"**{1}**: {connection.Current.Title} (queued by {connection.Current.QueuerId})");
+                    items.Add($"__**{1}**: {connection.Current.Title} (queued by {connection.Current.QueuerId})__");
 
-                    for (int i = 1; i < queue.Count; i++)
-                        items.Add($"**{i+1}**: {queue[i].Title} (queued by {queue[i].QueuerId})");
+                    for (int i = 0; i < queue.Count; i++)
+                        items.Add($"**{i+2}**: {queue[i].Title} (queued by {queue[i].QueuerId})");
                 }
                 else
                     for (int i = 0; i < queue.Count; i++)
@@ -386,6 +386,15 @@ namespace donniebot.services
             }
 
             return items;
+        }
+        public List<Song> GetRawQueue(ulong id)
+        {
+            var songs = new List<Song>();
+
+            if (HasConnection(id))
+                return GetConnection(id).Queue;
+
+            return songs;
         }
 
         private bool HasConnection(ulong id) => _connections.Any(x => x.GuildId == id);

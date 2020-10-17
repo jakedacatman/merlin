@@ -46,7 +46,7 @@ namespace donniebot.commands
                 var items = new List<string>();
 
                 foreach (var h in chunks)
-                    items.Add(string.Join('\n', h));
+                    items.Add($"{string.Join('\n', h)}");
 
                 await PagedReplyAsync(new PaginatedMessage 
                 { 
