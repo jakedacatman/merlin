@@ -22,7 +22,7 @@ namespace donniebot.commands
         [Command("disconnect")]
         [Alias("di", "dis", "leave")]
         [Summary("Leaves the current voice channel.")]
-        public async Task JoinCmd()
+        public async Task LeaveCmd()
         {
             try
             {
