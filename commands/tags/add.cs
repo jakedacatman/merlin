@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Discord.Addons.Interactive;
+using Discord.WebSocket;
 
 namespace donniebot.commands
 {
@@ -12,10 +13,13 @@ namespace donniebot.commands
         [Summary("Adds the specified tag.")]
         [RequireUserPermission(GuildPermission.ManageMessages)]
         [Priority(1)]
-        public async Task AddCmd([Summary("The name of the tag.")] string tag, [Summary("The value of the tag."), Remainder] string value)
+        public async Task AddCmd([Summary("The name of the tag.")] string tag, [Summary("The value of the tag."), Remainder] string value = null)
         {
             try
             {
+                if (value == null)
+                    value = (await _misc.GetPreviousMessageAsync(Context.Channel as SocketTextChannel)).Content;
+                
                 if (tag.Length > 150)
                 {
                     await ReplyAsync("Tag is too long. Limit it to 150 characters or less.");

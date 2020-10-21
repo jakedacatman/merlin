@@ -141,15 +141,17 @@ namespace donniebot.services
                 await PlayAsync(player);
         }
 
-        public Task OnVoiceUpdate(SocketUser user, SocketVoiceState oldS, SocketVoiceState newS)
+        public async Task OnVoiceUpdate(SocketUser user, SocketVoiceState oldS, SocketVoiceState newS)
         {
             if (newS.VoiceChannel == null)
             {
-                var queue = GetConnection(newS.VoiceChannel.Id).Queue;
+                var connection = GetConnection(newS.VoiceChannel.Id);
+                var queue = connection.Queue;
                 queue.RemoveRange(0, queue.Count);
+                await DisconnectAsync(connection.Channel);
             }
-
-            return Task.CompletedTask;
+            else if (newS.VoiceChannel != oldS.VoiceChannel && HasConnection(oldS.VoiceChannel.Id))
+                await ConnectAsync(newS.VoiceChannel);
         }
 
         public async Task PlayAsync(ulong id)
@@ -214,7 +216,6 @@ namespace donniebot.services
                             {
                                 if (player.IsSkipping)
                                 {
-                                    downloadStream.CompleteWriting();
                                     skipCts.Cancel();
                                     break;
                                 }
@@ -227,9 +228,8 @@ namespace donniebot.services
                         finally
                         {
                             await downloadStream.FlushAsync();
+                            downloadStream.CompleteWriting();
                         }
-
-                        downloadStream.CompleteWriting();
                     });
 
                     var read = Task.Run(async () => 
@@ -399,12 +399,10 @@ namespace donniebot.services
         }
         public List<Song> GetRawQueue(ulong id)
         {
-            var songs = new List<Song>();
-
             if (HasConnection(id))
                 return GetConnection(id).Queue;
 
-            return songs;
+            return new List<Song>();
         }
 
         private bool HasConnection(ulong id) => _connections.Any(x => x.GuildId == id);
