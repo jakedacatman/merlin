@@ -75,6 +75,16 @@ namespace donniebot.services
             { typeof(RequireContextAttribute), "must be invoked in a guild or dm" }
         };
 
+        private readonly Dictionary<int, string> prefixes = new Dictionary<int, string>()
+        {
+            { 0, "" },
+            { 1, "Ki"},
+            { 2, "Mi"},
+            { 3, "Gi"},
+            { 4, "Ti"},
+            { 5, "Pi"},
+        };
+
         public MiscService(DiscordShardedClient client, IServiceProvider services, NetService net, Random random, RandomService rand)
         {
             _client = client;
@@ -540,27 +550,22 @@ namespace donniebot.services
             return embed;
         }
 
-        public string PrettyFormat(long bytes)
+        public string PrettyFormat(long bytes, int place)
         {
+            var bd = (double) bytes; 
             var sb = new StringBuilder();
-            sb.Append(bytes);
+            long divisor = 1 << 10;
 
-            if (bytes < 1024L)
-                sb.Append("");
-            if ((bytes >> 10) < 1024L)
-                sb.Append("Ki");
-            else if ((bytes >> 20) < 1024L)
-                sb.Append("Mi");
-            else if ((bytes >> 30) < 1024L)
-                sb.Append("Gi");
-            else if ((bytes >> 40) < 1024L)
-                sb.Append("Ti");
-            else if ((bytes >> 50) < 1024L)
-                sb.Append("Pi");
-            else if ((bytes >> 60) < 1024L)
-                sb.Append("Ei");
+            for (int i = 0; i < 6; i++)
+            {
+                if (bd < 1024d)
+                {
+                    sb.Append($"{Math.Round(bd, place)} {prefixes[i]}B");
+                    break;
+                }
 
-            sb.Append("B");
+                bd /= divisor;
+            }
 
             return sb.ToString();
         }
