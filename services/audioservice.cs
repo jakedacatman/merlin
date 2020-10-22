@@ -11,6 +11,7 @@ using YoutubeExplode.Videos;
 using System.Threading.Tasks;
 using YoutubeExplode.Playlists;
 using System.Collections.Generic;
+using YoutubeExplode.Videos.Streams;
 
 namespace donniebot.services
 {
@@ -143,15 +144,17 @@ namespace donniebot.services
 
         public async Task OnVoiceUpdate(SocketUser user, SocketVoiceState oldS, SocketVoiceState newS)
         {
-            if (newS.VoiceChannel == null)
+            var newVc = newS.VoiceChannel;
+            var oldVc = oldS.VoiceChannel;
+            if (newVc == null && HasConnection(newVc.Guild.Id))
             {
-                var connection = GetConnection(newS.VoiceChannel.Id);
+                var connection = GetConnection(newVc.Guild.Id);
                 var queue = connection.Queue;
                 queue.RemoveRange(0, queue.Count);
                 await DisconnectAsync(connection.Channel);
             }
-            else if (newS.VoiceChannel != oldS.VoiceChannel && HasConnection(oldS.VoiceChannel.Id))
-                await ConnectAsync(newS.VoiceChannel);
+            else if (newVc != oldVc && HasConnection(oldVc.Guild.Id))
+                await ConnectAsync(newVc);
         }
 
         public async Task PlayAsync(ulong id)
@@ -185,7 +188,11 @@ namespace donniebot.services
 
                 var discord = connection.Stream;
 
-                using (var str = await GetAudioAsync(song.Url))
+                var info = await GetAudioInfoAsync(song.Url);
+
+                song.Size = info.Size.TotalBytes;
+
+                using (var str = await GetAudioAsync(info))
                 using (var downloadStream = new SimplexStream())
                 using (var ffmpeg = CreateStream())
                 using (var output = ffmpeg.StandardOutput.BaseStream)
@@ -295,8 +302,7 @@ namespace donniebot.services
                     player.IsSkipping = false;
                     player.Current = null;
 
-                    var finished = player.Pop();
-                    SongEnded?.Invoke(finished, connection);
+                    SongEnded?.Invoke(song, connection);
                 }
             }
             catch (Exception e)
@@ -305,12 +311,15 @@ namespace donniebot.services
             }
         }
 
-        private async Task<Stream> GetAudioAsync(string ytUrl)
+        private async Task<AudioOnlyStreamInfo> GetAudioInfoAsync(string ytUrl)
         {
             var info = await yt.Videos.Streams.GetManifestAsync(new VideoId(ytUrl));
             
-            return await yt.Videos.Streams.GetAsync(info.GetAudioOnly().OrderByDescending(x => x.Bitrate).First());
+            return info.GetAudioOnly().OrderByDescending(x => x.Bitrate).First();
         }
+
+        private async Task<Stream> GetAudioAsync(AudioOnlyStreamInfo info) => await yt.Videos.Streams.GetAsync(info);
+
         public async Task<Song> CreateSongAsync(string queryOrUrl, ulong guildId, ulong userId)
         {
             Video video;
@@ -324,6 +333,7 @@ namespace donniebot.services
 
             return new Song(info, userId, guildId);
         }
+
         public async Task<classes.Playlist> GetPlaylistAsync(string playlistId, ulong guildId, ulong userId)
         {
             var songs = new List<Song>();
@@ -372,6 +382,17 @@ namespace donniebot.services
                 return 0;
 
             return GetConnection(id).Skip(skipper);
+        }
+
+        public Song GetCurrent(ulong id)
+        {
+            if (HasConnection(id))
+            {
+                var connection = GetConnection(id);
+                return connection.Current;
+            }
+
+            return null;
         }
 
         public List<string> GetQueue(ulong id)

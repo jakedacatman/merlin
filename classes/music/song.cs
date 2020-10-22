@@ -11,6 +11,7 @@ namespace donniebot.classes
         public ulong QueuerId { get; }
         public ulong GuildId { get; }
         public TimeSpan Length { get; }
+        public long Size { get; set; } = 0L;
 
         public Song(SongInfo info, ulong queuerId, ulong guildId)
         {

@@ -1,6 +1,5 @@
 using System;
 using Discord.Commands;
-using Discord.WebSocket;
 using donniebot.services;
 using System.Threading.Tasks;
 using Discord.Addons.Interactive;

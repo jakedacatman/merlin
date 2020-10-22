@@ -540,6 +540,31 @@ namespace donniebot.services
             return embed;
         }
 
+        public string PrettyFormat(long bytes)
+        {
+            var sb = new StringBuilder();
+            sb.Append(bytes);
+
+            if (bytes < 1024L)
+                sb.Append("");
+            if ((bytes >> 10) < 1024L)
+                sb.Append("Ki");
+            else if ((bytes >> 20) < 1024L)
+                sb.Append("Mi");
+            else if ((bytes >> 30) < 1024L)
+                sb.Append("Gi");
+            else if ((bytes >> 40) < 1024L)
+                sb.Append("Ti");
+            else if ((bytes >> 50) < 1024L)
+                sb.Append("Pi");
+            else if ((bytes >> 60) < 1024L)
+                sb.Append("Ei");
+
+            sb.Append("B");
+
+            return sb.ToString();
+        }
+
         public async Task<IMessage> GetNthMessageAsync(SocketTextChannel channel, int pos) => (await channel.GetMessagesAsync().FlattenAsync()).OrderByDescending(x => x.Timestamp).ToArray()[pos];
 
         public async Task<IMessage> GetPreviousMessageAsync(SocketTextChannel channel) => await GetNthMessageAsync(channel, 1);
