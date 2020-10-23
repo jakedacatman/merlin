@@ -33,9 +33,8 @@ namespace donniebot.commands
             try
             {
                 var id = Context.Guild.Id;
-                var queue = _audio.GetQueue(id);
 
-                if (!queue.Any())
+                if (!_audio.HasSongs(id))
                 {
                     await ReplyAsync("There are no songs in the queue. Try adding some with `don.add`!");
                     return;

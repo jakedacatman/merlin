@@ -46,11 +46,10 @@ namespace donniebot.services
             
             var connection = await channel.ConnectAsync(true, false);
 
-            if (!HasConnection(id))
+            if (!GetConnection(id, out var curr))
                 _connections.Add(new AudioPlayer(id, channel, connection));
             else
             {
-                var curr = GetConnection(id);
                 _connections.Remove(curr);
                 _connections.Add(new AudioPlayer(id, channel, connection));
             }
@@ -62,9 +61,8 @@ namespace donniebot.services
 
             await channel.DisconnectAsync();
 
-            if (HasConnection(id))
+            if (GetConnection(id, out var connection))
             {
-                var connection = GetConnection(id);
                 _connections.Remove(connection);
                 connection.Dispose();
             }
@@ -77,10 +75,9 @@ namespace donniebot.services
             try
             {
                 var id = vc.Guild.Id;
-                if (!HasConnection(id))
+                if (!GetConnection(id, out var player))
                     await ConnectAsync(vc);
                 
-                var player = _connections.First(x => x.GuildId == id);
                 player.Enqueue(song);
                 SongAdded?.Invoke(id, player, song);
             }
@@ -95,10 +92,9 @@ namespace donniebot.services
             try
             {
                 var id = vc.Guild.Id;
-                if (!HasConnection(id))
+                if (!GetConnection(id, out var player))
                     await ConnectAsync(vc);
                 
-                var player = _connections.First(x => x.GuildId == id);
                 player.EnqueueMany(songs);
                 SongAdded?.Invoke(id, player, songs.First());
             }
@@ -110,10 +106,10 @@ namespace donniebot.services
 
         public void RemoveAt(ulong id, int index)
         {
-            if (!HasConnection(id))
+            if (!GetConnection(id, out var c))
                 return;
 
-            var queue = GetConnection(id).Queue;
+            var queue = c.Queue;
 
             if (index < 0 || index >= queue.Count)
                 return;
@@ -123,11 +119,10 @@ namespace donniebot.services
 
         public void Shuffle(ulong id)
         {
-
-            if (!HasConnection(id))
+            if (!GetConnection(id, out var c))
                 return;
 
-            GetConnection(id).Shuffle();
+            c.Shuffle();
         }
 
         public async Task OnSongAdded(ulong id, AudioPlayer player, Song s)
@@ -145,24 +140,20 @@ namespace donniebot.services
         public async Task OnVoiceUpdate(SocketUser user, SocketVoiceState oldS, SocketVoiceState newS)
         {
             var newVc = newS.VoiceChannel;
-            var oldVc = oldS.VoiceChannel;
-            if (newVc == null && HasConnection(newVc.Guild.Id))
+            if (newVc == null && GetConnection(newVc.Guild.Id, out var connection))
             {
-                var connection = GetConnection(newVc.Guild.Id);
                 var queue = connection.Queue;
                 queue.RemoveRange(0, queue.Count);
                 await DisconnectAsync(connection.Channel);
             }
-            else if (newVc != oldVc && HasConnection(oldVc.Guild.Id))
-                await ConnectAsync(newVc);
         }
 
         public async Task PlayAsync(ulong id)
         {
-            if (!HasConnection(id))
+            if (!GetConnection(id, out var player))
                 throw new InvalidOperationException("Not connected to a voice channel.");
 
-            await PlayAsync(GetConnection(id));
+            await PlayAsync(player);
         }
         public async Task PlayAsync(AudioPlayer player)
         {
@@ -175,10 +166,9 @@ namespace donniebot.services
                 var song = player.Pop();
                 player.Current = song;
 
-                if (!HasConnection(id))
+                if (!GetConnection(id, out var connection))
                     throw new InvalidOperationException("Not connected to a voice channel.");
 
-                var connection = GetConnection(id);
                 var channel = connection.Channel;
                 if (channel.Guild.CurrentUser.VoiceChannel != channel)
                     await ConnectAsync(channel);
@@ -209,8 +199,6 @@ namespace donniebot.services
                     var bytesDown = 0;
                     var bytesRead = 0;
                     var bytesConverted = 0;
-
-                    var isWriting = false;
 
                     var skipCts = new CancellationTokenSource();
                     var token = skipCts.Token;
@@ -276,10 +264,8 @@ namespace donniebot.services
                                     break;
                                 }
 
-                                if (isWriting && hasHadFullChunkYet && bytesConverted < block_size) //if bytesConverted is less than here, then the last (small) chunk is done
+                                if (hasHadFullChunkYet && bytesConverted < block_size) //if bytesConverted is less than here, then the last (small) chunk is done
                                     break;
-
-                                isWriting = true;
 
                                 bytesConverted = await output.ReadAsync(bufferWrite, 0, block_size, token);
 
@@ -369,28 +355,23 @@ namespace donniebot.services
 
         private async Task<Video> GetVideoAsync(string query) => await yt.Search.GetVideosAsync(query).FirstAsync();
 
-        public bool IsConnected(ulong id) => HasConnection(id);
+        public bool IsConnected(ulong id) => GetConnection(id, out var _);
 
-        public bool HasSongs(ulong id) => (HasConnection(id) && GetConnection(id).Queue.Any());
-
-        private AudioPlayer GetConnection(ulong id) => _connections.First(x => x.GuildId == id);
+        public bool HasSongs(ulong id) => (GetConnection(id, out var c) && c.Queue.Any());
 
         public int Skip(SocketGuildUser skipper)
         {
             var id = skipper.Guild.Id;
-            if (!HasConnection(id))
+            if (!GetConnection(id, out var c))
                 return 0;
 
-            return GetConnection(id).Skip(skipper);
+            return c.Skip(skipper);
         }
 
         public Song GetCurrent(ulong id)
         {
-            if (HasConnection(id))
-            {
-                var connection = GetConnection(id);
+            if (GetConnection(id, out var connection))
                 return connection.Current;
-            }
 
             return null;
         }
@@ -399,9 +380,8 @@ namespace donniebot.services
         {
             var items = new List<string>();
 
-            if (HasConnection(id))
+            if (GetConnection(id, out var connection))
             {
-                var connection = GetConnection(id);
                 var queue = connection.Queue;
 
                 if (connection.Current != null) 
@@ -420,12 +400,21 @@ namespace donniebot.services
         }
         public List<Song> GetRawQueue(ulong id)
         {
-            if (HasConnection(id))
-                return GetConnection(id).Queue;
+            if (GetConnection(id, out var c))
+                return c.Queue;
 
             return new List<Song>();
         }
 
-        private bool HasConnection(ulong id) => _connections.Any(x => x.GuildId == id);
+        private bool GetConnection(ulong id, out AudioPlayer connection)
+        {
+            connection = null;
+            var exists = _connections.Any(x => x.GuildId == id);
+
+            if (exists)
+                connection = _connections.First(x => x.GuildId == id);
+
+            return exists;
+        }
     }
 }
