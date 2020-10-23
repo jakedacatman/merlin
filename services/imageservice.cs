@@ -18,6 +18,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using UkooLabs.SVGSharpie.ImageSharp;
 
 namespace donniebot.services
 {
@@ -333,7 +334,7 @@ namespace donniebot.services
             var w = source.Width;
             var h = source.Height;
 
-            var font = SystemFonts.Collection.CreateFont("Linux Libertine", source.Width / 12f, FontStyle.Regular);
+            var font = SystemFonts.Collection.CreateFont("Goulong", source.Width / 12f, FontStyle.Regular);
             var tFont = SystemFonts.Collection.CreateFont("Linux Libertine", source.Width / 6f, FontStyle.Regular);
             float padding = 0.05f * source.Width;
             float wrap = source.Width - (2 * padding);
@@ -351,7 +352,7 @@ namespace donniebot.services
                 VerticalAlignment = VerticalAlignment.Center
             });
 
-            if (tBounds.Width > wrap) // will the title fit on one line? if not, scale both down
+            if (tBounds.Width > wrap) // will the title fit on one line? if not, scale it down
             {
                 var ratio = wrap / tBounds.Width;
                 var size = tFont.Size * ratio;
@@ -364,26 +365,17 @@ namespace donniebot.services
                     HorizontalAlignment = HorizontalAlignment.Center, 
                     VerticalAlignment = VerticalAlignment.Center
                 });
-
-                font = SystemFonts.Collection.CreateFont("Linux Libertine", size / 2, FontStyle.Regular);;
-
-                bounds = TextMeasurer.Measure(title, new RendererOptions(font) 
-                { 
-                    WrappingWidth = wrap, 
-                    HorizontalAlignment = HorizontalAlignment.Center, 
-                    VerticalAlignment = VerticalAlignment.Center
-                });
             }
 
             var bw = (int)Math.Round(w / 8d);
             var bh = (int)Math.Round(h / 8d);
 
-            var height = (int)tBounds.Height + bh;
+            var height = tBounds.Height + bh;
 
             bg.Mutate(x => x.Resize(new ResizeOptions
             {
                 Mode = ResizeMode.Stretch,
-                Size = new Size((int)Math.Round(5d * w / 4d), (int)Math.Round((1.2f * h) + height + bounds.Height)),
+                Size = new Size((int)Math.Round((5d / 4d) * w), (int)Math.Round((1.25f * h) + height + bounds.Height)),
                 Sampler = KnownResamplers.NearestNeighbor
             }));
 
@@ -394,7 +386,7 @@ namespace donniebot.services
 
             bg.Mutate(x => x.Draw(Pens.Solid(Color.White, rWidth), r));
 
-            var location = new PointF(bw + padding, r.Bottom + (.6f * bh));
+            var location = new PointF(bw + padding, r.Bottom + bh);
 
             var to = new TextOptions
             {
@@ -406,10 +398,14 @@ namespace donniebot.services
                     SystemFonts.Find("Twemoji")
                 }
             };
-
             var options = new TextGraphicsOptions(new GraphicsOptions(), to);
             bg.Mutate(x => x.DrawText(options, title, tFont, Color.White, location));
-            location.Y += (.25f * bh) + tBounds.Height;
+
+            var nextY = tBounds.Height;// + bh;
+            if (bounds.Width > wrap)
+                nextY = (height + .25f * bounds.Height);
+                
+            location.Y += (nextY);
             bg.Mutate(x => x.DrawText(options, text, font, Color.White, location));
 
             if (source.Frames.Count() > 1)
@@ -1177,6 +1173,16 @@ namespace donniebot.services
             File.Delete(path);
         }
 
-        public async Task<Image> DownloadFromUrlAsync(string url) => Image.Load(await _net.DownloadFromUrlAsync(url), out _format);
+        public async Task<Image> DownloadFromUrlAsync(string url)
+        {
+            if (!url.Contains("svg"))
+                return Image.Load(await _net.DownloadFromUrlAsync(url), out _format);
+            else 
+            {
+                var img = SvgImageRenderer.RenderFromString<Rgba32>(await _net.DownloadAsStringAsync(url), 500, 500);
+                _format = null;
+                return img;
+            }
+        }
     }
 }

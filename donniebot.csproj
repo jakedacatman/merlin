@@ -16,6 +16,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="../repos/SVGSharpie/src/UkooLabs.SVGSharpie.ImageSharp/UkooLabs.SVGSharpie.ImageSharp.csproj" />
     <!--> <ProjectReference Include="Discord.Addons.Interactive/Discord.Addons.Interactive.csproj"/> <!-->
     <PackageReference Include="Nerdbank.Streams" Version="2.6.81" />
     <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="1.0.0-unstable0456" />

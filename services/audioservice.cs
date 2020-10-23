@@ -36,7 +36,7 @@ namespace donniebot.services
         public event Func<ulong, AudioPlayer, Song, Task> SongAdded;
         public event Func<Song, AudioPlayer, Task> SongEnded;
 
-        public async Task ConnectAsync(SocketVoiceChannel channel)
+        public async Task<AudioPlayer> ConnectAsync(SocketVoiceChannel channel)
         {
             var id = channel.Guild.Id;
             var currUser = channel.Guild.CurrentUser;
@@ -46,13 +46,17 @@ namespace donniebot.services
             
             var connection = await channel.ConnectAsync(true, false);
 
+            var np = new AudioPlayer(id, channel, connection);
+
             if (!GetConnection(id, out var curr))
-                _connections.Add(new AudioPlayer(id, channel, connection));
+                _connections.Add(np);
             else
             {
                 _connections.Remove(curr);
-                _connections.Add(new AudioPlayer(id, channel, connection));
+                _connections.Add(np);
             }
+
+            return np;
         }
 
         public async Task DisconnectAsync(SocketVoiceChannel channel)
@@ -76,7 +80,7 @@ namespace donniebot.services
             {
                 var id = vc.Guild.Id;
                 if (!GetConnection(id, out var player))
-                    await ConnectAsync(vc);
+                    player = await ConnectAsync(vc);
                 
                 player.Enqueue(song);
                 SongAdded?.Invoke(id, player, song);
@@ -93,7 +97,7 @@ namespace donniebot.services
             {
                 var id = vc.Guild.Id;
                 if (!GetConnection(id, out var player))
-                    await ConnectAsync(vc);
+                    player = await ConnectAsync(vc);
                 
                 player.EnqueueMany(songs);
                 SongAdded?.Invoke(id, player, songs.First());
@@ -139,8 +143,12 @@ namespace donniebot.services
 
         public async Task OnVoiceUpdate(SocketUser user, SocketVoiceState oldS, SocketVoiceState newS)
         {
+            var oldVc = oldS.VoiceChannel;
             var newVc = newS.VoiceChannel;
-            if (newVc == null && GetConnection(newVc.Guild.Id, out var connection))
+
+            if (oldVc == null) return;
+
+            if (newVc == null && GetConnection(oldVc.Guild.Id, out var connection))
             {
                 var queue = connection.Queue;
                 queue.RemoveRange(0, queue.Count);
@@ -357,7 +365,7 @@ namespace donniebot.services
 
         public bool IsConnected(ulong id) => GetConnection(id, out var _);
 
-        public bool HasSongs(ulong id) => (GetConnection(id, out var c) && c.Queue.Any());
+        public bool HasSongs(ulong id) => GetConnection(id, out var c) && (GetCurrent(id) != null || c.Queue.Any());
 
         public int Skip(SocketGuildUser skipper)
         {
