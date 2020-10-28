@@ -2,7 +2,7 @@ name: .NET Core
 
 on:
   push:
-    branches: [ master ]
+    branches: [ master,audio-dev ]
   pull_request:
     branches: [ master ]
 
@@ -20,7 +20,7 @@ jobs:
     - name: Make directory
       run: mkdir ../repos
     - name: Clone repo
-      run: git clone https://github.com/UkooLabs/SVGSharpie.git ../repos/
+      run: git clone https://github.com/UkooLabs/SVGSharpie.git ../repos
     - name: Install dependencies
       run: dotnet restore
     - name: Build
