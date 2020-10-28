@@ -236,15 +236,12 @@ namespace donniebot.classes
 
     public static class StringExtensions
     {
-        public static bool WillExit(this string s, out string message)
+        public static IEnumerable<int> Utf8ToCodePoints(this string s) //adapted from https://stackoverflow.com/a/44679973
         {
-            if (s.Contains("Environment.Exit"))
-            {
-                message = "This code calls Environment.Exit.";
-                return true;
-            }
-            message = "This code will not exit.";
-            return false;
+            var utf32Bytes = Encoding.UTF32.GetBytes(s);
+            var bytesPerChar = 4;
+            for (int i = 0; i < utf32Bytes.Length; i+= bytesPerChar)
+                yield return BitConverter.ToInt32(utf32Bytes, i);
         }
     }
 

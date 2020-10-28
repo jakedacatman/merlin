@@ -27,18 +27,20 @@ namespace donniebot.services
         private readonly MiscService _misc;
         private readonly NetService _net;
         private readonly RandomService _rand;
+        private readonly DiscordShardedClient _client;
 
         private IImageFormat _format;
         private List<GuildImage> sentImages = new List<GuildImage>();
         private readonly Regex _reg = new Regex(@"[0-9]+(\.[0-9]{1,2})? fps");
         private readonly NekoEndpoints _nkeps;
 
-        public ImageService(MiscService misc, NetService net, RandomService rand, NekoEndpoints nkeps)
+        public ImageService(MiscService misc, NetService net, RandomService rand, NekoEndpoints nkeps, DiscordShardedClient client)
         {
             _misc = misc;
             _net = net;
             _rand = rand;
             _nkeps = nkeps;
+            _client = client;
         }
 
         public async Task<Image> Invert(string url) => Invert(await DownloadFromUrlAsync(url));
@@ -1097,13 +1099,30 @@ namespace donniebot.services
 
         public async Task<string> ParseUrlAsync(string url, SocketUserMessage msg)
         {
-            if (url != null) url = url.Trim('<').Trim('>');
+            if (url != null) 
+            {
+                if (Discord.MentionUtils.TryParseUser(url, out var uId))
+                    return _client.GetUser(uId).GetAvatarUrl(size: 512);
+
+                if (Discord.Emote.TryParse(url, out var e) && await _net.IsSuccessAsync(e.Url))
+                    return e.Url;
+                else
+                {
+                    var svgUrl = $"https://raw.githubusercontent.com/twitter/twemoji/master/assets/svg/{url.Utf8ToCodePoints().First():x4}.svg";
+                    if (await _net.IsSuccessAsync(svgUrl))
+                        return svgUrl;
+                    else
+                        url = url.Trim('<').Trim('>');
+                }
+
+            }
+
             if (url == null || !Uri.IsWellFormedUriString(url, UriKind.Absolute))
             {
-                if (msg.Attachments.Count == 0)
+                if (!msg.Attachments.Any())
                 {
                     var previousmsg = await _misc.GetPreviousMessageAsync(msg.Channel as SocketTextChannel);
-                    if (previousmsg.Attachments.Count > 0)
+                    if (previousmsg.Attachments.Any())
                         url = previousmsg.Attachments.First().Url;
                     else
                         if (Uri.IsWellFormedUriString(previousmsg.Content, UriKind.Absolute))
@@ -1186,7 +1205,7 @@ namespace donniebot.services
 
         public async Task<Image> DownloadFromUrlAsync(string url)
         {
-            if (!url.Contains("svg"))
+            if (!url.Contains("svg") && (await _net.GetContentTypeAsync(url)).ToLower() != "image/svg+xml")
                 return Image.Load(await _net.DownloadFromUrlAsync(url), out _format);
             else 
             {

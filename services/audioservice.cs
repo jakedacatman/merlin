@@ -143,6 +143,8 @@ namespace donniebot.services
 
         public async Task OnVoiceUpdate(SocketUser user, SocketVoiceState oldS, SocketVoiceState newS)
         {
+            if (user != _client.CurrentUser) return;
+
             var oldVc = oldS.VoiceChannel;
             var newVc = newS.VoiceChannel;
 
