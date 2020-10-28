@@ -30,7 +30,7 @@ namespace donniebot.commands
             {
                 url = await _img.ParseUrlAsync(url, Context.Message);
                 var osamaUrl = "https://i.jakedacatman.me/UfLp7.jpg";
-                var img = await _img.Overlay(osamaUrl, url, 106, 64, 73, 48, 4f);
+                var img = await _img.Overlay(osamaUrl, url, 103, 58, 80, 60, 4f);
                 await _img.SendToChannelAsync(img, Context.Channel);
             }
             catch (Exception e)

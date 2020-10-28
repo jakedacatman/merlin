@@ -9,24 +9,18 @@ namespace donniebot.classes
     {
         public async static Task<string> Run(string command, bool stderr = false)
         {
-            var arr = command.Split(' ');
-            var fn = arr[0].Trim('\\');
-            var list = new List<string>(arr);
-            list.Remove(fn);
-            var args = string.Join(' ', list);
             var shell = new Process
             {
                 StartInfo = new ProcessStartInfo
                 {
-                    FileName = fn,
-                    Arguments = args,
+                    FileName = "/bin/bash",
+                    Arguments = $"-c \"{command}\"",
                     UseShellExecute = false,
                     RedirectStandardOutput = true,
                     RedirectStandardError = stderr,
                     CreateNoWindow = true
                 }
             };
-            Console.WriteLine($"Running {fn} with args {args}");
             shell.Start();
 
             var stdout = await shell.StandardOutput.ReadToEndAsync();

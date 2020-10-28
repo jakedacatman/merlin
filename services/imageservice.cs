@@ -245,18 +245,42 @@ namespace donniebot.services
         }
         public Image Overlay(Image source, Image overlay, Point location, Size size, float rot = 0f)
         {
-            if (rot != 0f)
+            if (overlay.Frames.Count > 1)
             {
-                var ow = overlay.Width;
-                var oh = overlay.Height;
-                overlay.Mutate(x => x.Rotate(rot));
-                var nw = overlay.Width;
-                var nh = overlay.Height;
+                var delay = overlay.Frames.RootFrame.Metadata.GetFormatMetadata(GifFormat.Instance).FrameDelay;
+                for (int i = 1; i < overlay.Frames.Count; i++)
+                {
+                    var frame = source.Frames.CloneFrame(0).Frames[0];
+                    frame.Metadata.GetFormatMetadata(GifFormat.Instance).FrameDelay = delay;
+                    source.Frames.InsertFrame(i, frame);
+                }
+                        
+                return GifFilter((Image)source, overlay, location, size, rot, Overlay);
+            }
+            else
+            {
+                if (size != overlay.Size())
+                    overlay.Mutate(h => h.Resize(new ResizeOptions
+                    {
+                        Mode = ResizeMode.Stretch,
+                        Size = size,
+                        Sampler = KnownResamplers.MitchellNetravali
+                    }));
+
+                if (rot != 0f)
+                {
+                    var ow = overlay.Width;
+                    var oh = overlay.Height;
+                    overlay.Mutate(x => x.Rotate(rot));
+                    var nw = overlay.Width;
+                    var nh = overlay.Height;
             
-                location = new Point(location.X - ((nw - ow) / 2), location.Y - ((nh - oh) / 2));
+                    location = new Point(location.X - ((nw - ow) / 2), location.Y - ((nh - oh) / 2));
+                }
+
+                source.Mutate(x => x.DrawImage(overlay, location, 1f));
             }
 
-            source.Mutate(x => x.DrawImage(overlay, location, 1f));
             return source;
         }
 
@@ -407,19 +431,6 @@ namespace donniebot.services
                 
             location.Y += (nextY);
             bg.Mutate(x => x.DrawText(options, text, font, Color.White, location));
-
-            if (source.Frames.Count() > 1)
-            {
-                var delay = source.Frames.RootFrame.Metadata.GetFormatMetadata(GifFormat.Instance).FrameDelay;
-                for (int i = 1; i < source.Frames.Count; i++)
-                {
-                    var frame = bg.Frames.CloneFrame(0).Frames[0];
-                    frame.Metadata.GetFormatMetadata(GifFormat.Instance).FrameDelay = delay;
-                    bg.Frames.InsertFrame(i, frame);
-                }
-                        
-                return GifFilter((Image)bg, source, new Point(bw, bh), source.Size(), 0f, Overlay);
-            }
             
             return Overlay((Image)bg, source, new Point(bw, bh), source.Size());
         }
@@ -593,7 +604,7 @@ namespace donniebot.services
         }
         public Image GifFilter(Image source, Image x, Point y, Size z, float w, Func<Image, Image, Point, Size, float, Image> func)
         {
-            if (source.Frames.Count <= 1) throw new InvalidOperationException("can't use a gif filter on a stationary image");
+            if (x.Frames.Count <= 1 && source.Frames.Count <= 1) throw new InvalidOperationException("can't use a gif filter on a stationary image");
                 
             if (x.Frames.Count > 1)
             {
@@ -952,23 +963,23 @@ namespace donniebot.services
             for (int i = 0; i < data.Count(); i++)
             {
                 var r = data.ElementAt(i);
-                var url = r["url"].Value<string>();
-                var un = r["userName"].Value<string>() ?? "unknown";
-                var s = r["sourceURL"].Value<string>() ?? "unknown";
+                var url = r["url"]?.Value<string>();
+                var un = r["userName"]?.Value<string>() ?? "unknown";
+                var s = r["sourceURL"]?.Value<string>() ?? "unknown";
 
                 //temporary fix until the website is functional
-                if (r["source"].Value<string>() == "Gelbooru")
+                if (r["source"]?.Value<string>() == "Gelbooru")
                 {
                     var fn = url.Split('/').Last();
                     url = $"https://img2.gelbooru.com/images/{fn.Substring(0, 2)}/{fn.Substring(2, 2)}/{fn}";
                 }
-                else if (r["source"].Value<string>() == "Danbooru")
+                else if (r["source"]?.Value<string>() == "Danbooru")
                 {
                     var fn = url.Split('/').Last();
                     url = $"https://cdn.donmai.us/original/{fn.Substring(0, 2)}/{fn.Substring(2, 2)}/{fn}";
                 }
                 
-                image = new GuildImage(url, gId, s, un, title: $"{r["id"].Value<string>()} - {r["source"].Value<string>()}");
+                image = new GuildImage(url, gId, s, un, title: $"{r["id"]?.Value<string>()} - {r["source"]?.Value<string>()}");
 
                 if (!sentImages.ContainsObj(image) && !string.IsNullOrWhiteSpace(un))
                 {
