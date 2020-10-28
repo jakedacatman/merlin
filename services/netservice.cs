@@ -63,6 +63,31 @@ namespace donniebot.services
             return false;
         }
 
+        public async Task<long> GetContentLengthAsync(string url)
+        {
+            url = ParseUrl(url);
+
+            var res = await _hc.SendAsync(new HttpRequestMessage(HttpMethod.Head, new Uri(url)));
+
+            if (res.IsSuccessStatusCode)
+                if (res.Content.Headers.ContentLength.HasValue)
+                    return res.Content.Headers.ContentLength.Value;
+
+            return 0L;
+        }
+
+        public async Task<bool> IsSuccessAsync(string url)
+        {
+            url = ParseUrl(url);
+
+            var res = await _hc.SendAsync(new HttpRequestMessage(HttpMethod.Head, new Uri(url)));
+
+            if (res.IsSuccessStatusCode) return true;
+
+            return false;
+        }
+
+
         public async Task<byte[]> DownloadFromUrlAsync(string url)
         {
             url = ParseUrl(url);

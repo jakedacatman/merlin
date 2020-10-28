@@ -9,11 +9,11 @@ namespace donniebot.classes
     {
         public async static Task<string> Run(string command, bool stderr = false)
         {
-            var shell = new Process
+            var proc = new Process
             {
                 StartInfo = new ProcessStartInfo
                 {
-                    FileName = "/usr/bin/bash",
+                    FileName = "/bin/bash",
                     Arguments = $"-c \"{command}\"",
                     UseShellExecute = false,
                     RedirectStandardOutput = true,
@@ -21,13 +21,14 @@ namespace donniebot.classes
                     CreateNoWindow = true
                 }
             };
-            using (shell)
+
+            using (proc)
             {
-                shell.Start();
+                proc.Start();
 
-                var stdout = await shell.StandardOutput.ReadToEndAsync();
+                var stdout = await proc.StandardOutput.ReadToEndAsync();
 
-                return stderr ? $"{await shell.StandardError.ReadToEndAsync()}\n{stdout}" : stdout;
+                return stderr ? $"{await proc.StandardError.ReadToEndAsync()}\n{stdout}" : stdout;
             }
         }
     }

@@ -17,21 +17,23 @@ namespace donniebot.commands
         private readonly MiscService _misc;
         private readonly ImageService _img;
         private readonly RandomService _rand;
+        private readonly NetService _net;
 
         private Regex _reg = new Regex(@"[0-9a-z]{1,21}"); 
 
-        public RedditCommand(DiscordShardedClient client, MiscService misc, ImageService img, RandomService rand)
+        public RedditCommand(DiscordShardedClient client, MiscService misc, ImageService img, RandomService rand, NetService net)
         {
             _client = client;
             _misc = misc;
             _img = img;
             _rand = rand;
+            _net = net;
         }
 
         [Command("reddit")]
         [Alias("red", "rd")]
         [Summary("Grabs a random image from Reddit.")]
-        public async Task RedditCmd([Summary("The subreddit to pull from.")]string sub = null, [Summary("The optional sort mode in lowercase. Accepts \"top\", \"best\", \"new\", \"rising\", \"hot\", and \"controversial\".")]string mode = "top")
+        public async Task RedditCmd([Summary("The subreddit to pull from.")]string sub, [Summary("The optional sort mode in lowercase. Accepts \"top\", \"best\", \"new\", \"rising\", \"hot\", and \"controversial\".")]string mode = "top")
         {
             try
             {
@@ -54,9 +56,27 @@ namespace donniebot.commands
                         embed = embed.WithImageUrl(img.Url);
                     else
                     {
+                        var reg = new Regex("DASH_[0-9]{1,4}");
+                        var videoUrl = img.Url;
+                        var audioUrl = reg.Replace(img.Url, "DASH_audio");
+
+                        string url;
+                        if (await _net.IsSuccessAsync(audioUrl))
+                        {
+                            var msg = await ReplyAsync("Downloading your video...");
+
+                            var fn = $"{_rand.GenerateId()}.mp4";
+                            await Shell.Run($"ffmpeg -i \"{videoUrl}\" -i \"{audioUrl}\" {fn}");
+
+                            url = await _net.UploadAsync(fn, fn.Split('.')[1]);
+
+                            await msg.DeleteAsync();
+                        }
+                        else url = videoUrl;
+
                         embed = embed
-                            .WithUrl(img.Url)
-                            .WithDescription("Click the title to see the soundless video\nFor audio, replace the number in the URL (example: `720`) with `audio`.");
+                            .WithUrl(url)
+                            .WithDescription("Click the title to see the video.");
                     }
                         
                     await ReplyAsync(embed: embed.Build());
@@ -64,7 +84,7 @@ namespace donniebot.commands
                 else
                     await ReplyAsync("Invalid subreddit.");
             }
-            catch(System.Net.Http.HttpRequestException)
+            catch (System.Net.Http.HttpRequestException)
             {
                 await ReplyAsync("Invalid subreddit.");
             }

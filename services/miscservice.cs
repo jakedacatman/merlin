@@ -75,6 +75,16 @@ namespace donniebot.services
             { typeof(RequireContextAttribute), "must be invoked in a guild or dm" }
         };
 
+        private readonly Dictionary<int, string> prefixes = new Dictionary<int, string>()
+        {
+            { 0, "" },
+            { 1, "Ki"},
+            { 2, "Mi"},
+            { 3, "Gi"},
+            { 4, "Ti"},
+            { 5, "Pi"},
+        };
+
         public MiscService(DiscordShardedClient client, IServiceProvider services, NetService net, Random random, RandomService rand)
         {
             _client = client;
@@ -126,7 +136,7 @@ namespace donniebot.services
             else if (e is VideoException ve)
                 description = ve.Message;
             else if (e is HttpRequestException he)
-                description = $"An exception occurred when making an HTTP request ({he.Message})";
+                description = $"An exception occurred when making an HTTP request: {he.Message}";
             else if (e is SixLabors.ImageSharp.UnknownImageFormatException)
                 description = "The image format was not valid.";
             else
@@ -538,6 +548,26 @@ namespace donniebot.services
                 .WithFields(fields);
             
             return embed;
+        }
+
+        public string PrettyFormat(long bytes, int place)
+        {
+            var bd = (double) bytes; 
+            var sb = new StringBuilder();
+            long divisor = 1 << 10;
+
+            for (int i = 0; i < 6; i++)
+            {
+                if (bd < 1024d)
+                {
+                    sb.Append($"{Math.Round(bd, place)} {prefixes[i]}B");
+                    break;
+                }
+
+                bd /= divisor;
+            }
+
+            return sb.ToString();
         }
 
         public async Task<IMessage> GetNthMessageAsync(SocketTextChannel channel, int pos) => (await channel.GetMessagesAsync().FlattenAsync()).OrderByDescending(x => x.Timestamp).ToArray()[pos];

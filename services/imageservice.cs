@@ -18,6 +18,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using UkooLabs.SVGSharpie.ImageSharp;
 
 namespace donniebot.services
 {
@@ -244,18 +245,42 @@ namespace donniebot.services
         }
         public Image Overlay(Image source, Image overlay, Point location, Size size, float rot = 0f)
         {
-            if (rot != 0f)
+            if (overlay.Frames.Count > 1)
             {
-                var ow = overlay.Width;
-                var oh = overlay.Height;
-                overlay.Mutate(x => x.Rotate(rot));
-                var nw = overlay.Width;
-                var nh = overlay.Height;
+                var delay = overlay.Frames.RootFrame.Metadata.GetFormatMetadata(GifFormat.Instance).FrameDelay;
+                for (int i = 1; i < overlay.Frames.Count; i++)
+                {
+                    var frame = source.Frames.CloneFrame(0).Frames[0];
+                    frame.Metadata.GetFormatMetadata(GifFormat.Instance).FrameDelay = delay;
+                    source.Frames.InsertFrame(i, frame);
+                }
+                        
+                return GifFilter((Image)source, overlay, location, size, rot, Overlay);
+            }
+            else
+            {
+                if (size != overlay.Size())
+                    overlay.Mutate(h => h.Resize(new ResizeOptions
+                    {
+                        Mode = ResizeMode.Stretch,
+                        Size = size,
+                        Sampler = KnownResamplers.MitchellNetravali
+                    }));
+
+                if (rot != 0f)
+                {
+                    var ow = overlay.Width;
+                    var oh = overlay.Height;
+                    overlay.Mutate(x => x.Rotate(rot));
+                    var nw = overlay.Width;
+                    var nh = overlay.Height;
             
-                location = new Point(location.X - ((nw - ow) / 2), location.Y - ((nh - oh) / 2));
+                    location = new Point(location.X - ((nw - ow) / 2), location.Y - ((nh - oh) / 2));
+                }
+
+                source.Mutate(x => x.DrawImage(overlay, location, 1f));
             }
 
-            source.Mutate(x => x.DrawImage(overlay, location, 1f));
             return source;
         }
 
@@ -333,7 +358,7 @@ namespace donniebot.services
             var w = source.Width;
             var h = source.Height;
 
-            var font = SystemFonts.Collection.CreateFont("Linux Libertine", source.Width / 12f, FontStyle.Regular);
+            var font = SystemFonts.Collection.CreateFont("Goulong", source.Width / 12f, FontStyle.Regular);
             var tFont = SystemFonts.Collection.CreateFont("Linux Libertine", source.Width / 6f, FontStyle.Regular);
             float padding = 0.05f * source.Width;
             float wrap = source.Width - (2 * padding);
@@ -351,7 +376,7 @@ namespace donniebot.services
                 VerticalAlignment = VerticalAlignment.Center
             });
 
-            if (tBounds.Width > wrap) // will the title fit on one line? if not, scale both down
+            if (tBounds.Width > wrap) // will the title fit on one line? if not, scale it down
             {
                 var ratio = wrap / tBounds.Width;
                 var size = tFont.Size * ratio;
@@ -364,26 +389,17 @@ namespace donniebot.services
                     HorizontalAlignment = HorizontalAlignment.Center, 
                     VerticalAlignment = VerticalAlignment.Center
                 });
-
-                font = SystemFonts.Collection.CreateFont("Linux Libertine", size / 2, FontStyle.Regular);;
-
-                bounds = TextMeasurer.Measure(title, new RendererOptions(font) 
-                { 
-                    WrappingWidth = wrap, 
-                    HorizontalAlignment = HorizontalAlignment.Center, 
-                    VerticalAlignment = VerticalAlignment.Center
-                });
             }
 
             var bw = (int)Math.Round(w / 8d);
             var bh = (int)Math.Round(h / 8d);
 
-            var height = (int)tBounds.Height + bh;
+            var height = tBounds.Height + bh;
 
             bg.Mutate(x => x.Resize(new ResizeOptions
             {
                 Mode = ResizeMode.Stretch,
-                Size = new Size((int)Math.Round(5d * w / 4d), (int)Math.Round((1.2f * h) + height + bounds.Height)),
+                Size = new Size((int)Math.Round((5d / 4d) * w), (int)Math.Round((1.25f * h) + height + bounds.Height)),
                 Sampler = KnownResamplers.NearestNeighbor
             }));
 
@@ -394,7 +410,7 @@ namespace donniebot.services
 
             bg.Mutate(x => x.Draw(Pens.Solid(Color.White, rWidth), r));
 
-            var location = new PointF(bw + padding, r.Bottom + (.6f * bh));
+            var location = new PointF(bw + padding, r.Bottom + bh);
 
             var to = new TextOptions
             {
@@ -406,24 +422,15 @@ namespace donniebot.services
                     SystemFonts.Find("Twemoji")
                 }
             };
-
             var options = new TextGraphicsOptions(new GraphicsOptions(), to);
             bg.Mutate(x => x.DrawText(options, title, tFont, Color.White, location));
-            location.Y += (.25f * bh) + tBounds.Height;
-            bg.Mutate(x => x.DrawText(options, text, font, Color.White, location));
 
-            if (source.Frames.Count() > 1)
-            {
-                var delay = source.Frames.RootFrame.Metadata.GetFormatMetadata(GifFormat.Instance).FrameDelay;
-                for (int i = 1; i < source.Frames.Count; i++)
-                {
-                    var frame = bg.Frames.CloneFrame(0).Frames[0];
-                    frame.Metadata.GetFormatMetadata(GifFormat.Instance).FrameDelay = delay;
-                    bg.Frames.InsertFrame(i, frame);
-                }
-                        
-                return GifFilter((Image)bg, source, new Point(bw, bh), source.Size(), 0f, Overlay);
-            }
+            var nextY = tBounds.Height;// + bh;
+            if (bounds.Width > wrap)
+                nextY = (height + .25f * bounds.Height);
+                
+            location.Y += (nextY);
+            bg.Mutate(x => x.DrawText(options, text, font, Color.White, location));
             
             return Overlay((Image)bg, source, new Point(bw, bh), source.Size());
         }
@@ -597,7 +604,7 @@ namespace donniebot.services
         }
         public Image GifFilter(Image source, Image x, Point y, Size z, float w, Func<Image, Image, Point, Size, float, Image> func)
         {
-            if (source.Frames.Count <= 1) throw new InvalidOperationException("can't use a gif filter on a stationary image");
+            if (x.Frames.Count <= 1 && source.Frames.Count <= 1) throw new InvalidOperationException("can't use a gif filter on a stationary image");
                 
             if (x.Frames.Count > 1)
             {
@@ -811,10 +818,7 @@ namespace donniebot.services
                     HorizontalAlignment = HorizontalAlignment.Center,
                     VerticalAlignment = VerticalAlignment.Bottom,
                     WrapTextWidth = width,
-                    FallbackFonts = 
-                    {
-                        SystemFonts.Find("Twemoji")
-                    }
+                    FallbackFonts = { SystemFonts.Find("Twemoji") }
                 };
 
                 var options = new TextGraphicsOptions(new GraphicsOptions(), to);
@@ -959,23 +963,23 @@ namespace donniebot.services
             for (int i = 0; i < data.Count(); i++)
             {
                 var r = data.ElementAt(i);
-                var url = r["url"].Value<string>();
-                var un = r["userName"].Value<string>() ?? "unknown";
-                var s = r["sourceURL"].Value<string>() ?? "unknown";
+                var url = r["url"]?.Value<string>();
+                var un = r["userName"]?.Value<string>() ?? "unknown";
+                var s = r["sourceURL"]?.Value<string>() ?? "unknown";
 
                 //temporary fix until the website is functional
-                if (r["source"].Value<string>() == "Gelbooru")
+                if (r["source"]?.Value<string>() == "Gelbooru")
                 {
                     var fn = url.Split('/').Last();
                     url = $"https://img2.gelbooru.com/images/{fn.Substring(0, 2)}/{fn.Substring(2, 2)}/{fn}";
                 }
-                else if (r["source"].Value<string>() == "Danbooru")
+                else if (r["source"]?.Value<string>() == "Danbooru")
                 {
                     var fn = url.Split('/').Last();
                     url = $"https://cdn.donmai.us/original/{fn.Substring(0, 2)}/{fn.Substring(2, 2)}/{fn}";
                 }
                 
-                image = new GuildImage(url, gId, s, un, title: $"{r["id"].Value<string>()} - {r["source"].Value<string>()}");
+                image = new GuildImage(url, gId, s, un, title: $"{r["id"]?.Value<string>()} - {r["source"]?.Value<string>()}");
 
                 if (!sentImages.ContainsObj(image) && !string.IsNullOrWhiteSpace(un))
                 {
@@ -1048,7 +1052,7 @@ namespace donniebot.services
             {
                 var post = postdata.ElementAt(i)["data"];
                 var hint = post["post_hint"];
-                if (post["url"] != null && hint != null && (hint.Value<string>() == "image" || hint.Value<string>() == "hosted:video"))
+                if (post["url"] != null && (hint?.Value<string>() == "image" || hint?.Value<string>() == "hosted:video"))
                 {
                     var title = post["title"].Value<string>();
                     if (title.Length > 256)
@@ -1122,7 +1126,7 @@ namespace donniebot.services
                     source.SaveAsPng(file);
             else
             {
-                if ((_format != null && _format.DefaultMimeType == "image/gif") || source.Frames.Count > 1) 
+                if ((_format?.DefaultMimeType == "image/gif") || source.Frames.Count > 1) 
                 {
                     source.Metadata.GetFormatMetadata(GifFormat.Instance).ColorTableMode = GifColorTableMode.Local;
                     source.Metadata.GetFormatMetadata(GifFormat.Instance).RepeatCount = 0;
@@ -1151,10 +1155,7 @@ namespace donniebot.services
 
             using (var file = File.Open(path, FileMode.OpenOrCreate))
             {
-                JpegEncoder s = new JpegEncoder
-                {
-                    Quality = quality,
-                };
+                JpegEncoder s = new JpegEncoder { Quality = quality };
                 source.SaveAsJpeg(file, s);
                 source.Dispose();
                 return path;
@@ -1183,6 +1184,16 @@ namespace donniebot.services
             File.Delete(path);
         }
 
-        public async Task<Image> DownloadFromUrlAsync(string url) => Image.Load(await _net.DownloadFromUrlAsync(url), out _format);
+        public async Task<Image> DownloadFromUrlAsync(string url)
+        {
+            if (!url.Contains("svg"))
+                return Image.Load(await _net.DownloadFromUrlAsync(url), out _format);
+            else 
+            {
+                var img = SvgImageRenderer.RenderFromString<Rgba32>(await _net.DownloadAsStringAsync(url), 500, 500);
+                _format = null;
+                return img;
+            }
+        }
     }
 }

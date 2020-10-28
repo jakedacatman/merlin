@@ -63,7 +63,17 @@ namespace donniebot.commands
                 }
                 else
                 {
-                    var module = modules.Where(x => x.Key.ToLower() == category.ToLower()).First();
+                    KeyValuePair<string, List<string>> module;
+                    var query = modules.Where(x => x.Key.ToLower() == category.ToLower());
+                    if (query.Any()) 
+                        module = query.First();
+                    else
+                    {
+                        await ReplyAsync("Category not found.");
+                        return;
+                    }
+
+
                     var fields = new List<EmbedFieldBuilder> { new EmbedFieldBuilder().WithIsInline(true).WithName(module.Key).WithValue($"**{string.Join(", ", module.Value)}**") };
 
                     var embed = new EmbedBuilder()
