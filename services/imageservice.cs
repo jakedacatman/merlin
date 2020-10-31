@@ -1097,7 +1097,7 @@ namespace donniebot.services
             Math.Round(img.Metadata.HorizontalResolution, 3), Math.Round(img.Metadata.VerticalResolution, 3));
         }
 
-        public async Task<string> ParseUrlAsync(string url, SocketUserMessage msg)
+        public async Task<string> ParseUrlAsync(string url, SocketUserMessage msg, bool isNext = false)
         {
             if (url != null) 
             {
@@ -1108,7 +1108,8 @@ namespace donniebot.services
                     return e.Url;
                 else
                 {
-                    var svgUrl = $"https://raw.githubusercontent.com/twitter/twemoji/master/assets/svg/{url.Utf8ToCodePoints().First():x4}.svg";
+                    var points = url.Utf8ToCodePoints().Select(x => x.ToString("x4"));
+                    var svgUrl = $"https://raw.githubusercontent.com/twitter/twemoji/master/assets/svg/{string.Join("-", points)}.svg";
                     if (await _net.IsSuccessAsync(svgUrl))
                         return svgUrl;
                     else
@@ -1121,18 +1122,18 @@ namespace donniebot.services
             {
                 if (!msg.Attachments.Any())
                 {
-                    var previousmsg = await _misc.GetPreviousMessageAsync(msg.Channel as SocketTextChannel);
-                    if (previousmsg.Attachments.Any())
-                        url = previousmsg.Attachments.First().Url;
+                    if (isNext)
+                        throw new ImageException("Try the command with a url, or attach an image.");
                     else
-                        if (Uri.IsWellFormedUriString(previousmsg.Content, UriKind.Absolute))
-                            url = previousmsg.Content;
-                        else
-                            throw new ImageException("Try the command with a url, or attach an image.");
+                    {
+                        var previousmsg = await _misc.GetPreviousMessageAsync(msg.Channel as SocketTextChannel);
+                        return await ParseUrlAsync(previousmsg.Content, msg, true);
+                    }
                 }
                 else
-                    url = msg.Attachments.First().Url;
+                    return msg.Attachments.First().Url;
             }
+
             return url;
         }
 
