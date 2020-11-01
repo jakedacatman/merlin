@@ -89,6 +89,7 @@ namespace donniebot.classes
         public void Dispose()
         {
             IsPlaying = false;
+            IsSkipping = false;
             Connection.Dispose();
             Stream.Dispose();
         }

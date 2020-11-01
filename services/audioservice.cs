@@ -81,6 +81,8 @@ namespace donniebot.services
                 var id = vc.Guild.Id;
                 if (!GetConnection(id, out var player))
                     player = await ConnectAsync(vc);
+
+                song.Info = await GetAudioInfoAsync(song.Url);
                 
                 player.Enqueue(song);
                 SongAdded?.Invoke(id, player, song);
@@ -106,6 +108,9 @@ namespace donniebot.services
             {
                 enq.Release(); 
             }
+
+            foreach (var song in songs)
+                song.Info = await GetAudioInfoAsync(song.Url);
         }
 
         public void RemoveAt(ulong id, int index)
@@ -188,7 +193,7 @@ namespace donniebot.services
 
                 var discord = connection.Stream;
 
-                var info = await GetAudioInfoAsync(song.Url);
+                var info = song.Info ?? await GetAudioInfoAsync(song.Url);
 
                 song.Size = info.Size.TotalBytes;
 
@@ -289,10 +294,11 @@ namespace donniebot.services
                         finally 
                         {
                             await discord.FlushAsync();
+                            ffmpeg.Kill();
                         }
                     });
 
-                    Task.WaitAll(download, read, write);
+                    await Task.WhenAll(download, read, write);
 
                     player.IsPlaying = false;
                     player.IsSkipping = false;

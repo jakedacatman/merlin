@@ -5,6 +5,7 @@ using SixLabors.ImageSharp.Drawing;
 using SixLabors.ImageSharp.Processing;
 using SixLabors.ImageSharp.Drawing.Processing;
 using System.Collections.Generic;
+using System.Threading;
 using SixLabors.ImageSharp.Formats;
 using SixLabors.ImageSharp.Formats.Jpeg;
 using SixLabors.ImageSharp.Formats.Gif;
@@ -1048,27 +1049,27 @@ namespace donniebot.services
             return img;
         }
 
-        private bool GetImage(IEnumerable<JToken> postdata, ulong gId, bool nsfw, out GuildImage image)
+        private bool GetImage(IEnumerable<JToken> postdata, ulong gId, bool nsfw, out GuildImage image, bool video = false)
         {
             for (int i = 0; i < postdata.Count(); i++)
             {
                 var post = postdata.ElementAt(i)["data"];
-                var hint = post["post_hint"];
-                if (post["url"] != null && (hint?.Value<string>() == "image" || hint?.Value<string>() == "hosted:video"))
+                var hint = post["post_hint"]?.Value<string>();
+                if (post["url"] != null && (hint == "image" || (hint == "hosted:video" && video)))
                 {
                     var title = post["title"].Value<string>();
                     if (title.Length > 256)
                         title = $"{title.Substring(0, 253)}...";
 
                     string url = post["url"].Value<string>();
-                    string type = hint.Value<string>();
-                    if (type != "image")
+
+                    if (hint == "hosted:video")
                     {
                         url = post["media"]["reddit_video"]["fallback_url"].Value<string>();
-                        type = "video";
+                        hint = "video";
                     }
 
-                    image = new GuildImage(url, gId, author: $"u/{post["author"].Value<string>()}", title: title, type: type);
+                    image = new GuildImage(url, gId, author: $"u/{post["author"].Value<string>()}", title: title, type: hint);
 
                     if (!sentImages.ContainsObj(image))
                     {
@@ -1087,6 +1088,36 @@ namespace donniebot.services
             }
             image = new GuildImage(null, gId);
             return false;
+        }
+
+        private readonly SemaphoreSlim dlSem = new SemaphoreSlim(1, 1);
+        public async Task DownloadRedditVideoAsync(string postUrl, SocketGuildChannel channel, bool nsfw = false)
+        {
+            await dlSem.WaitAsync();
+            try
+            {
+                var post = JsonConvert.DeserializeObject<JArray>(await _net.DownloadAsStringAsync($"{postUrl}.json"))[0];
+                if (!GetImage(post["data"]["children"], channel.Guild.Id, nsfw, out var img, true) || img.Type != "video") return;
+
+                var reg = new Regex("DASH_[0-9]{1,4}");
+                var videoUrl = img.Url;
+                var audioUrl = reg.Replace(img.Url, "DASH_audio");
+                var fn = $"{_rand.GenerateId()}.mp4";
+
+                if (await _net.IsSuccessAsync(audioUrl))
+                    await Shell.Run($"ffmpeg -i \"{videoUrl}\" -i \"{audioUrl}\" {fn}");
+                else
+                {
+                    var data = await _net.DownloadFromUrlAsync(videoUrl);
+                    await File.WriteAllBytesAsync(fn, data);
+                }
+
+                await SendToChannelAsync(fn, channel as ISocketMessageChannel);
+            }
+            finally
+            {
+                dlSem.Release();
+            }
         }
 
         public async Task<ImageProperties> GetInfo(string url)
