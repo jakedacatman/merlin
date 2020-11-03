@@ -45,5 +45,25 @@ namespace donniebot.commands
                 await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
             }
         }
+        [Command("avatar")]
+        [Alias("a", "av")]
+        [Summary("Gets a user's avatar.")]
+        public async Task AvatarCmd([Summary("The user.")] ulong userId)
+        {
+            try
+            {
+                var url = (await _client.Rest.GetUserAsync(userId)).GetAvatarUrl(size: 512);
+
+                await ReplyAsync(embed: new EmbedBuilder()
+                    .WithColor(_rand.RandomColor())
+                    .WithImageUrl(url)
+                    .WithCurrentTimestamp()
+                    .Build());
+            }
+            catch (Exception e)
+            {
+                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
+            }
+        }
     }
 }

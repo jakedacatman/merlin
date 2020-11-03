@@ -39,10 +39,11 @@ namespace donniebot.commands
             {
                 var msg = await ReplyAsync("Downloading your video...");
                 await _img.DownloadRedditVideoAsync(post, Context.Channel as SocketGuildChannel);
+                await ReplyAndDeleteAsync($"{Context.User.Mention}, your video is ready.", timeout: TimeSpan.FromSeconds(30));
             }
-            catch (System.Net.Http.HttpRequestException)
+            catch (System.Net.Http.HttpRequestException e)
             {
-                await ReplyAsync("Invalid post.");
+                await ReplyAsync($"Downloading encountered an error: `{e.Message}`");
             }
             catch (Exception e)
             {
