@@ -440,14 +440,15 @@ namespace donniebot.services
 
         public async Task<string> VideoFilter(string url, Func<Image, string, Image> func, string arg1)
         {
-            if (!await _net.IsVideoAsync(url)) return "";
+            if (!await _net.IsVideoAsync(url)) throw new VideoException("Not a video.");
+
             var id = await _net.DownloadToFileAsync(url);
             
             var framerate = _reg.Match(await Shell.Run($"ffprobe -hide_banner -show_streams {id}", true)).Value.Replace(" fps", "");
 
             var tmp = Directory.CreateDirectory($"tmp-{id}");
-            await Shell.Run($"ffmpeg -i {id} -hide_banner -vn {tmp.Name}/{id}.aac", true);
-            await Shell.Run($"ffmpeg -i {id} -r {framerate} -f image2 -hide_banner {tmp.Name}/frame-%d.png", true);
+            await Shell.Ffmpeg($"-i {id} -hide_banner -vn {tmp.Name}/{id}.aac", true);
+            await Shell.Ffmpeg($"-i {id} -r {framerate} -f image2 -hide_banner {tmp.Name}/frame-%d.png", true);
 
             var files = tmp.EnumerateFiles().Where(x => x.Name.Contains(".png"));
             for (int i = 0; i < files.Count(); i++)
@@ -464,7 +465,7 @@ namespace donniebot.services
                 Save(img, f.FullName);
             }
 
-            await Shell.Run($"ffmpeg -f image2 -framerate {framerate} -i {tmp.Name}/frame-%d.png -i {tmp.Name}/{id}.aac -hide_banner -c:v libx264 -c:a copy {id}.mp4", true);
+            await Shell.Ffmpeg($"-f image2 -framerate {framerate} -i {tmp.Name}/frame-%d.png -i {tmp.Name}/{id}.aac -hide_banner -c:v libx264 -c:a copy {id}.mp4", true);
 
             File.Delete(id);
             Directory.Delete(tmp.Name, true);
@@ -473,14 +474,15 @@ namespace donniebot.services
         }
         public async Task<string> VideoFilter(string url, Func<Image, string, string, Image> func, string arg1, string arg2)
         {
-            if (!await _net.IsVideoAsync(url)) return "";
+            if (!await _net.IsVideoAsync(url)) throw new VideoException("Not a video.");
+
             var id = await _net.DownloadToFileAsync(url);
             
             var framerate = _reg.Match(await Shell.Run($"ffprobe -hide_banner -show_streams {id}", true)).Value.Replace(" fps", "");
 
             var tmp = Directory.CreateDirectory($"tmp-{id}");
-            await Shell.Run($"ffmpeg -i {id} -hide_banner -vn {tmp.Name}/{id}.aac", true);
-            await Shell.Run($"ffmpeg -i {id} -r {framerate} -f image2 -hide_banner {tmp.Name}/frame-%04d.png", true);
+            await Shell.Ffmpeg($"-i {id} -hide_banner -vn {tmp.Name}/{id}.aac", true);
+            await Shell.Ffmpeg($"-i {id} -r {framerate} -f image2 -hide_banner {tmp.Name}/frame-%04d.png", true);
 
             foreach (var f in tmp.EnumerateFiles().Where(x => x.Name.Contains(".png")))
             {
@@ -495,7 +497,7 @@ namespace donniebot.services
                 Save(img, f.FullName);
             }
 
-            await Shell.Run($"ffmpeg -f image2 -framerate {framerate} -i {tmp.Name}/frame-%04d.png -i {tmp.Name}/{id}.aac -hide_banner -c:v libx264 -c:a copy {id}.mp4", true);
+            await Shell.Ffmpeg($"-f image2 -framerate {framerate} -i {tmp.Name}/frame-%04d.png -i {tmp.Name}/{id}.aac -hide_banner -c:v libx264 -c:a copy {id}.mp4", true);
 
             File.Delete(id);
             Directory.Delete(tmp.Name, true);
@@ -704,68 +706,21 @@ namespace donniebot.services
             return newImg;
         }
         
-        public async Task<Image> VideoToGif(string url)
+        public async Task<string> VideoToGif(string url)
         {
-            if (!await _net.IsVideoAsync(url)) throw new InvalidOperationException("Not a video.");
-
-            var src = Image.Load(new byte[]
-            {
-                137, 80, 78, 71, 13, 
-                10, 26, 10, 0, 0, 
-                0, 13, 73, 72, 68, 
-                82, 0, 0, 0, 1, 
-                0, 0, 0, 1, 8, 
-                6, 0, 0, 0, 31, 
-                21, 196, 137, 0, 0, 
-                0, 11, 73, 68, 65, 
-                84, 8, 215, 99, 248, 
-                15, 4, 0, 9, 251, 
-                3, 253, 99, 38, 197, 
-                143, 0, 0, 0, 0, 
-                73, 69, 78, 68, 174, 
-                66, 96, 130
-            }); //1px image
+            if (!await _net.IsVideoAsync(url)) throw new VideoException("Not a video.");
 
             var id = await _net.DownloadToFileAsync(url);
-            
-            var framerate = _reg.Match(await Shell.Run($"ffprobe -hide_banner -show_streams {id}", true)).Value.Replace(" fps", "");
+            var tmp = $"{id}.gif";
 
-            var delay = Math.Max((int)Math.Round(100d / double.Parse(framerate)), 2);
+            var framerate = _reg.Match(await Shell.Run($"ffprobe -hide_banner -show_streams {id}", true)).Value.Replace(" fps", "");    
 
-            var tmp = Directory.CreateDirectory($"tmp-{id}");
-            await Shell.Run($"ffmpeg -i {id} -r {framerate} -f image2 -hide_banner {tmp.Name}/frame-%04d.png", true);
+            Console.WriteLine(await Shell.Ffmpeg($"-i {id} -r {framerate} -vf \"split[s0][s1];[s0]palettegen=stats_mode=diff[p];[s1][p]paletteuse\" -loop 0 {tmp}", true));
 
-            var h = tmp.EnumerateFiles().Where(x => x.Name.Contains(".png")).ToArray();
-            for (int i = 0; i < h.Count(); i++)
-            {
-                var img = Image.Load(h[i].FullName);
-                var frame = img.Frames[0];
-                frame.Metadata.GetFormatMetadata(GifFormat.Instance).FrameDelay = delay;
-                if (i == 0)
-                {
-                    if (img.Width > 1000 || img.Height > 1000)
-                        throw new VideoException("Video too large.");
 
-                    src.Mutate(x => x.Resize(new ResizeOptions
-                    {
-                        Mode = ResizeMode.Stretch,
-                        Size = new Size(img.Width, img.Height),
-                        Sampler = KnownResamplers.NearestNeighbor
-                    }));
-
-                    src.Frames.AddFrame(frame);
-                    src.Frames.RemoveFrame(0);
-                }
-                else
-                    src.Frames.InsertFrame(i, frame);
-
-                File.Delete(h[i].FullName);
-            }
-            
             File.Delete(id);
-            Directory.Delete(tmp.Name, true);
 
-            return src;
+            return tmp;
         }
 
         public async Task<Image> PlaceBelow(string url, string belowUrl, bool resize = true) => PlaceBelow(await DownloadFromUrlAsync(url), await DownloadFromUrlAsync(belowUrl), resize);
@@ -1105,7 +1060,7 @@ namespace donniebot.services
                 var fn = $"{_rand.GenerateId()}.mp4";
 
                 if (await _net.IsSuccessAsync(audioUrl))
-                    await Shell.Run($"ffmpeg -i \"{videoUrl}\" -i \"{audioUrl}\" {fn}");
+                    await Shell.Ffmpeg($"-i \"{videoUrl}\" -i \"{audioUrl}\" {fn}");
                 else
                 {
                     var data = await _net.DownloadFromUrlAsync(videoUrl);
@@ -1124,7 +1079,7 @@ namespace donniebot.services
         {
             var img = await DownloadFromUrlAsync(url);
             return new ImageProperties(img.Width, img.Height, img.Frames.Count, img.PixelType.BitsPerPixel, 
-            Math.Round(100d / img.Frames.RootFrame.Metadata.GetFormatMetadata(GifFormat.Instance).FrameDelay, 3), _format.DefaultMimeType,
+            Math.Round(100d / img.Frames.RootFrame.Metadata.GetFormatMetadata(GifFormat.Instance).FrameDelay, 3), _format?.DefaultMimeType,
             Math.Round(img.Metadata.HorizontalResolution, 3), Math.Round(img.Metadata.VerticalResolution, 3));
         }
 
@@ -1148,8 +1103,7 @@ namespace donniebot.services
                 }
 
             }
-
-            if (url == null || !Uri.IsWellFormedUriString(url, UriKind.Absolute))
+            else if (url == null || !Uri.IsWellFormedUriString(url, UriKind.Absolute))
             {
                 if (!msg.Attachments.Any())
                 {
@@ -1170,13 +1124,13 @@ namespace donniebot.services
 
         public string Save(Image source, string path = null)
         {
-            var id = _rand.GenerateId();
-
             if (path != null)
                 using (var file = File.Open(path, FileMode.OpenOrCreate))
                     source.SaveAsPng(file);
             else
             {
+                var id = _rand.GenerateId();
+
                 if ((_format?.DefaultMimeType == "image/gif") || source.Frames.Count > 1) 
                 {
                     source.Metadata.GetFormatMetadata(GifFormat.Instance).ColorTableMode = GifColorTableMode.Local;
@@ -1242,7 +1196,7 @@ namespace donniebot.services
             else 
             {
                 var img = SvgImageRenderer.RenderFromString<Rgba32>(await _net.DownloadAsStringAsync(url), 500, 500);
-                _format = null;
+                _format = new SvgFormat();
                 return img;
             }
         }

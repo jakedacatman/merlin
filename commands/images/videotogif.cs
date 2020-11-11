@@ -29,8 +29,8 @@ namespace donniebot.commands
             try
             {
                 url = await _img.ParseUrlAsync(url, Context.Message);
-                var img = await _img.VideoToGif(url);
-                await _img.SendToChannelAsync(img, Context.Channel);
+                var path = await _img.VideoToGif(url);
+                await _img.SendToChannelAsync(path, Context.Channel);
             }
             catch (Exception e)
             {
