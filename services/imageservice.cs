@@ -192,16 +192,15 @@ namespace donniebot.services
             
             img.Mutate(x => x.Resize(source.Width, height + source.Height));
 
+            SystemFonts.TryFind("Twemoji Mozilla", out var tcef);
+            SystemFonts.TryFind("HanaMinA", out var hmf);
+
             var to = new TextOptions
             {
                 HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center,
                 WrapTextWidth = wrap,
-                FallbackFonts = 
-                {
-                    SystemFonts.Find("Twemoji")
-                    //SystemFonts.Find("LimerickCdSerial-Xbold")
-                }
+                FallbackFonts = { tcef ?? SystemFonts.Find("Twemoji"), hmf ?? SystemFonts.Find("Yu Gothic") }
             };
 
             var options = new TextGraphicsOptions(new GraphicsOptions(), to);
@@ -415,15 +414,15 @@ namespace donniebot.services
 
             var location = new PointF(bw + padding, r.Bottom + bh);
 
+            SystemFonts.TryFind("Twemoji Mozilla", out var tcef);
+            SystemFonts.TryFind("HanaMinA", out var hmf);
+
             var to = new TextOptions
             {
                 HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center,
                 WrapTextWidth = wrap,
-                FallbackFonts = 
-                {
-                    SystemFonts.Find("Twemoji")
-                }
+                FallbackFonts = { tcef ?? SystemFonts.Find("Twemoji"), hmf ?? SystemFonts.Find("Yu Gothic") }
             };
             var options = new TextGraphicsOptions(new GraphicsOptions(), to);
             bg.Mutate(x => x.DrawText(options, title, tFont, Color.White, location));
@@ -436,6 +435,83 @@ namespace donniebot.services
             bg.Mutate(x => x.DrawText(options, text, font, Color.White, location));
             
             return Overlay((Image)bg, source, new Point(bw, bh), source.Size());
+        }
+
+        public async Task<Image> Redpill(string choice1, string choice2)
+        {
+            var redpillImg = Image.Load(await _net.DownloadFromUrlAsync("https://i.jakedacatman.me/BIQtx.png"));
+
+            Font rF = SystemFonts.CreateFont("Impact", 40f);
+            Font bF = SystemFonts.CreateFont("Impact", 40f);
+
+            var wrap = 200;
+
+            var redBounds = TextMeasurer.Measure(choice1, new RendererOptions(rF) 
+            { 
+                WrappingWidth = wrap,
+                HorizontalAlignment = HorizontalAlignment.Center, 
+                VerticalAlignment = VerticalAlignment.Center
+            });
+
+            var blueBounds = TextMeasurer.Measure(choice2, new RendererOptions(bF) 
+            {
+                WrappingWidth = wrap,
+                HorizontalAlignment = HorizontalAlignment.Center, 
+                VerticalAlignment = VerticalAlignment.Center
+            });
+
+            if (redBounds.Width > wrap)
+            {
+                var ratio = wrap / redBounds.Width;
+                var size = rF.Size * ratio;
+
+                rF = SystemFonts.Collection.CreateFont("Impact", size, FontStyle.Regular);;
+
+                redBounds = TextMeasurer.Measure(choice1, new RendererOptions(rF) 
+                { 
+                    WrappingWidth = wrap, 
+                    HorizontalAlignment = HorizontalAlignment.Left, 
+                    VerticalAlignment = VerticalAlignment.Center
+                });
+            }
+
+            if (blueBounds.Width > wrap)
+            {
+                var ratio = wrap / blueBounds.Width;
+                var size = bF.Size * ratio;
+
+                bF = SystemFonts.Collection.CreateFont("Impact", size, FontStyle.Regular);
+
+                blueBounds = TextMeasurer.Measure(choice2, new RendererOptions(bF) 
+                { 
+                    WrappingWidth = wrap, 
+                    HorizontalAlignment = HorizontalAlignment.Left, 
+                    VerticalAlignment = VerticalAlignment.Center
+                });
+            }
+
+            var location = new PointF(186 - (.5f * redBounds.Width), 270);
+
+            SystemFonts.TryFind("Twemoji Mozilla", out var tcef);
+            SystemFonts.TryFind("HanaMinA", out var hmf);
+
+            var to = new TextOptions
+            {
+                HorizontalAlignment = HorizontalAlignment.Left,
+                VerticalAlignment = VerticalAlignment.Center,
+                WrapTextWidth = wrap,
+                FallbackFonts = { tcef ?? SystemFonts.Find("Twemoji"), hmf ?? SystemFonts.Find("Yu Gothic") }
+            };
+            var options = new TextGraphicsOptions(new GraphicsOptions(), to);
+
+            redpillImg.Mutate(x => x.DrawText(options, choice1, rF, Pens.Solid(Color.Black, 3), location));
+            redpillImg.Mutate(x => x.DrawText(options, choice1, rF, Color.White, location));
+
+            location = new PointF(521 - (.5f * blueBounds.Width), 270);
+            redpillImg.Mutate(x => x.DrawText(options, choice2, bF, Pens.Solid(Color.Black, 3), location));
+            redpillImg.Mutate(x => x.DrawText(options, choice2, bF, Color.White, location));
+
+            return redpillImg;
         }
 
         public async Task<string> VideoFilter(string url, Func<Image, string, Image> func, string arg1)
@@ -771,12 +847,15 @@ namespace donniebot.services
                 float padding = 0.05f * source.Width;
                 float width = source.Width - (2 * padding);
 
+                SystemFonts.TryFind("Twemoji Mozilla", out var tcef);
+                SystemFonts.TryFind("HanaMinA", out var hmf);
+
                 var to = new TextOptions
                 {
                     HorizontalAlignment = HorizontalAlignment.Center,
                     VerticalAlignment = VerticalAlignment.Bottom,
                     WrapTextWidth = width,
-                    FallbackFonts = { SystemFonts.Find("Twemoji") }
+                    FallbackFonts = { tcef ?? SystemFonts.Find("Twemoji"), hmf ?? SystemFonts.Find("Yu Gothic") }
                 };
 
                 var options = new TextGraphicsOptions(new GraphicsOptions(), to);
@@ -822,7 +901,7 @@ namespace donniebot.services
         public async Task<Image> SpeedUp(string url, double speed) => SpeedUp(await DownloadFromUrlAsync(url), 2);
         public Image SpeedUp(Image source, double speed)
         {
-            if (speed > 1000 || speed <= 0) speed = 2;
+            if (speed > 1000d || speed <= 0d) speed = 2d;
             
             var delay = source.Frames.RootFrame.Metadata.GetFormatMetadata(GifFormat.Instance).FrameDelay;
             for (int i = 0; i < source.Frames.Count; i++)
@@ -1094,16 +1173,24 @@ namespace donniebot.services
                     return e.Url;
                 else
                 {
-                    var points = url.Utf8ToCodePoints().Select(x => x.ToString("x4"));
+                    var points = url.Utf8ToCodePoints().Select(x => x.ToString("x4")).ToList();
                     var svgUrl = $"https://raw.githubusercontent.com/twitter/twemoji/master/assets/svg/{string.Join("-", points)}.svg";
                     if (await _net.IsSuccessAsync(svgUrl))
                         return svgUrl;
                     else
-                        url = url.Trim('<').Trim('>');
+                    {
+                        points.RemoveAll(x => x == "fe0f");
+                        svgUrl = $"https://raw.githubusercontent.com/twitter/twemoji/master/assets/svg/{string.Join("-", points)}.svg";
+                        
+                        if (await _net.IsSuccessAsync(svgUrl))
+                            return svgUrl;
+                    }
+
+                    url = url.Trim('<').Trim('>');
                 }
 
             }
-            else if (url == null || !Uri.IsWellFormedUriString(url, UriKind.Absolute))
+            else if (!Uri.IsWellFormedUriString(url, UriKind.Absolute))
             {
                 if (!msg.Attachments.Any())
                 {
@@ -1112,7 +1199,7 @@ namespace donniebot.services
                     else
                     {
                         var previousmsg = await _misc.GetPreviousMessageAsync(msg.Channel as SocketTextChannel);
-                        return await ParseUrlAsync(previousmsg.Content, msg, true);
+                        return await ParseUrlAsync(previousmsg.Content, previousmsg as SocketUserMessage, true);
                     }
                 }
                 else
@@ -1191,7 +1278,7 @@ namespace donniebot.services
 
         public async Task<Image> DownloadFromUrlAsync(string url)
         {
-            if (!url.Contains("svg") && (await _net.GetContentTypeAsync(url)).ToLower() != "image/svg+xml")
+            if (!url.Contains("svg") && (await _net.GetContentTypeAsync(url))?.ToLower() != "image/svg+xml")
                 return Image.Load(await _net.DownloadFromUrlAsync(url), out _format);
             else 
             {

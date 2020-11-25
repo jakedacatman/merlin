@@ -42,12 +42,12 @@ namespace donniebot.commands
                     {
                         new EmbedFieldBuilder().WithName("Width").WithValue(info.Width).WithIsInline(true),
                         new EmbedFieldBuilder().WithName("Height").WithValue(info.Height).WithIsInline(true),
-                        new EmbedFieldBuilder().WithName("Resolution").WithValue($"{(ulong)info.Width * (ulong)info.Height} pixels").WithIsInline(true),
+                        new EmbedFieldBuilder().WithName("Resolution").WithValue($"{(ulong)info.Width * (ulong)info.Height} px").WithIsInline(true),
                         new EmbedFieldBuilder().WithName("Frames").WithValue(info.Frames).WithIsInline(true),
-                        new EmbedFieldBuilder().WithName("Color depth").WithValue(info.BitsPerPixel + "bpp").WithIsInline(true),
-                        new EmbedFieldBuilder().WithName("Frames/second").WithValue((double.IsInfinity(info.FPS) ? "unknown " : info.FPS.ToString()) + "fps").WithIsInline(true),
+                        new EmbedFieldBuilder().WithName("Color depth").WithValue(info.BitsPerPixel + " bpp").WithIsInline(true),
+                        new EmbedFieldBuilder().WithName("Frames/second").WithValue((double.IsInfinity(info.FPS) ? "unknown " : info.FPS.ToString()) + " fps").WithIsInline(true),
                         new EmbedFieldBuilder().WithName("MIME type").WithValue(info.MimeType).WithIsInline(true),
-                        new EmbedFieldBuilder().WithName("Resolution").WithValue($"{info.HorizontalResolution}dpi * {info.VerticalResolution}dpi").WithIsInline(true),
+                        new EmbedFieldBuilder().WithName("Resolution").WithValue($"{info.HorizontalResolution} dpi * {info.VerticalResolution} dpi").WithIsInline(true),
                     });
                 await Context.Channel.SendMessageAsync(embed: em.Build());
             }

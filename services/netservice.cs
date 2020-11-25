@@ -48,14 +48,15 @@ namespace donniebot.services
         public async Task<bool> IsVideoAsync(string url)
         {
             url = ParseUrl(url);
+            if (url == null || !Uri.TryCreate(url, UriKind.Absolute, out var uri)) return false;
 
-            var res = await _hc.SendAsync(new HttpRequestMessage(HttpMethod.Head, new Uri(url)));
+            var res = await _hc.SendAsync(new HttpRequestMessage(HttpMethod.Head, uri));
 
             if (res.IsSuccessStatusCode)
                 if (res.Content.Headers.ContentType.MediaType.Contains("video"))
                     return true;
 
-            res = await _hc.SendAsync(new HttpRequestMessage(HttpMethod.Get, new Uri(url)));
+            res = await _hc.SendAsync(new HttpRequestMessage(HttpMethod.Get, uri));
             if (res.IsSuccessStatusCode)
                 if (res.Content.Headers.ContentType.MediaType.Contains("video"))
                     return true;
@@ -66,8 +67,9 @@ namespace donniebot.services
         public async Task<long> GetContentLengthAsync(string url)
         {
             url = ParseUrl(url);
+            if (url == null || !Uri.TryCreate(url, UriKind.Absolute, out var uri)) return 0;
 
-            var res = await _hc.SendAsync(new HttpRequestMessage(HttpMethod.Head, new Uri(url)));
+            var res = await _hc.SendAsync(new HttpRequestMessage(HttpMethod.Head, uri));
 
             if (res.IsSuccessStatusCode)
                 if (res.Content.Headers.ContentLength.HasValue)
@@ -79,8 +81,9 @@ namespace donniebot.services
         public async Task<string> GetContentTypeAsync(string url)
         {
             url = ParseUrl(url);
+            if (url == null || !Uri.TryCreate(url, UriKind.Absolute, out var uri)) return null;
 
-            var res = await _hc.SendAsync(new HttpRequestMessage(HttpMethod.Head, new Uri(url)));
+            var res = await _hc.SendAsync(new HttpRequestMessage(HttpMethod.Head, uri));
 
             if (res.IsSuccessStatusCode)
                 return res.Content.Headers.ContentType.MediaType;
@@ -91,8 +94,9 @@ namespace donniebot.services
         public async Task<bool> IsSuccessAsync(string url)
         {
             url = ParseUrl(url);
+            if (url == null || !Uri.TryCreate(url, UriKind.Absolute, out var uri)) return false;
 
-            var res = await _hc.SendAsync(new HttpRequestMessage(HttpMethod.Head, new Uri(url)));
+            var res = await _hc.SendAsync(new HttpRequestMessage(HttpMethod.Head, uri));
 
             if (res.IsSuccessStatusCode) return true;
 
