@@ -18,7 +18,7 @@ jobs:
       with:
         dotnet-version: 3.1.301
     - name: Install dependencies
-      run: dotnet restore
+      run: dotnet restore --configfile nuget.config src/donniebot.csproj
     - name: Build
       run: dotnet build --configuration Release --no-restore src/donniebot.csproj
     - name: Test
