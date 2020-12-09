@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>netcoreapp3.0</TargetFramework>
+    <TargetFramework>net5.0</TargetFramework>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -20,7 +20,7 @@
     <ProjectReference Include="../deps/Discord.Addons.Interactive/Discord.Addons.Interactive/Discord.Addons.Interactive.csproj" />
     <PackageReference Include="Nerdbank.Streams" Version="2.6.81" />
     <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="1.0.0-unstable0456" />
-    <PackageReference Include="Discord.Net" Version="2.3.0-dev-*" />
+    <PackageReference Include="Discord.Net" Version="2.3.0-dev-20201201.2" />
     <PackageReference Include="LiteDB" Version="4.1.4" />
     <PackageReference Include="Microsoft.CodeAnalysis" Version="3.3.1" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="3.3.1" />
