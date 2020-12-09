@@ -8,29 +8,28 @@ using Discord.Addons.Interactive;
 namespace donniebot.commands
 {
     [Name("Image")]
-    public class VideoToGifCommand : InteractiveBase<ShardedCommandContext>
+    public class RedpillCommand : InteractiveBase<ShardedCommandContext>
     {
         private readonly DiscordShardedClient _client;
         private readonly ImageService _img;
         private readonly MiscService _misc;
 
-        public VideoToGifCommand(DiscordShardedClient client, ImageService img, MiscService misc)
+        public RedpillCommand(DiscordShardedClient client, ImageService img, MiscService misc)
         {
             _client = client;
             _img = img;
             _misc = misc;
         }
 
-        [Command("videotogif")]
-        [Alias("vtg", "v2g")]
-        [Summary("Converts a video to a GIF.")]
-        public async Task VideoToGifCmd([Summary("The video to convert.")] string url = null)
+        [Command("redpill")]
+        [Alias("rp")]
+        [Summary("Creates an image with two choices..")]
+        public async Task RedpillCmd([Summary("The first choice (red pill).")] string choice1, [Summary("The second choice (blue pill).")] string choice2)
         {
             try
             {
-                url = await _img.ParseUrlAsync(url, Context.Message);
-                var path = await _img.VideoToGif(url);
-                await _img.SendToChannelAsync(path, Context.Channel);
+                var img = await _img.Redpill(choice1, choice2);
+                await _img.SendToChannelAsync(img, Context.Channel);
             }
             catch (Exception e)
             {

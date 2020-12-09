@@ -58,7 +58,9 @@ namespace donniebot.classes
             "SixLabors.ImageSharp.Processing",
             "YoutubeExplode",
             "YoutubeExplode.Videos",
-            "YoutubeExplode.Playlists"
+            "YoutubeExplode.Playlists",
+            "SixLabors.Fonts",
+            "SixLabors.ImageSharp.Drawing.Processing"
         };
     }
 }

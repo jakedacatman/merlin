@@ -1,0 +1,6 @@
+[submodule "deps/Discord.Addons.Interactive"]
+	path = deps/Discord.Addons.Interactive
+	url = https://github.com/foxbot/Discord.Addons.Interactive/
+[submodule "deps/SVGSharpie"]
+	path = deps/SVGSharpie
+	url = https://github.com/UkooLabs/SVGSharpie

@@ -1,4 +1,5 @@
 using System;
+using YoutubeExplode.Videos.Streams;
 
 namespace donniebot.classes
 {
@@ -12,6 +13,7 @@ namespace donniebot.classes
         public ulong GuildId { get; }
         public TimeSpan Length { get; }
         public long Size { get; set; } = 0L;
+        public AudioOnlyStreamInfo Info { get; set; } = null;
 
         public Song(SongInfo info, ulong queuerId, ulong guildId)
         {

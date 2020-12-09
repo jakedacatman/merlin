@@ -305,16 +305,30 @@ namespace donniebot.services
 
             script.Globals["XD"] = (Action)(async () => 
                 {
-                    await channel.SendMessageAsync("XD");
-                    return;
+                    try
+                    {
+                        await channel.SendMessageAsync("XD");
+                        return;
+                    }
+                    catch (Exception e)
+                    {
+                        throw e;
+                    }
                 });
             script.Globals["sendMessage"] = (Action<string>)(async (string text) => 
             {
-                if (text.Length > 1000)
-                    text = $"Message too long; here is a link to it: {await _net.UploadToPastebinAsync(text)}";
+                try
+                {
+                    if (text.Length > 1000)
+                        text = $"Message too long; here is a link to it: {await _net.UploadToPastebinAsync(text)}";
 
-                await channel.SendMessageAsync(text);
-                return;
+                    await channel.SendMessageAsync(text);
+                    return;
+                }
+                catch (Exception e)
+                {
+                    throw e;
+                }
             });
 
             DynValue eval;

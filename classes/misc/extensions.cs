@@ -132,97 +132,105 @@ namespace donniebot.classes
 
         public static string MakeString(this object t, bool doMethods = false, bool doValueType = false, bool doProperties = true, int level = 0)
         {
-            if (t == null)
-                return $" ";
-
-            if (t.GetType().IsValueType && !doValueType) return t.ToString();
-
-            StringBuilder sb = new StringBuilder();
-
-            if (doProperties)
-            {
-                var properties = t.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.Static | BindingFlags.NonPublic).Where(x => x.GetIndexParameters().Length == 0);
-                foreach (var thing in properties)
+            string str = " ";
+            try
                 {
-                    if (thing == null)
-                        continue;
+                if (t == null)
+                    return $" ";
 
-                    var toAppend = "  ".RepeatString(level + 1);
+                if (t.GetType().IsValueType && !doValueType) return t.ToString();
 
-                    object value;
-                    if ((thing.Name.Contains("Exit") || thing.Name.Contains("Start") || thing.Name.Contains("Standard")) && t is System.Diagnostics.Process)
-                        value = "(none)";
-                    else
-                        value = thing.GetValue(t);
+                StringBuilder sb = new StringBuilder();
 
-                    if (value is ICollection h)
-                        toAppend += $"{thing.Name}:\n  {h.MakeString(level + 1)}";
-                    else if (value is IReadOnlyCollection<object> x)
-                        toAppend += $"{thing.Name}:\n  {x.MakeString(level + 1)}";
-                    else
+                if (doProperties)
+                {
+                    var properties = t.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.Static | BindingFlags.NonPublic).Where(x => x.GetIndexParameters().Length == 0);
+                    foreach (var thing in properties)
                     {
-                        string valueAsString = null;
-                        if (value != null)
+                        if (thing == null)
+                            continue;
+
+                        var toAppend = "  ".RepeatString(level + 1);
+
+                        object value;
+                        if ((thing.Name.Contains("Exit") || thing.Name.Contains("Start") || thing.Name.Contains("Standard")) && t is System.Diagnostics.Process)
+                            value = "(none)";
+                        else
+                            value = thing.GetValue(t);
+
+                        if (value is ICollection h)
+                            toAppend += $"{thing.Name}:\n  {h.MakeString(level + 1)}";
+                        else if (value is IReadOnlyCollection<object> x)
+                            toAppend += $"{thing.Name}:\n  {x.MakeString(level + 1)}";
+                        else
                         {
-                            var tostring = value.ToString();
-                            if (tostring.Length > 100)
-                                valueAsString = tostring.Substring(0, 100) + "...";
-                            else
-                                valueAsString = tostring;
+                            string valueAsString = null;
+                            if (value != null)
+                            {
+                                var tostring = value.ToString();
+                                if (tostring.Length > 100)
+                                    valueAsString = tostring.Substring(0, 100) + "...";
+                                else
+                                    valueAsString = tostring;
+                            }
+                            toAppend += $"{thing.Name}: {valueAsString ?? "null"}";
                         }
-                        toAppend += $"{thing.Name}: {valueAsString ?? "null"}";
+
+                        toAppend += ",\n";
+
+                        sb.Append(toAppend);
                     }
-
-                    toAppend += ",\n";
-
-                    sb.Append(toAppend);
                 }
-            }
 
-            if (doMethods)
-            {
-                var methods = t.GetType().GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.Static | BindingFlags.NonPublic);
-                foreach (var thing in methods)
+                if (doMethods)
                 {
-                    if (thing == null)
-                        continue;
+                    var methods = t.GetType().GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.Static | BindingFlags.NonPublic);
+                    foreach (var thing in methods)
+                    {
+                        if (thing == null)
+                            continue;
 
-                    var toAppend = "  ".RepeatString(level + 1);
+                        var toAppend = "  ".RepeatString(level + 1);
 
-                    if (thing.IsPublic) toAppend += $"public ";
-                    if (thing.IsPrivate) toAppend += $"private ";
-                    if (thing.IsFamily) toAppend += $"protected ";
-                    if (thing.IsAssembly) toAppend += "internal ";
-                    if (thing.IsStatic) toAppend += $"static ";
-                    if (thing.GetCustomAttribute(typeof(AsyncStateMachineAttribute)) != null) toAppend += $"async ";
-                    if (thing.IsAbstract) toAppend += $"abstract ";
-                    if (thing.IsOverride()) toAppend += "override ";
-                    else if (thing.IsVirtual) toAppend += $"virtual ";
+                        if (thing.IsPublic) toAppend += $"public ";
+                        if (thing.IsPrivate) toAppend += $"private ";
+                        if (thing.IsFamily) toAppend += $"protected ";
+                        if (thing.IsAssembly) toAppend += "internal ";
+                        if (thing.IsStatic) toAppend += $"static ";
+                        if (thing.GetCustomAttribute(typeof(AsyncStateMachineAttribute)) != null) toAppend += $"async ";
+                        if (thing.IsAbstract) toAppend += $"abstract ";
+                        if (thing.IsOverride()) toAppend += "override ";
+                        else if (thing.IsVirtual) toAppend += $"virtual ";
 
-                    var type = thing.ReturnType;
-                    toAppend += Aliases.ContainsKey(type) ? Aliases[type] + " " : type.ToString() + " ";
+                        var type = thing.ReturnType;
+                        toAppend += Aliases.ContainsKey(type) ? Aliases[type] + " " : type.ToString() + " ";
 
-                    toAppend += thing.Name;
+                        toAppend += thing.Name;
 
-                    if (thing.IsGenericMethod || thing.IsGenericMethodDefinition) toAppend += "<T>";
-                    toAppend += "(";
-                    var parameters = thing.GetParameters();
-                    foreach (var g in parameters)
-                        toAppend += $"{(g.IsOut ? "out " : "")}{(Aliases.ContainsKey(g.ParameterType) ? Aliases[g.ParameterType] : g.ParameterType.ToString())} {g.Name}{(g.HasDefaultValue ? " = " + g.DefaultValue ?? "null" : "")}, ";
+                        if (thing.IsGenericMethod || thing.IsGenericMethodDefinition) toAppend += "<T>";
+                        toAppend += "(";
+                        var parameters = thing.GetParameters();
+                        foreach (var g in parameters)
+                            toAppend += $"{(g.IsOut ? "out " : "")}{(Aliases.ContainsKey(g.ParameterType) ? Aliases[g.ParameterType] : g.ParameterType.ToString())} {g.Name}{(g.HasDefaultValue ? " = " + g.DefaultValue ?? "null" : "")}, ";
 
-                    if (parameters.Length > 0) toAppend = toAppend.Substring(0, toAppend.Length - 2);
+                        if (parameters.Length > 0) toAppend = toAppend.Substring(0, toAppend.Length - 2);
 
-                    toAppend += ")";
+                        toAppend += ")";
 
-                    toAppend += ",\n";
+                        toAppend += ",\n";
 
-                    sb.Append(toAppend);
+                        sb.Append(toAppend);
+                    }
                 }
-            }
 
-            var str = sb.ToString();
-            if (str.Length == 0) return $"{t} (no properties/methods only)";
-            return $"[\n{str.Substring(0, str.Length - 2)}\n{"  ".RepeatString(level)}]";
+                str = sb.ToString();
+                if (str.Length == 0) return $"{t} (no properties/methods only)";
+                return $"[\n{str.Substring(0, str.Length - 2)}\n{"  ".RepeatString(level)}]";               
+            }
+            catch
+            {
+                return t.ToString();
+            }
         }
 
         public static IEnumerable<object> Repeat(this object o, int amount) => Enumerable.Repeat(o, amount);
@@ -236,15 +244,12 @@ namespace donniebot.classes
 
     public static class StringExtensions
     {
-        public static bool WillExit(this string s, out string message)
+        public static IEnumerable<int> Utf8ToCodePoints(this string s) //adapted from https://stackoverflow.com/a/44679973
         {
-            if (s.Contains("Environment.Exit"))
-            {
-                message = "This code calls Environment.Exit.";
-                return true;
-            }
-            message = "This code will not exit.";
-            return false;
+            var utf32Bytes = Encoding.UTF32.GetBytes(s);
+            var bytesPerChar = 4;
+            for (int i = 0; i < utf32Bytes.Length; i+= bytesPerChar)
+                yield return BitConverter.ToInt32(utf32Bytes, i);
         }
     }
 

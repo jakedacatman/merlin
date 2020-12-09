@@ -50,34 +50,9 @@ namespace donniebot.commands
                         .WithTitle(img.Title)
                         .WithColor(_rand.RandomColor())
                         .WithTimestamp(DateTime.UtcNow)
+                        .WithImageUrl(img.Url)
                         .WithFooter($"Posted by {img.Author} • From {img.Subreddit}");
 
-                    if (img.Type == "image")
-                        embed = embed.WithImageUrl(img.Url);
-                    else
-                    {
-                        var reg = new Regex("DASH_[0-9]{1,4}");
-                        var videoUrl = img.Url;
-                        var audioUrl = reg.Replace(img.Url, "DASH_audio");
-
-                        string url;
-                        if (await _net.IsSuccessAsync(audioUrl))
-                        {
-                            var msg = await ReplyAsync("Downloading your video...");
-
-                            var fn = $"{_rand.GenerateId()}.mp4";
-                            await Shell.Run($"ffmpeg -i \"{videoUrl}\" -i \"{audioUrl}\" {fn}");
-
-                            url = await _net.UploadAsync(fn, fn.Split('.')[1]);
-
-                            await msg.DeleteAsync();
-                        }
-                        else url = videoUrl;
-
-                        embed = embed
-                            .WithUrl(url)
-                            .WithDescription("Click the title to see the video.");
-                    }
                         
                     await ReplyAsync(embed: embed.Build());
                 }

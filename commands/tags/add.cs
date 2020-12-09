@@ -4,6 +4,7 @@ using Discord;
 using Discord.Commands;
 using Discord.Addons.Interactive;
 using Discord.WebSocket;
+using System.Linq;
 
 namespace donniebot.commands
 {
@@ -18,7 +19,9 @@ namespace donniebot.commands
             try
             {
                 if (value == null)
-                    value = (await _misc.GetPreviousMessageAsync(Context.Channel as SocketTextChannel)).Content;
+                    if (!Context.Message.Attachments.Any())
+                        value = (await _misc.GetPreviousMessageAsync(Context.Channel as SocketTextChannel)).Content;
+                    else value = Context.Message.Attachments.First().Url;
                 
                 if (tag.Length > 150)
                 {

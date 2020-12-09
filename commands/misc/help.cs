@@ -32,7 +32,7 @@ namespace donniebot.commands
         {
             try
             {
-                if (command == null)
+                if (command == null) //run don.cmds
                 {
                     await _commands.Commands.Where(x => x.Name == "commands").First().ExecuteAsync(Context, ParseResult.FromSuccess(new List<TypeReaderValue> { new TypeReaderValue(null, 1f) }, new List<TypeReaderValue>()), _services);
                     return;
