@@ -4,7 +4,7 @@ on:
   push:
     branches: [ master,audio-dev ]
   pull_request:
-    branches: [ master ]
+    branches: [ master,audio-dev ]
 
 jobs:
   build:
@@ -17,13 +17,9 @@ jobs:
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: 3.1.301
-    - name: Make directory
-      run: mkdir ../repos
-    - name: Clone repo
-      run: git clone https://github.com/UkooLabs/SVGSharpie.git ../repos
     - name: Install dependencies
       run: dotnet restore
     - name: Build
-      run: dotnet build --configuration Release --no-restore
+      run: dotnet build --configuration Release --no-restore src/donniebot.csproj
     - name: Test
       run: dotnet test --no-restore --verbosity normal
