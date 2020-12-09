@@ -34,7 +34,7 @@ namespace donniebot.services
                 var collection = _db.GetCollection<ApiKey>("apikeys");
 
                 var apiKey = collection.FindOne(Query.Where("Service", x => x.AsString == service));
-                return apiKey != null ? apiKey.Key : null;
+                return apiKey?.Key;
             }
         }
 
@@ -123,7 +123,7 @@ namespace donniebot.services
                 var _db = scope.ServiceProvider.GetRequiredService<LiteDatabase>();
                 var collection = _db.GetCollection<Host>("hosts");
                 var host = collection.FindOne(Query.Where("Name", x => x.AsString == name));
-                return host == null ? null : host.Url;
+                return host?.Url;
             }
         }
 
