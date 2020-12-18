@@ -62,7 +62,7 @@ namespace donniebot.classes
             
             _skips = 0;
             IsSkipping = true;
-            await SongSkipped.Invoke(this, this.Current);
+            SongSkipped?.Invoke(this, this.Current);
             await TextChannel.SendMessageAsync("Skipping the current song.");
             return 0;
         }

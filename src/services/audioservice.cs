@@ -235,9 +235,6 @@ namespace donniebot.services
                         {
                             do
                             {
-                                if (token.IsCancellationRequested)
-                                    break;
-
                                 bytesDown = await str.ReadAsync(bufferDown, 0, block_size, token);
                                 await downloadStream.WriteAsync(bufferDown, 0, bytesDown, token);
                             }
@@ -248,7 +245,7 @@ namespace donniebot.services
                             await downloadStream.FlushAsync();
                             downloadStream.CompleteWriting();
                         }
-                    });
+                    }, token);
 
                     var read = Task.Run(async () => 
                     {
@@ -256,9 +253,6 @@ namespace donniebot.services
                         {
                             do
                             {
-                                if (token.IsCancellationRequested)
-                                    break;
-
                                 bytesRead = await downloadStream.ReadAsync(bufferRead, 0, block_size, token);
                                 await input.WriteAsync(bufferRead, 0, bytesRead, token);
                             }
@@ -268,7 +262,7 @@ namespace donniebot.services
                         {
                             await input.FlushAsync();
                         }
-                    });
+                    }, token);
 
 
                     var hasHadFullChunkYet = false;
@@ -278,9 +272,6 @@ namespace donniebot.services
                         {
                             do 
                             {
-                                if (token.IsCancellationRequested)
-                                    break;
-
                                 if (hasHadFullChunkYet && bytesConverted < block_size) //if bytesConverted is less than here, then the last (small) chunk is done
                                     break;
 
@@ -298,9 +289,16 @@ namespace donniebot.services
                             await discord.FlushAsync();
                             ffmpeg.Kill();
                         }
-                    });
+                    }, token);
 
-                    await Task.WhenAll(download, read, write);
+                    try
+                    {
+                        await Task.WhenAll(download, read, write);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        
+                    }
 
                     player.IsPlaying = false;
                     player.IsSkipping = false;
