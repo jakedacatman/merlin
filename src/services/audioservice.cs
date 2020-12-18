@@ -88,7 +88,6 @@ namespace donniebot.services
                 
                 player.Enqueue(song);
                 if (shuffle) Shuffle(player.GuildId);
-                
                 SongAdded?.Invoke(id, player, song);
             }
             finally 
@@ -107,7 +106,6 @@ namespace donniebot.services
                 
                 player.EnqueueMany(songs);
                 if (shuffle) Shuffle(player.GuildId);
-
                 SongAdded?.Invoke(id, player, songs.First());
             }
             finally 
@@ -309,7 +307,6 @@ namespace donniebot.services
                     {
                         
                     }
-
                     player.IsPlaying = false;
                     player.IsSkipping = false;
                     player.Current = null;
