@@ -1190,7 +1190,7 @@ namespace donniebot.services
                 }
 
             }
-            else if (!Uri.IsWellFormedUriString(url, UriKind.Absolute))
+            else if (string.IsNullOrWhiteSpace(url) || !Uri.IsWellFormedUriString(url, UriKind.Absolute))
             {
                 if (!msg.Attachments.Any())
                 {

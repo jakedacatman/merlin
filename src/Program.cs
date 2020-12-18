@@ -148,6 +148,7 @@ namespace donniebot
                 int mentPos = 0;
 
                 var pre = _db.GetItem<GuildPrefix>("prefixes", Query.Where("GuildId", x => x.AsDouble == (double)context.Guild.Id))?.Prefix ?? prefix;
+                
                 if (msg.HasMentionPrefix(_client.CurrentUser, ref mentPos))
                 {
                     var parseResult = ParseResult.FromSuccess(new List<TypeReaderValue> { new TypeReaderValue(msg.Content.Substring(mentPos), 1f) }, new List<TypeReaderValue>() );

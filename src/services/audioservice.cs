@@ -35,6 +35,7 @@ namespace donniebot.services
 
         public event Func<ulong, AudioPlayer, Song, Task> SongAdded;
         public event Func<Song, AudioPlayer, Task> SongEnded;
+        public event Func<SocketVoiceChannel, SocketVoiceChannel, Task> BotMoved;
 
         public async Task<AudioPlayer> ConnectAsync(SocketTextChannel textChannel, SocketVoiceChannel channel)
         {
@@ -164,12 +165,18 @@ namespace donniebot.services
 
             if (oldVc == null) return;
 
-            if (newVc == null && GetConnection(oldVc.Guild.Id, out var connection))
-            {
-                var queue = connection.Queue;
-                queue.RemoveRange(0, queue.Count);
-                await DisconnectAsync(connection.Channel);
-            }
+            if (GetConnection(oldVc.Guild.Id, out var connection))
+                if (newVc == null)
+                {
+                    var queue = connection.Queue;
+                    queue.RemoveRange(0, queue.Count);
+                    await DisconnectAsync(connection.Channel);
+                }
+                else
+                {
+                    connection = await ConnectAsync(connection.TextChannel, newVc);
+                    BotMoved?.Invoke(oldVc, newVc);
+                }
         }
 
         public async Task PlayAsync(ulong id)
@@ -181,17 +188,18 @@ namespace donniebot.services
         }
         public async Task PlayAsync(AudioPlayer player)
         {
-            try
-            {
-                var id = player.GuildId;
-                if (!player.Queue.Any())
+            var id = player.GuildId;
+            if (!player.Queue.Any())
                     return;
 
-                var song = player.Pop();
-                player.Current = song;
+            var song = player.Pop();
+            player.Current = song;
 
-                if (!GetConnection(id, out var connection))
-                    throw new InvalidOperationException("Not connected to a voice channel.");
+            if (!GetConnection(id, out var connection))
+                throw new InvalidOperationException("Not connected to a voice channel.");
+
+            try
+            {
 
                 var channel = connection.Channel;
                 if (channel.Guild.CurrentUser.VoiceChannel != channel)
@@ -220,9 +228,7 @@ namespace donniebot.services
                     var bufferRead = new byte[block_size];
                     var bufferWrite = new byte[block_size];
 
-                    var bytesDown = 0;
-                    var bytesRead = 0;
-                    var bytesConverted = 0;
+                    int bytesDown = 0, bytesRead = 0, bytesConverted = 0;
 
                     var skipCts = new CancellationTokenSource();
                     var token = skipCts.Token;
@@ -230,6 +236,12 @@ namespace donniebot.services
                     player.SongSkipped += (AudioPlayer player, Song song) =>
                     {
                         skipCts.Cancel();
+                        return Task.CompletedTask;
+                    };
+
+                    this.BotMoved += (SocketVoiceChannel oVc, SocketVoiceChannel nVc) =>
+                    {
+                        discord = player.Stream;
                         return Task.CompletedTask;
                     };
                         
@@ -307,16 +319,19 @@ namespace donniebot.services
                     {
                         
                     }
-                    player.IsPlaying = false;
-                    player.IsSkipping = false;
-                    player.Current = null;
-
-                    SongEnded?.Invoke(song, connection);
                 }
             }
-            catch (Exception e)
+            catch (Discord.Net.WebSocketClosedException)
             {
-                Console.WriteLine(e);
+                
+            }
+            finally
+            {
+                player.IsPlaying = false;
+                player.IsSkipping = false;
+                player.Current = null;
+
+                SongEnded?.Invoke(song, connection);
             }
         }
 

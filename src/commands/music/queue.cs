@@ -49,7 +49,10 @@ namespace donniebot.commands
                 var pages = new List<PageBuilder>();
 
                 for (int i = 0; i < chunks.Count(); i++)
-                    pages.Add(new PageBuilder().WithColor(_rand.RandomColor()).WithFields(new EmbedFieldBuilder().WithName($"Page {i}").WithValue(string.Join('\n', chunks.ElementAt(i)))));
+                {
+                    var chunk = chunks.ElementAt(i);
+                    pages.Add(new PageBuilder().WithColor(_rand.RandomColor()).WithFields(new EmbedFieldBuilder().WithName($"#{i * 10 + 1} to #{i * 10 + chunk.Count()}").WithValue(string.Join('\n', chunk))));
+                }
                 
                 await _inter.SendPaginatorAsync(new StaticPaginatorBuilder()
                     .WithUsers(Context.User)
