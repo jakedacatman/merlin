@@ -115,11 +115,13 @@ namespace donniebot.services
                 enq.Release(); 
             }
 
-            Task.Run(async () =>
+            #pragma warning disable CS4014
+            Task.Run(async () => //let it run in the background... we don't really care about the output
             {
                 foreach (var song in songs)
                     song.Info = await GetAudioInfoAsync(song.Url);
             });
+            #pragma warning restore CS4014
         }
 
         public void RemoveAt(ulong id, int index)
@@ -295,15 +297,15 @@ namespace donniebot.services
                         }
                     }, token);
 
-                    try
+                    try //allows for skipping
                     {
                         Task.WaitAll(new[] { download, read, write }, token);
                     }
-                    catch (OperationCanceledException)
+                    catch (OperationCanceledException) //allows for skipping
                     {
                         
                     }
-                    catch (AggregateException)
+                    catch (AggregateException) //allows for skipping
                     {
                         
                     }
