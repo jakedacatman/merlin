@@ -4,12 +4,12 @@ using System.Threading.Tasks;
 using Discord.WebSocket;
 using Discord.Commands;
 using donniebot.services;
-using Discord.Addons.Interactive;
+using Interactivity;
 
 namespace donniebot.commands
 {
     [Name("Moderation")]
-    public class PurgeCommand : InteractiveBase<ShardedCommandContext>
+    public class PurgeCommand : ModuleBase<ShardedCommandContext>
     {
         private readonly DiscordShardedClient _client;
         private readonly ModerationService _mod;

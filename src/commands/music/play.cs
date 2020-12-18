@@ -5,18 +5,18 @@ using Discord.WebSocket;
 using donniebot.services;
 using System.Threading.Tasks;
 using System.Collections.Generic;
-using Discord.Addons.Interactive;
+using Interactivity;
 
 namespace donniebot.commands
 {
     [Name("Audio")]
-    public class AddCommand : InteractiveBase<ShardedCommandContext>
+    public class PlayCommand : ModuleBase<ShardedCommandContext>
     {
         private readonly AudioService _audio;
         private readonly MiscService _misc;
         private readonly RandomService _rand;
 
-        public AddCommand(AudioService audio, MiscService misc, RandomService rand)
+        public PlayCommand(AudioService audio, MiscService misc, RandomService rand)
         {
             _audio = audio;
             _misc = misc;
@@ -24,9 +24,9 @@ namespace donniebot.commands
         }
 
         [Command("add")]
-        [Alias("play")]
-        [Summary("Adds a song to the song queue in order to be played.")]
-        public async Task AddCmd([Summary("The URL or YouTube search query."), Remainder] string queryOrUrl = null)
+        [Alias("p", "play", "pl")]
+        [Summary("Adds a song or playlist to the queue in order to be played.")]
+        public async Task PlayCmd([Summary("The URL or YouTube search query."), Remainder] string queryOrUrl = null)
         {
             try
             {
@@ -53,7 +53,7 @@ namespace donniebot.commands
                 {
                     var playlist = await _audio.GetPlaylistAsync(queryOrUrl, id, uId);
 
-                    await _audio.EnqueueMany(vc, playlist.Songs);
+                    await _audio.EnqueueMany(Context.Channel as SocketTextChannel, vc, playlist.Songs);
 
                     await ReplyAsync(embed: new EmbedBuilder()
                         .WithTitle("Added playlist")
@@ -87,7 +87,7 @@ namespace donniebot.commands
                     .WithCurrentTimestamp()
                 .Build());
 
-                await _audio.Enqueue(vc, song);
+                await _audio.Enqueue(Context.Channel as SocketTextChannel, vc, song);
             }
             catch (Exception e)
             {

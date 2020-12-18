@@ -2,14 +2,14 @@ using System;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
-using Discord.Addons.Interactive;
+using Interactivity;
 using System.Diagnostics;
 using donniebot.services;
 
 namespace donniebot.commands
 {
     [Name("Misc")]
-    public class WikiCommand : InteractiveBase<ShardedCommandContext>
+    public class WikiCommand : ModuleBase<ShardedCommandContext>
     {
         private readonly NetService _net;
         private readonly MiscService _misc;

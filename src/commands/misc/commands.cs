@@ -4,23 +4,26 @@ using System.Linq;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
-using Discord.Addons.Interactive;
+using Interactivity;
+using Interactivity.Pagination;
 using donniebot.services;
 
 namespace donniebot.commands
 {
     [Name("Help")]
-    public class CommandsCommand : InteractiveBase<ShardedCommandContext>
+    public class CommandsCommand : ModuleBase<ShardedCommandContext>
     {
         private readonly CommandService _commands;
         private readonly MiscService _misc;
         private readonly RandomService _rand;
+        private readonly InteractivityService _inter;
 
-        public CommandsCommand(CommandService commands, MiscService misc, RandomService rand)
+        public CommandsCommand(CommandService commands, MiscService misc, RandomService rand, InteractivityService inter)
         {
             _commands = commands;
             _misc = misc;
             _rand = rand;
+            _inter = inter;
         }
 
         [Command("commands")]
@@ -49,17 +52,19 @@ namespace donniebot.commands
 
                 if (string.IsNullOrEmpty(category))
                 {
-                    var pages = new List<string>();
+                    var pages = new List<PageBuilder>();
                     foreach (var module in modules)
-                        pages.Add($"**{module.Key}**\n{string.Join(", ", module.Value)}");
+                        pages.Add(new PageBuilder()
+                            .WithTitle("Commands")
+                            .WithFields(new EmbedFieldBuilder().WithName(module.Key).WithValue(string.Join(", ", module.Value)))
+                            .WithColor(_rand.RandomColor()));
 
-                    await PagedReplyAsync(new PaginatedMessage 
-                    { 
-                        Pages = pages, 
-                        Color = _rand.RandomColor(), 
-                        Title = "Commands", 
-                        AlternateDescription = "A list of commands" 
-                    });
+                    await _inter.SendPaginatorAsync(new StaticPaginatorBuilder()
+                        .WithUsers(Context.User)
+                        .WithDefaultEmotes()
+                        .WithFooter(PaginatorFooter.PageNumber)
+                        .WithPages(pages)
+                        .Build(), Context.Channel);
                 }
                 else
                 {

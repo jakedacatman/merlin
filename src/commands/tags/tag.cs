@@ -1,22 +1,24 @@
 using System;
 using System.Threading.Tasks;
 using Discord.Commands;
-using Discord.Addons.Interactive;
+using Interactivity;
 using donniebot.services;
 
 namespace donniebot.commands
 {
     [Name("Tag")]
     [Group("tag")]
-    public partial class TagCommand : InteractiveBase<ShardedCommandContext>
+    public partial class TagCommand : ModuleBase<ShardedCommandContext>
     {
         private readonly MiscService _misc;
         private readonly DbService _db;
+        private readonly InteractivityService _inter;
 
-        public TagCommand(MiscService misc, DbService db)
+        public TagCommand(MiscService misc, DbService db, InteractivityService inter)
         {
             _misc = misc;
             _db = db;
+            _inter = inter;
         }
 
         [Command("")]

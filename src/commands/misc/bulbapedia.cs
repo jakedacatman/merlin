@@ -2,13 +2,13 @@ using System;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
-using Discord.Addons.Interactive;
+using Interactivity;
 using donniebot.services;
 
 namespace donniebot.commands
 {
     [Name("Misc")]
-    public class BulbapediaCommand : InteractiveBase<ShardedCommandContext>
+    public class BulbapediaCommand : ModuleBase<ShardedCommandContext>
     {
         private readonly NetService _net;
         private readonly MiscService _misc;
@@ -22,7 +22,7 @@ namespace donniebot.commands
         }
 
         [Command("bulbapedia")]
-        [Alias("bu", "pokedex", "p")]
+        [Alias("bu", "pokedex")]
         [Summary("Searches Bulbapedia for an article.")]
         public async Task BulbapediaCmd([Summary("The search term."), Remainder] string term)
         {

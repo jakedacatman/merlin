@@ -6,28 +6,30 @@ using Discord.WebSocket;
 using Discord.Commands;
 using donniebot.services;
 using donniebot.classes;
-using Discord.Addons.Interactive;
+using Interactivity;
 
 namespace donniebot.commands
 {
     [Name("Image")]
-    public class RedditDownloadCommand : InteractiveBase<ShardedCommandContext>
+    public class RedditDownloadCommand : ModuleBase<ShardedCommandContext>
     {
         private readonly DiscordShardedClient _client;
         private readonly MiscService _misc;
         private readonly ImageService _img;
         private readonly RandomService _rand;
         private readonly NetService _net;
+        private readonly InteractivityService _inter;
 
         private Regex _reg = new Regex(@"[0-9a-z]{1,21}"); 
 
-        public RedditDownloadCommand(DiscordShardedClient client, MiscService misc, ImageService img, RandomService rand, NetService net)
+        public RedditDownloadCommand(DiscordShardedClient client, MiscService misc, ImageService img, RandomService rand, NetService net, InteractivityService inter)
         {
             _client = client;
             _misc = misc;
             _img = img;
             _rand = rand;
             _net = net;
+            _inter = inter;
         }
 
         [Command("redditdownload")]
@@ -39,7 +41,7 @@ namespace donniebot.commands
             {
                 var msg = await ReplyAsync("Downloading your video...");
                 await _img.DownloadRedditVideoAsync(post, Context.Channel as SocketGuildChannel);
-                await ReplyAndDeleteAsync($"{Context.User.Mention}, your video is ready.", timeout: TimeSpan.FromSeconds(30));
+                _inter.DelayedSendMessageAndDeleteAsync(Context.Channel, deleteDelay: TimeSpan.FromSeconds(30), text: $"{Context.User.Mention}, your video is ready.");
             }
             catch (System.Net.Http.HttpRequestException e)
             {

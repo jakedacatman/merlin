@@ -40,7 +40,7 @@ namespace donniebot.classes
             "Discord.WebSocket",
             "Discord.API",
             "Discord.Rest",
-            "Discord.Addons.Interactive",
+            "Interactivity",
             "System.Diagnostics",
             "Microsoft.CodeAnalysis.CSharp.Scripting",
             "Microsoft.CodeAnalysis.Scripting",

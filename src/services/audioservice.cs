@@ -36,7 +36,7 @@ namespace donniebot.services
         public event Func<ulong, AudioPlayer, Song, Task> SongAdded;
         public event Func<Song, AudioPlayer, Task> SongEnded;
 
-        public async Task<AudioPlayer> ConnectAsync(SocketVoiceChannel channel)
+        public async Task<AudioPlayer> ConnectAsync(SocketTextChannel textChannel, SocketVoiceChannel channel)
         {
             var id = channel.Guild.Id;
             var currUser = channel.Guild.CurrentUser;
@@ -46,7 +46,7 @@ namespace donniebot.services
             
             var connection = await channel.ConnectAsync(true, false);
 
-            var np = new AudioPlayer(id, channel, connection);
+            var np = new AudioPlayer(id, channel, connection, textChannel);
 
             if (!GetConnection(id, out var curr))
                 _connections.Add(np);
@@ -55,6 +55,8 @@ namespace donniebot.services
                 _connections.Remove(curr);
                 _connections.Add(np);
             }
+
+            await textChannel.SendMessageAsync($"Joined `{channel.Name}` and will send messages in `{textChannel.Name}`.");
 
             return np;
         }
@@ -73,18 +75,19 @@ namespace donniebot.services
         }
 
         private readonly SemaphoreSlim enq = new SemaphoreSlim(1, 1);
-        public async Task Enqueue(SocketVoiceChannel vc, Song song)
+        public async Task Enqueue(SocketTextChannel textChannel, SocketVoiceChannel vc, Song song, bool shuffle = false)
         {
             await enq.WaitAsync();
             try
             {
                 var id = vc.Guild.Id;
                 if (!GetConnection(id, out var player))
-                    player = await ConnectAsync(vc);
+                    player = await ConnectAsync(textChannel, vc);
 
                 song.Info = await GetAudioInfoAsync(song.Url);
                 
                 player.Enqueue(song);
+                if (shuffle) Shuffle(player.GuildId);
                 SongAdded?.Invoke(id, player, song);
             }
             finally 
@@ -92,16 +95,17 @@ namespace donniebot.services
                 enq.Release(); 
             }
         }
-        public async Task EnqueueMany(SocketVoiceChannel vc, IEnumerable<Song> songs)
+        public async Task EnqueueMany(SocketTextChannel textChannel, SocketVoiceChannel vc, IEnumerable<Song> songs, bool shuffle = false)
         {
             await enq.WaitAsync();
             try
             {
                 var id = vc.Guild.Id;
                 if (!GetConnection(id, out var player))
-                    player = await ConnectAsync(vc);
+                    player = await ConnectAsync(textChannel, vc);
                 
                 player.EnqueueMany(songs);
+                if (shuffle) Shuffle(player.GuildId);
                 SongAdded?.Invoke(id, player, songs.First());
             }
             finally 
@@ -109,8 +113,13 @@ namespace donniebot.services
                 enq.Release(); 
             }
 
-            foreach (var song in songs)
-                song.Info = await GetAudioInfoAsync(song.Url);
+            #pragma warning disable CS4014
+            Task.Run(async () => //let it run in the background... we don't really care about the output
+            {
+                foreach (var song in songs)
+                    song.Info = await GetAudioInfoAsync(song.Url);
+            });
+            #pragma warning restore CS4014
         }
 
         public void RemoveAt(ulong id, int index)
@@ -186,7 +195,7 @@ namespace donniebot.services
 
                 var channel = connection.Channel;
                 if (channel.Guild.CurrentUser.VoiceChannel != channel)
-                    await ConnectAsync(channel);
+                    await ConnectAsync(player.TextChannel, channel);
 
                 if (connection.IsPlaying)
                     return;
@@ -217,6 +226,12 @@ namespace donniebot.services
 
                     var skipCts = new CancellationTokenSource();
                     var token = skipCts.Token;
+                    
+                    player.SongSkipped += (AudioPlayer player, Song song) =>
+                    {
+                        skipCts.Cancel();
+                        return Task.CompletedTask;
+                    };
                         
                     var download = Task.Run(async () => 
                     {
@@ -224,12 +239,6 @@ namespace donniebot.services
                         {
                             do
                             {
-                                if (player.IsSkipping)
-                                {
-                                    skipCts.Cancel();
-                                    break;
-                                }
-                                
                                 bytesDown = await str.ReadAsync(bufferDown, 0, block_size, token);
                                 await downloadStream.WriteAsync(bufferDown, 0, bytesDown, token);
                             }
@@ -240,7 +249,7 @@ namespace donniebot.services
                             await downloadStream.FlushAsync();
                             downloadStream.CompleteWriting();
                         }
-                    });
+                    }, token);
 
                     var read = Task.Run(async () => 
                     {
@@ -248,12 +257,6 @@ namespace donniebot.services
                         {
                             do
                             {
-                                if (player.IsSkipping)
-                                {
-                                    skipCts.Cancel();
-                                    break;
-                                }
-                                
                                 bytesRead = await downloadStream.ReadAsync(bufferRead, 0, block_size, token);
                                 await input.WriteAsync(bufferRead, 0, bytesRead, token);
                             }
@@ -263,7 +266,7 @@ namespace donniebot.services
                         {
                             await input.FlushAsync();
                         }
-                    });
+                    }, token);
 
 
                     var hasHadFullChunkYet = false;
@@ -273,12 +276,6 @@ namespace donniebot.services
                         {
                             do 
                             {
-                                if (player.IsSkipping)
-                                {
-                                    skipCts.Cancel();
-                                    break;
-                                }
-
                                 if (hasHadFullChunkYet && bytesConverted < block_size) //if bytesConverted is less than here, then the last (small) chunk is done
                                     break;
 
@@ -296,10 +293,20 @@ namespace donniebot.services
                             await discord.FlushAsync();
                             ffmpeg.Kill();
                         }
-                    });
+                    }, token);
 
-                    await Task.WhenAll(download, read, write);
-
+                    try //allows for skipping
+                    {
+                        Task.WaitAll(new[] { download, read, write }, token);
+                    }
+                    catch (OperationCanceledException) //allows for skipping
+                    {
+                        
+                    }
+                    catch (AggregateException) //allows for skipping
+                    {
+                        
+                    }
                     player.IsPlaying = false;
                     player.IsSkipping = false;
                     player.Current = null;
@@ -375,13 +382,13 @@ namespace donniebot.services
 
         public bool HasSongs(ulong id) => GetConnection(id, out var c) && (GetCurrent(id) != null || c.Queue.Any());
 
-        public int Skip(SocketGuildUser skipper)
+        public async Task<int> SkipAsync(SocketGuildUser skipper)
         {
             var id = skipper.Guild.Id;
             if (!GetConnection(id, out var c))
                 return 0;
 
-            return c.Skip(skipper);
+            return await c.SkipAsync(skipper);
         }
 
         public Song GetCurrent(ulong id)

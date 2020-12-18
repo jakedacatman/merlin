@@ -3,12 +3,12 @@ using System.Threading.Tasks;
 using Discord.WebSocket;
 using Discord.Commands;
 using donniebot.services;
-using Discord.Addons.Interactive;
+using Interactivity;
 
 namespace donniebot.commands
 {
     [Name("Image")]
-    public class PixelateCommand : InteractiveBase<ShardedCommandContext>
+    public class PixelateCommand : ModuleBase<ShardedCommandContext>
     {
         private readonly DiscordShardedClient _client;
         private readonly ImageService _img;
@@ -22,7 +22,7 @@ namespace donniebot.commands
         }
 
         [Command("pixelate")]
-        [Alias("p", "px")]
+        [Alias("px")]
         [Summary("Changes an image's pixel size to the given size.")]
         public async Task PixelateCmd([Summary("The value to change the pixel size to.")] int size = 1,[Summary("The image to change.")] string url = null)
         {

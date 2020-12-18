@@ -171,41 +171,27 @@ namespace donniebot.services
 
         public async Task<string> UploadToPastebinAsync(string stuffToUpload)
         {
-            try
-            {
-                var sc = new FormUrlEncodedContent( new Dictionary<string, string> { { "input", stuffToUpload } } );
-                sc.Headers.ContentType = new MediaTypeHeaderValue("application/x-www-form-urlencoded");
+            var sc = new FormUrlEncodedContent( new Dictionary<string, string> { { "input", stuffToUpload } } );
+            sc.Headers.ContentType = new MediaTypeHeaderValue("application/x-www-form-urlencoded");
 
-                if (!string.IsNullOrEmpty(uploadKey))
-                    sc.Headers.Add("key", uploadKey); //you can always do don.e _db.AddApiKey("upload", <key>) (and additionally change the host used)
+            if (!string.IsNullOrEmpty(uploadKey))
+                sc.Headers.Add("key", uploadKey); //you can always do don.e _db.AddApiKey("upload", <key>) (and additionally change the host used)
 
-                var request = await _hc.PostAsync(pasteHost, sc);
-                return await request.Content.ReadAsStringAsync();
-            }
-            catch (Exception e)
-            {
-                throw e;
-            }
+            var request = await _hc.PostAsync(pasteHost, sc);
+            return await request.Content.ReadAsStringAsync();
         }
 
         public async Task<string> DownloadAsStringAsync(string url) => await _hc.GetStringAsync(url);
 
         public async Task<Article> GetMediaWikiArticleAsync(string term, string url)
         {
-            try
-            {
-                var data = JsonConvert.DeserializeObject<JArray>(await _hc.GetStringAsync($"https://{url}/w/api.php?action=opensearch&search={term}&limit=1&format=json"));
-                var titleArr = data[1];
-                var urlArr = data[3];
-                if (titleArr.Count() == 0 || urlArr.Count() == 0)
-                    return new Article("", "");
-                else
-                    return new Article(titleArr[0].Value<string>(), urlArr[0].Value<string>());
-            }
-            catch (Exception e)
-            {
-                throw e;
-            }
+            var data = JsonConvert.DeserializeObject<JArray>(await _hc.GetStringAsync($"https://{url}/w/api.php?action=opensearch&search={term}&limit=1&format=json"));
+            var titleArr = data[1];
+            var urlArr = data[3];
+            if (titleArr.Count() == 0 || urlArr.Count() == 0)
+                return new Article("", "");
+            else
+                return new Article(titleArr[0].Value<string>(), urlArr[0].Value<string>());
         }
         public async Task<Article> GetWikipediaArticleAsync(string term) => await GetMediaWikiArticleAsync(term, "en.wikipedia.org");  
         public async Task<Article> GetBulbapediaArticleAsync(string term) => await GetMediaWikiArticleAsync(term, "bulbapedia.bulbagarden.net");

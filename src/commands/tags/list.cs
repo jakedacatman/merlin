@@ -1,13 +1,13 @@
 using System;
 using System.Threading.Tasks;
 using Discord.Commands;
-using Discord.Addons.Interactive;
+using Interactivity;
 using Discord;
 using System.Linq;
 
 namespace donniebot.commands
 {
-    public partial class TagCommand : InteractiveBase<ShardedCommandContext>
+    public partial class TagCommand : ModuleBase<ShardedCommandContext>
     {
         [Command("list")]
         [Summary("Gets all tags for the current guild.")]
