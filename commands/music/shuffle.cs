@@ -5,12 +5,12 @@ using Discord.Commands;
 using Discord.WebSocket;
 using donniebot.services;
 using System.Threading.Tasks;
-using Discord.Addons.Interactive;
+using Interactivity;
 
 namespace donniebot.commands
 {
     [Name("Audio")]
-    public class ShuffleCommand : InteractiveBase<ShardedCommandContext>
+    public class ShuffleCommand : ModuleBase<ShardedCommandContext>
     {
         private readonly AudioService _audio;
         private readonly MiscService _misc;

@@ -6,13 +6,13 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
-using Discord.Addons.Interactive;
+using Interactivity;
 using donniebot.services;
 
 namespace donniebot.commands
 {
     [Name("Help")]
-    public class HelpCommand : InteractiveBase<ShardedCommandContext>
+    public class HelpCommand : ModuleBase<ShardedCommandContext>
     {
         private readonly CommandService _commands;
         private readonly MiscService _misc;

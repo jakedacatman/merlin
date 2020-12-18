@@ -21,6 +21,8 @@ using MoonSharp.Interpreter;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
+#pragma warning disable CA2200 //Re-throwing caught exception changes stack information
+
 namespace donniebot.services
 {
     public class MiscService
@@ -304,17 +306,17 @@ namespace donniebot.services
                 .DebugPrint = s => sb.Append(s + "\n");
 
             script.Globals["XD"] = (Action)(async () => 
+            {
+                try
                 {
-                    try
-                    {
-                        await channel.SendMessageAsync("XD");
-                        return;
-                    }
-                    catch (Exception e)
-                    {
-                        throw e;
-                    }
-                });
+                    await channel.SendMessageAsync("XD");
+                    return;
+                }
+                catch (Exception e)
+                {
+                    throw e;
+                }
+            });
             script.Globals["sendMessage"] = (Action<string>)(async (string text) => 
             {
                 try
@@ -589,3 +591,4 @@ namespace donniebot.services
         public async Task<IMessage> GetPreviousMessageAsync(SocketTextChannel channel) => await GetNthMessageAsync(channel, 1);
     }
 }
+#pragma warning restore CA2200 //Re-throwing caught exception changes stack information

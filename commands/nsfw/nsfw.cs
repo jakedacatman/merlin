@@ -6,12 +6,12 @@ using Discord.WebSocket;
 using Discord.Commands;
 using donniebot.services;
 using donniebot.classes;
-using Discord.Addons.Interactive;
+using Interactivity;
 
 namespace donniebot.commands
 {
     [Name("Nsfw")]
-    public class NsfwCommand : InteractiveBase<ShardedCommandContext>
+    public class NsfwCommand : ModuleBase<ShardedCommandContext>
     {
         private readonly DiscordShardedClient _client;
         private readonly MiscService _misc;

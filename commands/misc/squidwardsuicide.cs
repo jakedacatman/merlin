@@ -1,7 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using Discord.Commands;
-using Discord.Addons.Interactive;
+using Interactivity;
 using System.Collections.Generic;
 using donniebot.services;
 using Discord.WebSocket;
@@ -9,7 +9,7 @@ using Discord.WebSocket;
 namespace donniebot.commands
 {
     [Name("Misc")]
-    public class SquidwardSuicideCommand : InteractiveBase<ShardedCommandContext>
+    public class SquidwardSuicideCommand : ModuleBase<ShardedCommandContext>
     {
         private readonly MiscService _misc;
 

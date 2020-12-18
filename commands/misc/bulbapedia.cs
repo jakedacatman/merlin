@@ -2,13 +2,13 @@ using System;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
-using Discord.Addons.Interactive;
+using Interactivity;
 using donniebot.services;
 
 namespace donniebot.commands
 {
     [Name("Misc")]
-    public class BulbapediaCommand : InteractiveBase<ShardedCommandContext>
+    public class BulbapediaCommand : ModuleBase<ShardedCommandContext>
     {
         private readonly NetService _net;
         private readonly MiscService _misc;

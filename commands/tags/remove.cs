@@ -2,11 +2,11 @@ using System;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
-using Discord.Addons.Interactive;
+using Interactivity;
 
 namespace donniebot.commands
 {
-    public partial class TagCommand : InteractiveBase<ShardedCommandContext>
+    public partial class TagCommand : ModuleBase<ShardedCommandContext>
     {
         [Command("remove")]
         [Summary("Removes the specified tag.")]

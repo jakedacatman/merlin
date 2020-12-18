@@ -127,24 +127,15 @@ namespace donniebot.services
             }
         }
 
-        public bool IsIn<T>(string collection, Query query, out IEnumerable<T> items)
-        {
-            using (var scope = _services.CreateScope())
-            {
-                items = scope.ServiceProvider.GetRequiredService<LiteDatabase>().GetCollection<T>(collection).Find(query);
-                return items.Count() > 0;
-            }
-        }
-
         public IEnumerable<Object> GetItems(string collection, Query query)
         {
             using (var scope = _services.CreateScope())
                 return scope.ServiceProvider.GetRequiredService<LiteDatabase>().GetCollection(collection).Find(query);
         }
-        public object GetItem(string collection, Query query)
+        public T GetItem<T>(string collection, Query query)
         {
             using (var scope = _services.CreateScope())
-                return scope.ServiceProvider.GetRequiredService<LiteDatabase>().GetCollection(collection).FindOne(query);
+                return scope.ServiceProvider.GetRequiredService<LiteDatabase>().GetCollection<T>(collection).FindOne(query);
         }
 
         public bool AddItem<T>(string collection, T item)

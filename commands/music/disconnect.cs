@@ -2,12 +2,12 @@ using System;
 using Discord.Commands;
 using donniebot.services;
 using System.Threading.Tasks;
-using Discord.Addons.Interactive;
+using Interactivity;
 
 namespace donniebot.commands
 {
     [Name("Audio")]
-    public class DisconnectCommand : InteractiveBase<ShardedCommandContext>
+    public class DisconnectCommand : ModuleBase<ShardedCommandContext>
     {
         private readonly AudioService _audio;
         private readonly MiscService _misc;

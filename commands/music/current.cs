@@ -7,12 +7,12 @@ using Discord.WebSocket;
 using donniebot.services;
 using System.Threading.Tasks;
 using System.Collections.Generic;
-using Discord.Addons.Interactive;
+using Interactivity;
 
 namespace donniebot.commands
 {
     [Name("Audio")]
-    public class CurrentCommand : InteractiveBase<ShardedCommandContext>
+    public class CurrentCommand : ModuleBase<ShardedCommandContext>
     {
         private readonly AudioService _audio;
         private readonly MiscService _misc;

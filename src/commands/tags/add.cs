@@ -2,13 +2,13 @@ using System;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
-using Discord.Addons.Interactive;
+using Interactivity;
 using Discord.WebSocket;
 using System.Linq;
 
 namespace donniebot.commands
 {
-    public partial class TagCommand : InteractiveBase<ShardedCommandContext>
+    public partial class TagCommand : ModuleBase<ShardedCommandContext>
     {
         [Command("add")]
         [Summary("Adds the specified tag.")]
@@ -53,17 +53,17 @@ namespace donniebot.commands
                     else
                     {
                         var msg = await ReplyAsync($"A tag already exists with the name \"{tag}\". Remove it?");
-                        var reply = await NextMessageAsync(timeout: TimeSpan.FromSeconds(10));
+                        var reply = await _inter.NextMessageAsync(timeout: TimeSpan.FromSeconds(10));
                         
-                        if (reply == null)
+                        if (!reply.IsSuccess)
                         {
                             await msg.DeleteAsync();
                             return;
                         }
                         else
-                            await reply.DeleteAsync();
+                            await reply.Value.DeleteAsync();
 
-                        if (reply.Content.ToLower() == "yes" || reply.Content.ToLower() == "y")
+                        if (reply.Value.Content.ToLower() == "yes" || reply.Value.Content.ToLower() == "y")
                         {
                             _db.RemoveTag(tag, Context.Guild.Id);
                             ct = _db.AddTag(tag, value, Context.Guild.Id);

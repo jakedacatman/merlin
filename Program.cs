@@ -6,7 +6,7 @@ using Discord;
 using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
 using donniebot.services;
-using Discord.Addons.Interactive;
+using Interactivity;
 using LiteDB;
 using System.IO;
 using System.Collections.Generic;
@@ -27,6 +27,8 @@ namespace donniebot
         public static Task Main() => new Program().Start();
 
         private readonly string prefix = "don.";
+
+        private DbService _db;
 
         public async Task Start()
         {
@@ -60,7 +62,7 @@ namespace donniebot
                 .AddSingleton(new LiteDatabase("database.db"))
                 .AddSingleton<DbService>()
                 .AddSingleton<MiscService>()
-                .AddSingleton<InteractiveService>()
+                .AddSingleton(new InteractivityService(_client))
                 .AddSingleton<ImageService>()
                 .AddSingleton<ModerationService>()
                 .AddSingleton(nekoEndpoints)
@@ -71,13 +73,13 @@ namespace donniebot
 
             await _commands.AddModulesAsync(Assembly.GetEntryAssembly(), _services);
 
-            var db = _services.GetService<DbService>();
-            var apiKey = db.GetApiKey("discord");
+            _db = _services.GetService<DbService>();
+            var apiKey = _db.GetApiKey("discord");
             if (apiKey == null)
             {
                 Console.WriteLine("What is the bot's token? (only logged to database.db)");
                 apiKey = Console.ReadLine();
-                db.AddApiKey("discord", apiKey);
+                _db.AddApiKey("discord", apiKey);
             }
 
             await _client.LoginAsync(TokenType.Bot, apiKey);
@@ -144,6 +146,8 @@ namespace donniebot
                 if (context.User.IsBot) return;
 
                 int mentPos = 0;
+
+                var pre = _db.GetItem<GuildPrefix>("prefixes", Query.Where("GuildId", x => x.AsDouble == (double)context.Guild.Id))?.Prefix ?? prefix;
                 if (msg.HasMentionPrefix(_client.CurrentUser, ref mentPos))
                 {
                     var parseResult = ParseResult.FromSuccess(new List<TypeReaderValue> { new TypeReaderValue(msg.Content.Substring(mentPos), 1f) }, new List<TypeReaderValue>() );
@@ -153,13 +157,12 @@ namespace donniebot
                 }
                 else if (msg.Content == _client.CurrentUser.Mention)
                 {
-                    var parseResult = ParseResult.FromSuccess(new List<TypeReaderValue> { new TypeReaderValue(_client.CurrentUser.Mention, 1f) }, new List<TypeReaderValue>() );
-                    await _commands.Commands.Where(x => x.Name == "" && x.Module.Group == "tag").First().ExecuteAsync(context, parseResult, _services);
+                    await context.Channel.SendMessageAsync($"My prefix is `{pre}`.");
                     return;
                 }
 
-                int argPos = prefix.Length - 1;
-                if (!msg.HasStringPrefix(prefix, ref argPos)) return;
+                int argPos = pre.Length - 1;
+                if (!msg.HasStringPrefix(pre, ref argPos)) return;
 
                 await _commands.ExecuteAsync(context, argPos, _services, MultiMatchHandling.Best);
             }   

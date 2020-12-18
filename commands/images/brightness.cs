@@ -3,12 +3,12 @@ using System.Threading.Tasks;
 using Discord.WebSocket;
 using Discord.Commands;
 using donniebot.services;
-using Discord.Addons.Interactive;
+using Interactivity;
 
 namespace donniebot.commands
 {
     [Name("Image")]
-    public class BrightnessCommand : InteractiveBase<ShardedCommandContext>
+    public class BrightnessCommand : ModuleBase<ShardedCommandContext>
     {
         private readonly DiscordShardedClient _client;
         private readonly ImageService _img;

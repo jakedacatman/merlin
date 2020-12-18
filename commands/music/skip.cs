@@ -3,12 +3,12 @@ using Discord.Commands;
 using Discord.WebSocket;
 using donniebot.services;
 using System.Threading.Tasks;
-using Discord.Addons.Interactive;
+using Interactivity;
 
 namespace donniebot.commands
 {
     [Name("Audio")]
-    public class SkipCommand : InteractiveBase<ShardedCommandContext>
+    public class SkipCommand : ModuleBase<ShardedCommandContext>
     {
         private readonly AudioService _audio;
         private readonly MiscService _misc;
@@ -26,9 +26,7 @@ namespace donniebot.commands
         {
             try
             {
-                var skipCount = _audio.Skip(Context.User as SocketGuildUser);
-                if (skipCount > 0)
-                    await ReplyAsync($"Voted to skip! There are now {skipCount} votes.");
+                await _audio.SkipAsync(Context.User as SocketGuildUser);
             }
             catch (Exception e)
             {

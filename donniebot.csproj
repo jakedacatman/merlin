@@ -16,8 +16,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+<<<<<<< Updated upstream:donniebot.csproj
     <ProjectReference Include="../repos/SVGSharpie/src/UkooLabs.SVGSharpie.ImageSharp/UkooLabs.SVGSharpie.ImageSharp.csproj" />
     <!--> <ProjectReference Include="Discord.Addons.Interactive/Discord.Addons.Interactive.csproj"/> <!-->
+=======
+    <PackageReference Include="Discord.InteractivityAddon" Version="2.2.0-rc8" />
+    <ProjectReference Include="../deps/SVGSharpie/src/UkooLabs.SVGSharpie.ImageSharp/UkooLabs.SVGSharpie.ImageSharp.csproj" />
+>>>>>>> Stashed changes:src/donniebot.csproj
     <PackageReference Include="Nerdbank.Streams" Version="2.6.81" />
     <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="1.0.0-unstable0456" />
     <PackageReference Include="Discord.Net" Version="2.3.0-dev-*" />
