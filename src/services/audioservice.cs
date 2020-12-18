@@ -293,9 +293,13 @@ namespace donniebot.services
 
                     try
                     {
-                        await Task.WhenAll(download, read, write);
+                        Task.WaitAll(new[] { download, read, write }, token);
                     }
                     catch (OperationCanceledException)
+                    {
+                        
+                    }
+                    catch (AggregateException)
                     {
                         
                     }
