@@ -1187,6 +1187,17 @@ namespace donniebot.services
                     }
 
                     url = url.Trim('<').Trim('>');
+
+                    if (!Uri.IsWellFormedUriString(url, UriKind.Absolute))
+                    {
+                        if (isNext)
+                            throw new ImageException("Try the command with a url, or attach an image.");
+                        else
+                        {
+                            var previousmsg = await _misc.GetPreviousMessageAsync(msg.Channel as SocketTextChannel);
+                            return await ParseUrlAsync(previousmsg.Content, previousmsg as SocketUserMessage, true);
+                        }
+                    }
                 }
 
             }
