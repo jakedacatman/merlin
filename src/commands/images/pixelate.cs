@@ -22,7 +22,7 @@ namespace donniebot.commands
         }
 
         [Command("pixelate")]
-        [Alias("p", "px")]
+        [Alias("px")]
         [Summary("Changes an image's pixel size to the given size.")]
         public async Task PixelateCmd([Summary("The value to change the pixel size to.")] int size = 1,[Summary("The image to change.")] string url = null)
         {

@@ -10,13 +10,13 @@ using Interactivity;
 namespace donniebot.commands
 {
     [Name("Audio")]
-    public class AddCommand : ModuleBase<ShardedCommandContext>
+    public class PlayCommand : ModuleBase<ShardedCommandContext>
     {
         private readonly AudioService _audio;
         private readonly MiscService _misc;
         private readonly RandomService _rand;
 
-        public AddCommand(AudioService audio, MiscService misc, RandomService rand)
+        public PlayCommand(AudioService audio, MiscService misc, RandomService rand)
         {
             _audio = audio;
             _misc = misc;
@@ -24,9 +24,9 @@ namespace donniebot.commands
         }
 
         [Command("add")]
-        [Alias("play", "pl")]
-        [Summary("Adds a song to the song queue in order to be played.")]
-        public async Task AddCmd([Summary("The URL or YouTube search query."), Remainder] string queryOrUrl = null)
+        [Alias("p", "play", "pl")]
+        [Summary("Adds a song or playlist to the queue in order to be played.")]
+        public async Task PlayCmd([Summary("The URL or YouTube search query."), Remainder] string queryOrUrl = null)
         {
             try
             {

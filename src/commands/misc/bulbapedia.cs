@@ -22,7 +22,7 @@ namespace donniebot.commands
         }
 
         [Command("bulbapedia")]
-        [Alias("bu", "pokedex", "p")]
+        [Alias("bu", "pokedex")]
         [Summary("Searches Bulbapedia for an article.")]
         public async Task BulbapediaCmd([Summary("The search term."), Remainder] string term)
         {

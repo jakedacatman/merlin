@@ -75,7 +75,7 @@ namespace donniebot.services
         }
 
         private readonly SemaphoreSlim enq = new SemaphoreSlim(1, 1);
-        public async Task Enqueue(SocketTextChannel textChannel, SocketVoiceChannel vc, Song song)
+        public async Task Enqueue(SocketTextChannel textChannel, SocketVoiceChannel vc, Song song, bool shuffle = false)
         {
             await enq.WaitAsync();
             try
@@ -87,6 +87,8 @@ namespace donniebot.services
                 song.Info = await GetAudioInfoAsync(song.Url);
                 
                 player.Enqueue(song);
+                if (shuffle) Shuffle(player.GuildId);
+                
                 SongAdded?.Invoke(id, player, song);
             }
             finally 
@@ -94,7 +96,7 @@ namespace donniebot.services
                 enq.Release(); 
             }
         }
-        public async Task EnqueueMany(SocketTextChannel textChannel, SocketVoiceChannel vc, IEnumerable<Song> songs)
+        public async Task EnqueueMany(SocketTextChannel textChannel, SocketVoiceChannel vc, IEnumerable<Song> songs, bool shuffle = false)
         {
             await enq.WaitAsync();
             try
@@ -104,6 +106,8 @@ namespace donniebot.services
                     player = await ConnectAsync(textChannel, vc);
                 
                 player.EnqueueMany(songs);
+                if (shuffle) Shuffle(player.GuildId);
+
                 SongAdded?.Invoke(id, player, songs.First());
             }
             finally 
