@@ -70,6 +70,8 @@ namespace donniebot.services
 
             if (GetConnection(id, out var connection))
             {
+                await connection.TextChannel.SendMessageAsync("👋");
+
                 _connections.Remove(connection);
                 connection.Dispose();
             }
@@ -147,13 +149,13 @@ namespace donniebot.services
         public async Task OnSongAdded(ulong id, AudioPlayer player, Song s)
         {
             if (!player.IsPlaying)
-                await PlayAsync(player);
+                await PlayAsync(id);
         }
 
         public async Task OnSongEnded(Song s, AudioPlayer player)
         {
             if (player.Queue.Count > 0)
-                await PlayAsync(player);
+                await PlayAsync(player.GuildId);
         }
 
         public async Task OnVoiceUpdate(SocketUser user, SocketVoiceState oldS, SocketVoiceState newS)
@@ -170,7 +172,7 @@ namespace donniebot.services
                 {
                     var queue = connection.Queue;
                     queue.RemoveRange(0, queue.Count);
-                    await DisconnectAsync(connection.Channel);
+                    await DisconnectAsync(connection.VoiceChannel);
                 }
                 else
                 {
@@ -181,29 +183,21 @@ namespace donniebot.services
 
         public async Task PlayAsync(ulong id)
         {
-            if (!GetConnection(id, out var player))
+            if (!GetConnection(id, out var connection) || connection.VoiceChannel == null)
                 throw new InvalidOperationException("Not connected to a voice channel.");
 
-            await PlayAsync(player);
-        }
-        public async Task PlayAsync(AudioPlayer player)
-        {
-            var id = player.GuildId;
-            if (!player.Queue.Any())
+            if (!connection.Queue.Any())
                     return;
 
-            var song = player.Pop();
-            player.Current = song;
-
-            if (!GetConnection(id, out var connection))
-                throw new InvalidOperationException("Not connected to a voice channel.");
+            var song = connection.Pop();
+            connection.Current = song;
 
             try
             {
 
-                var channel = connection.Channel;
+                var channel = connection.VoiceChannel;
                 if (channel.Guild.CurrentUser.VoiceChannel != channel)
-                    await ConnectAsync(player.TextChannel, channel);
+                    await ConnectAsync(connection.TextChannel, channel);
 
                 if (connection.IsPlaying)
                     return;
@@ -220,7 +214,7 @@ namespace donniebot.services
                 using (var output = ffmpeg.StandardOutput.BaseStream)
                 using (var input = ffmpeg.StandardInput.BaseStream)
                 {
-                    player.IsPlaying = true;
+                    connection.IsPlaying = true;
 
                     const int block_size = 4096; //4 KiB
 
@@ -233,7 +227,7 @@ namespace donniebot.services
                     var skipCts = new CancellationTokenSource();
                     var token = skipCts.Token;
                     
-                    player.SongSkipped += (AudioPlayer player, Song song) =>
+                    connection.SongSkipped += (AudioPlayer player, Song song) =>
                     {
                         skipCts.Cancel();
                         return Task.CompletedTask;
@@ -241,7 +235,7 @@ namespace donniebot.services
 
                     this.BotMoved += (SocketVoiceChannel oVc, SocketVoiceChannel nVc) =>
                     {
-                        discord = player.Stream;
+                        discord = connection.Stream;
                         return Task.CompletedTask;
                     };
                         
@@ -327,9 +321,9 @@ namespace donniebot.services
             }
             finally
             {
-                player.IsPlaying = false;
-                player.IsSkipping = false;
-                player.Current = null;
+                connection.IsPlaying = false;
+                connection.IsSkipping = false;
+                connection.Current = null;
 
                 SongEnded?.Invoke(song, connection);
             }
@@ -338,7 +332,6 @@ namespace donniebot.services
         private async Task<AudioOnlyStreamInfo> GetAudioInfoAsync(string ytUrl)
         {
             var info = await yt.Videos.Streams.GetManifestAsync(new VideoId(ytUrl));
-            
             return info.GetAudioOnly().OrderByDescending(x => x.Bitrate).First();
         }
 

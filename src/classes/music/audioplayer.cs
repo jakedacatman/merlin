@@ -11,7 +11,7 @@ namespace donniebot.classes
     {
         public ulong GuildId { get; }
         public IAudioClient Connection { get; }
-        public SocketVoiceChannel Channel { get; }
+        public SocketVoiceChannel VoiceChannel { get; }
         public SocketTextChannel TextChannel { get; }
         public AudioOutStream Stream { get; set; }
         public Song Current { get; set; } = null;
@@ -26,7 +26,7 @@ namespace donniebot.classes
         public AudioPlayer(ulong id, SocketVoiceChannel channel, IAudioClient client, SocketTextChannel textchannel)
         {
             GuildId= id;
-            Channel = channel;
+            VoiceChannel = channel;
             Connection = client;
             TextChannel = textchannel;
             Stream = client.CreatePCMStream(AudioApplication.Mixed);
@@ -67,6 +67,11 @@ namespace donniebot.classes
             return 0;
         }
 
+        public IEnumerable<SocketGuildUser> GetListeningUsers() => VoiceChannel.Users.Where(x => 
+            !x.IsBot && 
+            !x.IsDeafened &&
+            !x.IsSelfDeafened);
+
         public async Task<int> SkipAsync(SocketGuildUser skipper)
         {
             if (!IsPlaying)
@@ -75,10 +80,7 @@ namespace donniebot.classes
                 return 0;
             }
 
-            var listeningUsers = Channel.Users.Where(x => 
-                !x.IsBot && 
-                !x.IsDeafened &&
-                !x.IsSelfDeafened);
+            var listeningUsers = GetListeningUsers();
 
             var requiredCount = (int)Math.Floor(.75f * listeningUsers.Count());
             if (skipper.GuildPermissions.MuteMembers) return await DoSkipAsync();
@@ -91,7 +93,7 @@ namespace donniebot.classes
                 return 0;
             }
 
-            if (skipper.VoiceChannel != Channel)
+            if (skipper.VoiceChannel != VoiceChannel)
             {
                 await TextChannel.SendMessageAsync("You are not in the voice channel.");
                 return 0;
