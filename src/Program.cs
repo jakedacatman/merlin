@@ -26,7 +26,7 @@ namespace donniebot
 
         public static Task Main() => new Program().Start();
 
-        private readonly string prefix = "don.";
+        private readonly string defaultPrefix = "don.";
 
         private DbService _db;
 
@@ -147,7 +147,7 @@ namespace donniebot
 
                 int mentPos = 0;
 
-                var pre = _db.GetItem<GuildPrefix>("prefixes", Query.Where("GuildId", x => x.AsDouble == (double)context.Guild.Id))?.Prefix ?? prefix;
+                var pre = _db.GetItem<GuildPrefix>("prefixes", Query.Where("GuildId", x => x.AsDouble == (double)context.Guild.Id))?.Prefix ?? defaultPrefix;
                 
                 if (msg.HasMentionPrefix(_client.CurrentUser, ref mentPos))
                 {
@@ -163,7 +163,12 @@ namespace donniebot
                 }
 
                 int argPos = pre.Length - 1;
-                if (!msg.HasStringPrefix(pre, ref argPos)) return;
+                if (!msg.HasStringPrefix(pre, ref argPos))
+                {
+                    argPos = defaultPrefix.Length - 1;
+                    if (!msg.HasStringPrefix(defaultPrefix, ref argPos))
+                        return;
+                }
 
                 await _commands.ExecuteAsync(context, argPos, _services, MultiMatchHandling.Best);
             }   
