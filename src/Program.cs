@@ -178,6 +178,6 @@ namespace donniebot
             }
         }
 
-        private async Task UpdateStatus(int counter) => await _client.SetActivityAsync(new Game($"over {counter} out of {_client.Shards.Count} shards", ActivityType.Watching));
+        private async Task UpdateStatus(int counter) => await _client.SetActivityAsync(new Game($"over {counter} out of {_client.Shards.Count} shard{(_client.Shards.Count > 1 ? "s" : "")}", ActivityType.Watching));
     }
 }
