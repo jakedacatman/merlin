@@ -37,6 +37,15 @@ namespace donniebot.classes
 
         public void EnqueueMany(IEnumerable<Song> s) => Queue.AddRange(s);
 
+        public async Task LeaveAsync()
+        {
+            _skips = 0;
+            Queue.RemoveAll(x => x.GuildId >= 0);
+            IsSkipping = true;
+            SongSkipped?.Invoke(this, this.Current);
+            await TextChannel.SendMessageAsync("👋");
+        }
+
         public Song Pop()
         {
             var song = Queue[0];
@@ -59,7 +68,6 @@ namespace donniebot.classes
 
         private async Task<int> DoSkipAsync()
         {
-            
             _skips = 0;
             IsSkipping = true;
             SongSkipped?.Invoke(this, this.Current);
@@ -83,6 +91,7 @@ namespace donniebot.classes
             var listeningUsers = GetListeningUsers();
 
             var requiredCount = (int)Math.Floor(.75f * listeningUsers.Count());
+            if (skipper == VoiceChannel.Guild.CurrentUser) return await DoSkipAsync();
             if (skipper.GuildPermissions.MuteMembers) return await DoSkipAsync();
             if (listeningUsers.Count() == 1 && listeningUsers.First() == skipper)  return await DoSkipAsync();
             if (_skips >= requiredCount)  return await DoSkipAsync();

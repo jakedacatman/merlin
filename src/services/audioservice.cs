@@ -70,7 +70,7 @@ namespace donniebot.services
 
             if (GetConnection(id, out var connection))
             {
-                await connection.TextChannel.SendMessageAsync("👋");
+                await connection.LeaveAsync();
 
                 _connections.Remove(connection);
                 connection.Dispose();
