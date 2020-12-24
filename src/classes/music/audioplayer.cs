@@ -10,18 +10,19 @@ namespace donniebot.classes
     public class AudioPlayer : IDisposable
     {
         public ulong GuildId { get; }
-        public IAudioClient Connection { get; }
-        public SocketVoiceChannel VoiceChannel { get; }
+        public IAudioClient Connection { get; private set; }
+        public SocketVoiceChannel VoiceChannel { get; private set; }
         public SocketTextChannel TextChannel { get; }
-        public AudioOutStream Stream { get; set; }
+        public AudioOutStream Stream { get; private set; }
         public Song Current { get; set; } = null;
         public List<Song> Queue { get; set; }
-        public bool IsPlaying { get; set; } = false;
-        public bool IsSkipping { get; set; } = false;
+        public bool IsPlaying { get; private set; } = false;
+        public bool IsPaused { get; private set; } = false;
         private int _skips = 0;
         private List<ulong> _skippedUsers = new List<ulong>();
 
         public event Func<AudioPlayer, Song, Task> SongSkipped;
+        public event Func<AudioPlayer, bool, Task> SongPaused;
 
         public AudioPlayer(ulong id, SocketVoiceChannel channel, IAudioClient client, SocketTextChannel textchannel)
         {
@@ -41,7 +42,6 @@ namespace donniebot.classes
         {
             _skips = 0;
             Queue.RemoveAll(x => x.GuildId >= 0);
-            IsSkipping = true;
             SongSkipped?.Invoke(this, this.Current);
             await TextChannel.SendMessageAsync("👋");
         }
@@ -64,12 +64,46 @@ namespace donniebot.classes
                 Queue = Queue.Shuffle().ToList();
         }
 
-        public void UpdateStream() => Stream = Connection.CreatePCMStream(AudioApplication.Mixed);
+        public async Task UpdateAsync(SocketVoiceChannel channel)
+        {
+            VoiceChannel = channel;
+            Connection = await channel.ConnectAsync(true, false);
+            Stream = Connection.CreatePCMStream(AudioApplication.Mixed);
+        }
+
+        public async Task ResumeAsync()
+        {
+            if (!IsPlaying) return;
+            if (!IsPaused)
+            {
+                await TextChannel.SendMessageAsync("Playback has already resumed!");
+                return;
+            }
+
+            IsPaused = false;
+            SongPaused?.Invoke(this, IsPaused);
+            await TextChannel.SendMessageAsync("Resuming playback.");
+        }
+
+        public async Task PauseAsync()
+        {
+            if (!IsPlaying) return;
+            if (IsPaused)
+            {
+                await TextChannel.SendMessageAsync("Playback is already paused!");
+                return;
+            }
+
+            IsPaused = true;
+            SongPaused?.Invoke(this, IsPaused);
+            await TextChannel.SendMessageAsync("Pausing playback.");
+        }
+
+        public void SetPlayingStatus(bool status) => IsPlaying = status;
 
         private async Task<int> DoSkipAsync()
         {
             _skips = 0;
-            IsSkipping = true;
             SongSkipped?.Invoke(this, this.Current);
             await TextChannel.SendMessageAsync("Skipping the current song.");
             return 0;
@@ -91,6 +125,7 @@ namespace donniebot.classes
             var listeningUsers = GetListeningUsers();
 
             var requiredCount = (int)Math.Floor(.75f * listeningUsers.Count());
+            
             if (skipper == VoiceChannel.Guild.CurrentUser) return await DoSkipAsync();
             if (skipper.GuildPermissions.MuteMembers) return await DoSkipAsync();
             if (listeningUsers.Count() == 1 && listeningUsers.First() == skipper)  return await DoSkipAsync();
@@ -118,7 +153,7 @@ namespace donniebot.classes
         public void Dispose()
         {
             IsPlaying = false;
-            IsSkipping = false;
+            IsPaused = false;
             Connection.Dispose();
             Stream.Dispose();
         }

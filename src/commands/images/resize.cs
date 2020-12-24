@@ -22,7 +22,7 @@ namespace donniebot.commands
         }
 
         [Command("resize")]
-        [Alias("r", "re")]
+        [Alias("r")]
         [Summary("Resizes an image.")]
         public async Task ResizeCmd([Summary("The width to change the size to.")] int width, [Summary("The height to change the size to.")] int height, [Summary("The image to change.")] string url = null)
         {

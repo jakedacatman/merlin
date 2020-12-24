@@ -77,6 +77,18 @@ namespace donniebot.services
             }
         }
 
+        public async Task ResumeAsync(ulong guildId)
+        {
+            if (!GetConnection(guildId, out var con)) return;
+            await con.ResumeAsync();
+        }
+
+        public async Task PauseAsync(ulong guildId)
+        {
+            if (!GetConnection(guildId, out var con)) return;
+            await con.PauseAsync();
+        }
+
         private readonly SemaphoreSlim enq = new SemaphoreSlim(1, 1);
         public async Task Enqueue(SocketTextChannel textChannel, SocketVoiceChannel vc, Song song, bool shuffle = false)
         {
@@ -175,10 +187,7 @@ namespace donniebot.services
                     await DisconnectAsync(connection.VoiceChannel);
                 }
                 else
-                {
-                    connection = await ConnectAsync(connection.TextChannel, newVc);
-                    BotMoved?.Invoke(oldVc, newVc);
-                }
+                    await connection.UpdateAsync(newVc);
         }
 
         public async Task PlayAsync(ulong id)
@@ -214,7 +223,7 @@ namespace donniebot.services
                 using (var output = ffmpeg.StandardOutput.BaseStream)
                 using (var input = ffmpeg.StandardInput.BaseStream)
                 {
-                    connection.IsPlaying = true;
+                    connection.SetPlayingStatus(true);
 
                     const int block_size = 4096; //4 KiB
 
@@ -226,14 +235,26 @@ namespace donniebot.services
 
                     var skipCts = new CancellationTokenSource();
                     var token = skipCts.Token;
+
+                    var pauseCts = new CancellationTokenSource();
                     
-                    connection.SongSkipped += (AudioPlayer player, Song song) =>
+                    connection.SongSkipped += (AudioPlayer _, Song song) =>
                     {
                         skipCts.Cancel();
                         return Task.CompletedTask;
                     };
 
-                    this.BotMoved += (SocketVoiceChannel oVc, SocketVoiceChannel nVc) =>
+                    connection.SongPaused += (AudioPlayer _, bool state) =>
+                    {
+                        if (state)
+                            pauseCts.Cancel();
+                        else
+                            pauseCts = new CancellationTokenSource();
+                        
+                        return Task.CompletedTask;
+                    };
+
+                    BotMoved += (SocketVoiceChannel oVc, SocketVoiceChannel nVc) =>
                     {
                         discord = connection.Stream;
                         return Task.CompletedTask;
@@ -282,6 +303,16 @@ namespace donniebot.services
                         {
                             do 
                             {
+                                while (connection.IsPaused) //don't write to discord while paused
+                                    try
+                                    {
+                                        await Task.Delay(-1, pauseCts.Token); //wait forever (until token is called)
+                                    }
+                                    catch (TaskCanceledException)
+                                    {
+
+                                    }
+
                                 if (hasHadFullChunkYet && bytesConverted < block_size) //if bytesConverted is less than here, then the last (small) chunk is done
                                     break;
 
@@ -321,8 +352,7 @@ namespace donniebot.services
             }
             finally
             {
-                connection.IsPlaying = false;
-                connection.IsSkipping = false;
+                connection.SetPlayingStatus(false);
                 connection.Current = null;
 
                 SongEnded?.Invoke(song, connection);

@@ -1265,17 +1265,7 @@ namespace donniebot.services
             }
         }
 
-        public async Task SendToChannelAsync(Image img, ISocketMessageChannel ch)
-        {
-            var path = Save(img);
-            var ext = path.Split('.')[1];
-            var len = new FileInfo(path).Length;
-            if (len > 8388119) //allegedly discord's limit
-                await ch.SendMessageAsync(await _net.UploadAsync(path, ext));
-            else
-                await ch.SendFileAsync(path);
-            File.Delete(path);
-        }
+        public async Task SendToChannelAsync(Image img, ISocketMessageChannel ch) => await SendToChannelAsync(Save(img), ch);
         public async Task SendToChannelAsync(string path, ISocketMessageChannel ch)
         {
             var ext = path.Split('.')[1];
