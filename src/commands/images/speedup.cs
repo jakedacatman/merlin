@@ -22,7 +22,7 @@ namespace donniebot.commands
         }
 
         [Command("speedup")]
-        [Alias("sp", "su")]
+        [Alias("su")]
         [Summary("Speeds up a GIF.")]
         public async Task SpeedUpCmd([Summary("The speed to change the playback to (in times).")] double speed, [Summary("The image to change.")] string url = null)
         {

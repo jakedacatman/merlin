@@ -30,64 +30,7 @@ namespace donniebot.commands
         {
             try
             {
-                var id = Context.Guild.Id;
-                var uId = Context.User.Id;
-                var vc = (Context.User as SocketGuildUser).VoiceChannel;
-                if (!_audio.IsConnected(id))
-                {
-                    if (vc == null)
-                    {
-                        await ReplyAsync("You must be in a voice channel.");
-                        return;
-                    }
-                }
-
-                if (string.IsNullOrWhiteSpace(queryOrUrl))
-                {
-                    await _audio.PlayAsync(id);
-                    
-                    return;
-                }
-
-                if (Uri.IsWellFormedUriString(queryOrUrl, UriKind.Absolute) && (queryOrUrl.Contains("&list=") || queryOrUrl.Contains("?list=")))
-                {
-                    var playlist = await _audio.GetPlaylistAsync(queryOrUrl, id, uId);
-
-                    await _audio.EnqueueMany(Context.Channel as SocketTextChannel, vc, playlist.Songs);
-
-                    await ReplyAsync(embed: new EmbedBuilder()
-                        .WithTitle("Added playlist")
-                        .WithFields(new List<EmbedFieldBuilder>
-                        {
-                            new EmbedFieldBuilder().WithName("Title").WithValue(playlist.Title).WithIsInline(false),
-                            new EmbedFieldBuilder().WithName("Author").WithValue(playlist.Author).WithIsInline(true),
-                            new EmbedFieldBuilder().WithName("Count").WithValue(playlist.Songs.Count).WithIsInline(true),
-                            new EmbedFieldBuilder().WithName("URL").WithValue(playlist.Url).WithIsInline(false),
-                        })
-                        .WithColor(_rand.RandomColor())
-                        .WithThumbnailUrl(playlist.ThumbnailUrl)
-                        .WithCurrentTimestamp()
-                        .Build());
-
-                    return;
-                }
-
-                var song = await _audio.CreateSongAsync(queryOrUrl, id, uId);
-
-                await ReplyAsync(embed: new EmbedBuilder()
-                    .WithTitle("Added song")
-                    .WithFields(new List<EmbedFieldBuilder>
-                    {
-                        new EmbedFieldBuilder().WithName("Title").WithValue(song.Title).WithIsInline(false),
-                        new EmbedFieldBuilder().WithName("Author").WithValue(song.Author).WithIsInline(true),
-                        new EmbedFieldBuilder().WithName("URL").WithValue(song.Url).WithIsInline(true)
-                    })
-                    .WithColor(_rand.RandomColor())
-                    .WithThumbnailUrl(song.ThumbnailUrl)
-                    .WithCurrentTimestamp()
-                .Build());
-
-                await _audio.Enqueue(Context.Channel as SocketTextChannel, vc, song);
+                await _audio.AddAsync(Context.User as SocketGuildUser, Context.Channel as SocketTextChannel, queryOrUrl);
             }
             catch (Exception e)
             {
