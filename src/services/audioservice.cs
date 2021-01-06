@@ -341,6 +341,8 @@ namespace donniebot.services
                             do
                             {
                                 bytesDown = await str.ReadAsync(bufferDown, 0, block_size, token);
+                                connection.BytesDownloaded += (uint)bytesDown;
+
                                 await downloadStream.WriteAsync(bufferDown, 0, bytesDown, token);
                             }
                             while (bytesDown > 0);
@@ -391,6 +393,7 @@ namespace donniebot.services
                                     break;
 
                                 bytesConverted = await output.ReadAsync(bufferWrite, 0, block_size, token);
+                                connection.BytesPlayed += (uint)bytesConverted;
 
                                 if (bytesConverted == block_size)
                                     hasHadFullChunkYet = true;
@@ -426,6 +429,8 @@ namespace donniebot.services
             }
             finally
             {
+                connection.BytesDownloaded = 0;
+                connection.BytesPlayed = 0;
                 connection.IsPlaying = false;
                 connection.Current = null;
                 SongEnded?.Invoke(song, connection);
@@ -501,6 +506,9 @@ namespace donniebot.services
 
             return await c.SkipAsync(skipper);
         }
+
+        public string GetSongPosition(ulong id) => GetConnection(id, out var con) ? $"{con.Position.ToString(@"hh\:mm\:ss")}/{con.Current.Length.ToString(@"hh\:mm\:ss")}" : null;
+        public double GetDownloadedPercent(ulong id) => GetConnection(id, out var con) ? (double)con.BytesDownloaded / con.Current.Size : 0d;
 
         public Song GetCurrent(ulong id)
         {

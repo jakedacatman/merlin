@@ -30,6 +30,12 @@ namespace donniebot.commands
         {
             try
             {
+                if (!_audio.HasSongs(Context.Guild.Id))
+                {
+                    await ReplyAsync("There are no songs to skip! Use don.add instead.");
+                    return;
+                }
+
                 await _audio.SkipAsync(Context.User as SocketGuildUser);
                 await _audio.AddAsync(Context.User as SocketGuildUser, Context.Channel as SocketTextChannel, queryOrUrl, false, 0);
             }

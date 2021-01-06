@@ -53,7 +53,8 @@ namespace donniebot.commands
                     {
                         new EmbedFieldBuilder().WithName("Title").WithValue(song.Title).WithIsInline(false),
                         new EmbedFieldBuilder().WithName("Author").WithValue(song.Author).WithIsInline(true),
-                        new EmbedFieldBuilder().WithName("Length").WithValue(song.Length.ToString("g")).WithIsInline(true),
+                        new EmbedFieldBuilder().WithName("Position").WithValue(_audio.GetSongPosition(id) ?? "n/a").WithIsInline(true),
+                        new EmbedFieldBuilder().WithName("% downloaded").WithValue($"{Math.Round(_audio.GetDownloadedPercent(id) * 100d, 3)}%").WithIsInline(true),
                         new EmbedFieldBuilder().WithName("Size").WithValue(_misc.PrettyFormat(song.Size, 3)).WithIsInline(true),
                         new EmbedFieldBuilder().WithName("Queuer").WithValue(Context.Guild.GetUser(song.QueuerId)).WithIsInline(true),
                         new EmbedFieldBuilder().WithName("URL").WithValue(song.Url).WithIsInline(true)

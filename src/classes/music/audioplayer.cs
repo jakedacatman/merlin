@@ -16,11 +16,17 @@ namespace donniebot.classes
         public AudioOutStream Stream { get; private set; }
         public Song Current { get; set; } = null;
         public List<Song> Queue { get; set; }
+        public TimeSpan Position { get => TimeSpan.FromSeconds(BytesPlayed / 6000d); } //bytes divided by byterate
+
         public bool HasDisconnected { get; private set; } = false;
         public bool IsPlaying { get; set; } = false;
         public bool IsPaused { get; private set; } = false;
+
         private int _skips = 0;
         private List<ulong> _skippedUsers = new List<ulong>();
+
+        internal uint BytesDownloaded { get; set; } = 0;
+        internal uint BytesPlayed { get; set; } = 0;
 
         public event Func<AudioPlayer, Song, Task> SongSkipped;
         public event Func<AudioPlayer, bool, Task> SongPaused;
