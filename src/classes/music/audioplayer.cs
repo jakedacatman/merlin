@@ -16,8 +16,13 @@ namespace donniebot.classes
         public AudioOutStream Stream { get; private set; }
         public Song Current { get; set; } = null;
         public List<Song> Queue { get; set; }
-        public TimeSpan Position { get => TimeSpan.FromSeconds(BytesPlayed / 6000d); } //bytes divided by byterate
-
+        public TimeSpan Position { 
+            get 
+            {
+                if (Current == null) return TimeSpan.FromSeconds(0);
+                return TimeSpan.FromSeconds(BytesPlayed / 196608d); //ffmpeg output in bytes/second
+            }
+        }
         public bool HasDisconnected { get; private set; } = false;
         public bool IsPlaying { get; set; } = false;
         public bool IsPaused { get; private set; } = false;
@@ -33,7 +38,7 @@ namespace donniebot.classes
 
         public AudioPlayer(ulong id, SocketVoiceChannel channel, IAudioClient client, SocketTextChannel textchannel)
         {
-            GuildId= id;
+            GuildId = id;
             VoiceChannel = channel;
             Connection = client;
             TextChannel = textchannel;

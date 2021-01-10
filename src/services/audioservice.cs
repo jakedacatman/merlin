@@ -102,6 +102,11 @@ namespace donniebot.services
                     return;
                 }
 
+                var estTime = GetConnection(id, out var con) ? TimeSpan.FromSeconds(con.Queue
+                    .Sum(x => x.Length.TotalSeconds) + (con.Current?.Length.TotalSeconds - con.Position.TotalSeconds ?? 0))
+                    .ToString(@"hh\:mm\:ss")
+                    : "Now";
+
                 if (Uri.IsWellFormedUriString(queryOrUrl, UriKind.Absolute) && (queryOrUrl.Contains("&list=") || queryOrUrl.Contains("?list=")))
                 {
                     var playlist = await GetPlaylistAsync(queryOrUrl, id, user.Id);
@@ -116,6 +121,7 @@ namespace donniebot.services
                             new EmbedFieldBuilder().WithName("Author").WithValue(playlist.Author).WithIsInline(true),
                             new EmbedFieldBuilder().WithName("Count").WithValue(playlist.Songs.Count).WithIsInline(true),
                             new EmbedFieldBuilder().WithName("URL").WithValue(playlist.Url).WithIsInline(false),
+                            new EmbedFieldBuilder().WithName("Estimated time").WithValue(estTime).WithIsInline(true)
                         })
                         .WithColor(_rand.RandomColor())
                         .WithThumbnailUrl(playlist.ThumbnailUrl)
@@ -133,7 +139,8 @@ namespace donniebot.services
                     {
                         new EmbedFieldBuilder().WithName("Title").WithValue(song.Title).WithIsInline(false),
                         new EmbedFieldBuilder().WithName("Author").WithValue(song.Author).WithIsInline(true),
-                        new EmbedFieldBuilder().WithName("URL").WithValue(song.Url).WithIsInline(true)
+                        new EmbedFieldBuilder().WithName("URL").WithValue(song.Url).WithIsInline(true),
+                        new EmbedFieldBuilder().WithName("Estimated time").WithValue(estTime).WithIsInline(true)
                     })
                     .WithColor(_rand.RandomColor())
                     .WithThumbnailUrl(song.ThumbnailUrl)
@@ -498,25 +505,12 @@ namespace donniebot.services
 
         public bool HasSongs(ulong id) => GetConnection(id, out var c) && (GetCurrent(id) != null || c.Queue.Any());
 
-        public async Task<int> SkipAsync(SocketGuildUser skipper)
-        {
-            var id = skipper.Guild.Id;
-            if (!GetConnection(id, out var c))
-                return 0;
-
-            return await c.SkipAsync(skipper);
-        }
+        public async Task<int> SkipAsync(SocketGuildUser skipper) => GetConnection(skipper.Guild.Id, out var c) ? await c.SkipAsync(skipper) : 0;
 
         public string GetSongPosition(ulong id) => GetConnection(id, out var con) ? $"{con.Position.ToString(@"hh\:mm\:ss")}/{con.Current.Length.ToString(@"hh\:mm\:ss")}" : null;
         public double GetDownloadedPercent(ulong id) => GetConnection(id, out var con) ? (double)con.BytesDownloaded / con.Current.Size : 0d;
 
-        public Song GetCurrent(ulong id)
-        {
-            if (GetConnection(id, out var connection))
-                return connection.Current;
-
-            return null;
-        }
+        public Song GetCurrent(ulong id) => GetConnection(id, out var connection) ? connection.Current : null;
 
         public List<string> GetQueue(ulong id)
         {
@@ -541,13 +535,7 @@ namespace donniebot.services
 
             return items;
         }
-        public List<Song> GetRawQueue(ulong id)
-        {
-            if (GetConnection(id, out var c))
-                return c.Queue;
-
-            return new List<Song>();
-        }
+        public List<Song> GetRawQueue(ulong id) => GetConnection(id, out var c) ? c.Queue : new List<Song>();
 
         private string GetMention(ulong guildId, ulong userId) => 
             _client

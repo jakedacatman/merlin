@@ -48,7 +48,7 @@ namespace donniebot.services
 
                 await user.AddRoleAsync(role);
                 
-                //await user.ModifyAsync(x => x.Mute = true);
+                await user.ModifyAsync(x => x.Mute = true);
                 return true;
             }
             catch (Exception e)
@@ -72,7 +72,7 @@ namespace donniebot.services
 
                 await user.RemoveRoleAsync(role);
 
-                //await user.ModifyAsync(x => x.Mute = false);
+                await user.ModifyAsync(x => x.Mute = false);
                 return true;
             }
             catch (Exception e)
