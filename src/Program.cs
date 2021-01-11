@@ -156,7 +156,7 @@ namespace donniebot
                     await _commands.Commands.Where(x => x.Name == "" && x.Module.Group == "tag").First().ExecuteAsync(context, parseResult, _services);
                     return;
                 }
-                else if (msg.Content == _client.CurrentUser.Mention)
+                else if (msg?.Content == _client.CurrentUser.Mention)
                 {
                     await context.Channel.SendMessageAsync($"My prefix is `{pre}`.");
                     return;
