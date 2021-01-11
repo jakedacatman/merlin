@@ -17,12 +17,14 @@ namespace donniebot.commands
         private readonly CommandService _commands;
         private readonly MiscService _misc;
         private readonly IServiceProvider _services;
+        private readonly InteractivityService _inter;
 
-        public HelpCommand(CommandService commands, MiscService misc, IServiceProvider services)
+        public HelpCommand(CommandService commands, MiscService misc, IServiceProvider services, InteractivityService inter)
         {
             _commands = commands;
             _misc = misc;
             _services = services;
+            _inter = inter;
         }
 
         [Command("help")]
@@ -41,13 +43,13 @@ namespace donniebot.commands
                 var cmds = _commands.Commands.Where(x => ((string.IsNullOrEmpty(x.Module.Group) ? "" : $"{x.Module.Group} ") + x.Name).TrimEnd(' ') == command);
                 
                 if (cmds.Any())
-                    await ReplyAsync(embed: _misc.GenerateCommandInfo(cmds).Build());
+                    await _inter.SendPaginatorAsync(_misc.GenerateCommandInfo(cmds, Context.User as SocketGuildUser).Build(), Context.Channel);
                 else 
                 {
                     var aliases =  _commands.Commands.Where(x => x.Aliases.Any(y => ((string.IsNullOrEmpty(x.Module.Group) ? "" : $"{x.Module.Group} ") + y).TrimEnd(' ') == command));
                     
                     if (aliases.Any())
-                        await ReplyAsync(embed: _misc.GenerateCommandInfo(aliases).Build());
+                        await _inter.SendPaginatorAsync(_misc.GenerateCommandInfo(aliases, Context.User as SocketGuildUser).Build(), Context.Channel);
                     else
                         await ReplyAsync("This command does not exist.");
                 }

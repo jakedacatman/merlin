@@ -52,14 +52,7 @@ namespace donniebot.classes
             "Newtonsoft.Json.Linq",
             "System.Numerics",
             "LiteDB",
-            "Microsoft.Extensions.DependencyInjection",
-            "SixLabors.ImageSharp",
-            "SixLabors.ImageSharp.Processing",
-            "YoutubeExplode",
-            "YoutubeExplode.Videos",
-            "YoutubeExplode.Playlists",
-            "SixLabors.Fonts",
-            "SixLabors.ImageSharp.Drawing.Processing"
+            "Microsoft.Extensions.DependencyInjection"
         };
     }
 }

@@ -20,6 +20,8 @@ using Discord.Commands;
 using MoonSharp.Interpreter;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Interactivity;
+using Interactivity.Pagination;
 
 #pragma warning disable CA2200 //Re-throwing caught exception changes stack information
 
@@ -517,12 +519,15 @@ namespace donniebot.services
             yield return typeof(ILookup<string, string>).GetTypeInfo().Assembly;
         }
 
-        public EmbedBuilder GenerateCommandInfo(IEnumerable<CommandInfo> commands)
+        public StaticPaginatorBuilder GenerateCommandInfo(IEnumerable<CommandInfo> commands, SocketGuildUser user)
         {
-            var firstCmd = commands.First();
-            string preconditions = null;
-            if (firstCmd.Preconditions.Any())
-                foreach (PreconditionAttribute p in firstCmd.Preconditions)
+            var pages = new List<PageBuilder>();
+
+            foreach (var cmd in commands)
+            {
+                string preconditions = null;
+                if (cmd.Preconditions.Any())
+                foreach (PreconditionAttribute p in cmd.Preconditions)
                 {
                     var txt = "no info";
                     if (p is RequireUserPermissionAttribute attr)
@@ -533,37 +538,46 @@ namespace donniebot.services
                     preconditions += $"{preconditionAliases[p.GetType()]} ({txt})\n";
                 }
 
-            var name = ((string.IsNullOrEmpty(firstCmd.Module.Group) ? "" : $"{firstCmd.Module.Group} ") + firstCmd.Name).TrimEnd(' ');
+                var name = ((string.IsNullOrEmpty(cmd.Module.Group) ? "" : $"{cmd.Module.Group} ") + cmd.Name).TrimEnd(' ');
 
-            var fields = new List<EmbedFieldBuilder>
-            {
-                new EmbedFieldBuilder().WithName("Name").WithValue(name).WithIsInline(true),
-                new EmbedFieldBuilder().WithName("Category").WithValue(firstCmd.Module.Name ?? "(none)").WithIsInline(true),
-                new EmbedFieldBuilder().WithName("Aliases").WithValue(firstCmd.Aliases.Count > 1 ? string.Join(", ", firstCmd.Aliases.Where(x => x != firstCmd.Name)) : "(none)").WithIsInline(true),
-                new EmbedFieldBuilder().WithName("Summary").WithValue(firstCmd.Summary ?? "(none)").WithIsInline(false),
-                new EmbedFieldBuilder().WithName("Preconditions").WithValue(preconditions ?? "(none)").WithIsInline(false),
-            };
-            int counter = 1;
-            StringBuilder sb = new StringBuilder();
-            foreach (var cmd in commands)
-            {
+                var fields = new List<EmbedFieldBuilder>
+                {
+                    new EmbedFieldBuilder().WithName("Name").WithValue(name).WithIsInline(true),
+                    new EmbedFieldBuilder().WithName("Category").WithValue(cmd.Module.Name ?? "(none)").WithIsInline(true),
+                    new EmbedFieldBuilder().WithName("Aliases").WithValue(cmd.Aliases.Count > 1 ? string.Join(", ", cmd.Aliases.Where(x => x != cmd.Name)) : "(none)").WithIsInline(true),
+                    new EmbedFieldBuilder().WithName("Summary").WithValue(cmd.Summary ?? "(none)").WithIsInline(false),
+                    new EmbedFieldBuilder().WithName("Preconditions").WithValue(preconditions ?? "(none)").WithIsInline(false),
+                };
+
                 var parameters = new List<string>();
                 foreach (Discord.Commands.ParameterInfo param in cmd.Parameters)
                     parameters.Add($"{param} ({typeAliases[param.Type]}{(param.DefaultValue != null ? ", default = " + param.DefaultValue.ToString() : "")}): {param.Summary}");
-                        
-                sb.Append($"**{counter}.**\n " + (parameters.Any() ? string.Join("\n", parameters) : "(none)") + "\n\n");
-                counter++;
+                
+                fields.Add(new EmbedFieldBuilder().WithName("Parameters").WithValue(parameters.Any() ? string.Join("\n", parameters) : "(none)").WithIsInline(false));
+            
+                pages.Add(new PageBuilder()
+                    .WithColor(_rand.RandomColor())
+                    .WithTitle($"Information for {name}")
+                    .WithFields(fields)
+                );
             }
 
-            fields.Add(new EmbedFieldBuilder().WithName("Parameters").WithValue(sb.ToString()).WithIsInline(false));
-
-            EmbedBuilder embed = new EmbedBuilder()
-                .WithTitle($"Information for {name}:")
-                .WithColor(_rand.RandomColor())
-                .WithCurrentTimestamp()
-                .WithFields(fields);
+            StaticPaginatorBuilder paginator;
             
-            return embed;
+            if (pages.Count > 1)
+                paginator = new StaticPaginatorBuilder()
+                    .WithDeletion(DeletionOptions.AfterCapturedContext)
+                    .WithUsers(user)
+                    .WithDefaultEmotes()
+                    .WithPages(pages);
+            else
+                paginator = new StaticPaginatorBuilder()
+                    .WithDeletion(DeletionOptions.AfterCapturedContext)
+                    .WithUsers(user)
+                    .WithEmotes(new Dictionary<IEmote, PaginatorAction> { { new Emoji("🛑"), PaginatorAction.Exit } })
+                    .WithPages(pages);
+            
+            return paginator;
         }
 
         public string PrettyFormat(long bytes, int place)
