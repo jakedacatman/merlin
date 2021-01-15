@@ -2,6 +2,7 @@ using System;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using donniebot.classes;
 using donniebot.services;
 using System.Threading.Tasks;
 using System.Collections.Generic;
@@ -25,7 +26,7 @@ namespace donniebot.commands
 
         [Command("playtop")]
         [Alias("pt", "tp")]
-        [RequireUserPermission(GuildPermission.MuteMembers)]
+        [RequireDjRole]
         [Summary("Adds a song or playlist to the beginning of the queue.")]
         public async Task PlayCmd([Summary("The URL or YouTube search query."), Remainder] string queryOrUrl = null)
         {

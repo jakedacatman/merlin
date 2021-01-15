@@ -5,6 +5,7 @@ using Discord.Commands;
 using Discord.WebSocket;
 using donniebot.services;
 using System.Threading.Tasks;
+using donniebot.classes;
 using Interactivity;
 
 namespace donniebot.commands
@@ -25,6 +26,7 @@ namespace donniebot.commands
 
         [Command("remove")]
         [Alias("rem")]
+        [RequireDjRole]
         [Summary("Removes the song at the specified index.")]
         public async Task ShuffleCmd(int index)
         {

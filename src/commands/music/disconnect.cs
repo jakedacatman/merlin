@@ -2,6 +2,7 @@ using System;
 using Discord.Commands;
 using donniebot.services;
 using System.Threading.Tasks;
+using donniebot.classes;
 using Interactivity;
 
 namespace donniebot.commands
@@ -20,6 +21,7 @@ namespace donniebot.commands
 
         [Command("disconnect")]
         [Alias("di", "dis", "leave")]
+        [RequireDjRole]
         [Summary("Leaves the current voice channel.")]
         public async Task LeaveCmd()
         {

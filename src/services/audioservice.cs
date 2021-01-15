@@ -38,7 +38,6 @@ namespace donniebot.services
 
         public event Func<ulong, AudioPlayer, Song, Task> SongAdded;
         public event Func<Song, AudioPlayer, Task> SongEnded;
-        public event Func<SocketVoiceChannel, SocketVoiceChannel, Task> BotMoved;
 
         public async Task<AudioPlayer> ConnectAsync(SocketTextChannel textChannel, SocketVoiceChannel channel)
         {
@@ -106,6 +105,8 @@ namespace donniebot.services
                     .Sum(x => x.Length.TotalSeconds) + (con.Current?.Length.TotalSeconds - con.Position.TotalSeconds ?? 0))
                     .ToString(@"hh\:mm\:ss")
                     : "Now";
+
+                if (estTime == "00:00:00") estTime = "Now";
 
                 if (Uri.IsWellFormedUriString(queryOrUrl, UriKind.Absolute) && (queryOrUrl.Contains("&list=") || queryOrUrl.Contains("?list=")))
                 {
@@ -334,12 +335,6 @@ namespace donniebot.services
                         
                         return Task.CompletedTask;
                     };
-
-                    BotMoved += (SocketVoiceChannel oVc, SocketVoiceChannel nVc) =>
-                    {
-                        discord = connection.Stream;
-                        return Task.CompletedTask;
-                    };
                         
                     var download = Task.Run(async () => 
                     {
@@ -509,6 +504,8 @@ namespace donniebot.services
 
         public string GetSongPosition(ulong id) => GetConnection(id, out var con) ? $"{con.Position.ToString(@"hh\:mm\:ss")}/{con.Current.Length.ToString(@"hh\:mm\:ss")}" : null;
         public double GetDownloadedPercent(ulong id) => GetConnection(id, out var con) ? (double)con.BytesDownloaded / con.Current.Size : 0d;
+
+        public List<SocketGuildUser> GetListeningUsers(ulong id) => GetConnection(id, out var connection) ? connection.GetListeningUsers().ToList() : new List<SocketGuildUser>();
 
         public Song GetCurrent(ulong id) => GetConnection(id, out var connection) ? connection.Current : null;
 

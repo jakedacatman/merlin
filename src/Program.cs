@@ -170,7 +170,10 @@ namespace donniebot
                         return;
                 }
 
-                await _commands.ExecuteAsync(context, argPos, _services, MultiMatchHandling.Best);
+                var result = await _commands.ExecuteAsync(context, argPos, _services, MultiMatchHandling.Best);
+
+                if (result is PreconditionResult res && !res.IsSuccess)
+                    await context.Channel.SendMessageAsync($"🛑 You lack the permissions to run this command. ({res.ErrorReason})");
             }   
             catch (Exception e)
             {

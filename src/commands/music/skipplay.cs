@@ -4,6 +4,7 @@ using Discord.Commands;
 using Discord.WebSocket;
 using donniebot.services;
 using System.Threading.Tasks;
+using donniebot.classes;
 using Interactivity;
 
 namespace donniebot.commands
@@ -24,7 +25,7 @@ namespace donniebot.commands
 
         [Command("skipplay")]
         [Alias("sp", "skp", "skpl")]
-        [RequireUserPermission(GuildPermission.MuteMembers)]
+        [RequireDjRole]
         [Summary("Skips the current song to play another.")]
         public async Task SkipPlayCmd([Summary("The URL or YouTube search query."), Remainder] string queryOrUrl = null)
         {

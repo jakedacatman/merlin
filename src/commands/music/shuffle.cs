@@ -5,6 +5,7 @@ using Discord.Commands;
 using Discord.WebSocket;
 using donniebot.services;
 using System.Threading.Tasks;
+using donniebot.classes;
 using Interactivity;
 
 namespace donniebot.commands
@@ -25,6 +26,7 @@ namespace donniebot.commands
 
         [Command("shuffle")]
         [Alias("sh")]
+        [RequireDjRole]
         [Summary("Shuffles the song queue.")]
         public async Task ShuffleCmd()
         {

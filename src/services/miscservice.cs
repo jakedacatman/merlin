@@ -79,14 +79,14 @@ namespace donniebot.services
             { typeof(RequireContextAttribute), "must be invoked in a guild or dm" }
         };
 
-        private readonly Dictionary<int, string> prefixes = new Dictionary<int, string>()
+        private readonly List<string> prefixes = new List<string>
         {
-            { 0, "" },
-            { 1, "Ki"},
-            { 2, "Mi"},
-            { 3, "Gi"},
-            { 4, "Ti"},
-            { 5, "Pi"},
+            "",
+            "Ki",
+            "Mi",
+            "Gi",
+            "Ti",
+            "Pi"
         };
 
         public MiscService(DiscordShardedClient client, IServiceProvider services, NetService net, Random random, RandomService rand)
@@ -586,7 +586,7 @@ namespace donniebot.services
             var sb = new StringBuilder();
             long divisor = 1 << 10;
 
-            for (int i = 0; i < 6; i++)
+            for (int i = 0; i < prefixes.Count; i++)
             {
                 if (bd < 1024d)
                 {

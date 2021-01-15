@@ -3,6 +3,7 @@ using Discord.Commands;
 using Discord.WebSocket;
 using donniebot.services;
 using System.Threading.Tasks;
+using donniebot.classes;
 using Interactivity;
 
 namespace donniebot.commands
@@ -21,6 +22,7 @@ namespace donniebot.commands
 
         [Command("pause")]
         [Alias("pa", "pau")]
+        [RequireDjRole]
         [Summary("Pauses playback.")]
         public async Task PauseCmd()
         {

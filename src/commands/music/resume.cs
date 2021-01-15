@@ -4,6 +4,7 @@ using Discord.WebSocket;
 using donniebot.services;
 using System.Threading.Tasks;
 using Interactivity;
+using donniebot.classes;
 
 namespace donniebot.commands
 {
@@ -21,6 +22,7 @@ namespace donniebot.commands
 
         [Command("resume")]
         [Alias("re", "res")]
+        [RequireDjRole]
         [Summary("Resumes playback.")]
         public async Task ResumeCmd()
         {
