@@ -34,7 +34,7 @@ namespace donniebot.commands
                 if (role == null)
                 {
                     _db.RemoveItems<DjRole>("djroles", Query.EQ("GuildId", Context.Guild.Id));
-                    await ReplyAsync("Reset the prefix to default.");
+                    await ReplyAsync("Unbound the DJ role.");
                     return;
                 }
                 
