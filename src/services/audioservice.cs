@@ -108,6 +108,15 @@ namespace donniebot.services
 
                 if (estTime == "00:00:00") estTime = "Now";
 
+                if (con != null && position.HasValue && con.Queue.Any())
+                {
+                    var len = con.Queue.Take(position.Value).Sum(x => x.Length.TotalSeconds);
+
+                    estTime = TimeSpan.FromSeconds(len + 
+                        (con.Current?.Length.TotalSeconds - con.Position.TotalSeconds ?? 0))
+                        .ToString(@"hh\:mm\:ss");
+                }
+
                 if (Uri.IsWellFormedUriString(queryOrUrl, UriKind.Absolute) && (queryOrUrl.Contains("&list=") || queryOrUrl.Contains("?list=")))
                 {
                     var playlist = await GetPlaylistAsync(queryOrUrl, id, user.Id);
