@@ -885,6 +885,28 @@ namespace donniebot.services
         public async Task<Image> Resize(string url, int x, int y) => Resize(await DownloadFromUrlAsync(url), x, y);
         public Image Resize(Image source, int x, int y)
         {
+            if (x > 2000 || y > 2000 || x < 0 || y < 0) throw new ImageException("The dimensions were either too small or too large.");
+
+            if (source.Frames.Count > 1)
+                source = ResizeGif(source, x, y);
+            else
+                source.Mutate(h => h.Resize(new ResizeOptions
+                {
+                    Mode = ResizeMode.Stretch,
+                    Size = new SixLabors.ImageSharp.Size(x, y),
+                    Sampler = KnownResamplers.MitchellNetravali
+                }));
+
+            return source;
+        }
+        public async Task<Image> Resize(string url, float scaleX, float scaleY) => Resize(await DownloadFromUrlAsync(url), scaleX, scaleY);
+        public Image Resize(Image source, float scaleX, float scaleY)
+        {
+            var x = (int)Math.Round(source.Width * scaleX);
+            var y = (int)Math.Round(source.Height * scaleY);
+
+            if (x > 2000 || y > 2000 || x < 0 || y < 0) throw new ImageException("The dimensions were either too small or too large.");
+
             if (source.Frames.Count > 1)
                 source = ResizeGif(source, x, y);
             else
