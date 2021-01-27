@@ -44,11 +44,14 @@ namespace donniebot.services
                             await channel.AddPermissionOverwriteAsync(role, Permissions);
                 }
 
+                if (role.Position < user.Roles.OrderBy(x => x.Position).Last().Position)
+                    return false;
+
                 if (user.Roles.Contains(role)) return false;
 
                 await user.AddRoleAsync(role);
                 
-                await user.ModifyAsync(x => x.Mute = true);
+                //await user.ModifyAsync(x => x.Mute = true);
                 return true;
             }
             catch (Exception e)
@@ -68,11 +71,14 @@ namespace donniebot.services
                     role = guild.Roles.FirstOrDefault(x => x.Name == "Muted");
                 else return false;
 
+                if (role.Position < user.Roles.OrderBy(x => x.Position).Last().Position)
+                    return false;
+
                 if (!user.Roles.Contains(role)) return false;
 
                 await user.RemoveRoleAsync(role);
 
-                await user.ModifyAsync(x => x.Mute = false);
+                //await user.ModifyAsync(x => x.Mute = false);
                 return true;
             }
             catch (Exception e)
