@@ -30,7 +30,7 @@ namespace donniebot.commands
             try
             {
                 if (await _mod.TryUnmuteUserAsync(Context.Guild, user))
-                    await ReplyAsync("Consider it done.");
+                    await ReplyAsync($"Consider it done, {Context.User.Mention}.");
                 else
                     await ReplyAsync("Failed to unmute the user.");
             }

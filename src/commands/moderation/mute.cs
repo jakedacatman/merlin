@@ -30,7 +30,7 @@ namespace donniebot.commands
             try
             {
                 if (await _mod.TryMuteUserAsync(Context.Guild, (Context.User as SocketGuildUser), user))
-                    await ReplyAsync("Consider it done.");
+                    await ReplyAsync($"Consider it done, {Context.User.Mention}.");
                 else
                     await ReplyAsync("Failed to mute the user.");
             }
