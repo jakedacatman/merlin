@@ -12,7 +12,7 @@ using Interactivity.Pagination;
 
 namespace donniebot.commands
 {
-    [Name("Audio")]
+    [Name("Music")]
     public class QueueCommand : ModuleBase<ShardedCommandContext>
     {
         private readonly AudioService _audio;

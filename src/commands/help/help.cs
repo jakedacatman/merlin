@@ -46,7 +46,7 @@ namespace donniebot.commands
                     await _inter.SendPaginatorAsync(_misc.GenerateCommandInfo(cmds, Context.User as SocketGuildUser).Build(), Context.Channel);
                 else 
                 {
-                    var aliases =  _commands.Commands.Where(x => x.Aliases.Any(y => ((string.IsNullOrEmpty(x.Module.Group) ? "" : $"{x.Module.Group} ") + y).TrimEnd(' ') == command));
+                    var aliases =  _commands.Commands.Where(x => x.Module.Group == command.Split(' ')[0] && x.Aliases.Any(y => y == command.Split(' ')[1]));
                     
                     if (aliases.Any())
                         await _inter.SendPaginatorAsync(_misc.GenerateCommandInfo(aliases, Context.User as SocketGuildUser).Build(), Context.Channel);

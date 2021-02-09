@@ -7,7 +7,7 @@ using Interactivity;
 
 namespace donniebot.commands
 {
-    [Name("Audio")]
+    [Name("Music")]
     public class SkipCommand : ModuleBase<ShardedCommandContext>
     {
         private readonly AudioService _audio;

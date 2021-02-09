@@ -519,6 +519,12 @@ namespace donniebot.services
             yield return typeof(ILookup<string, string>).GetTypeInfo().Assembly;
         }
 
+        public  IEnumerable<string> GetCommands(IEnumerable<CommandInfo> commands)
+        {
+            foreach (var cmd in commands)
+                yield return ((string.IsNullOrEmpty(cmd.Module.Group) ? "" : $"{cmd.Module.Group} ") + cmd.Name).TrimEnd(' ');
+        }
+
         public StaticPaginatorBuilder GenerateCommandInfo(IEnumerable<CommandInfo> commands, SocketGuildUser user)
         {
             var pages = new List<PageBuilder>();

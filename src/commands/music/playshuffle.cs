@@ -12,7 +12,7 @@ using System.Linq;
 
 namespace donniebot.commands
 {
-    [Name("Audio")]
+    [Name("Music")]
     public class PlayShuffleCommand : ModuleBase<ShardedCommandContext>
     {
         private readonly AudioService _audio;

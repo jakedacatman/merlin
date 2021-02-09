@@ -10,7 +10,7 @@ using Interactivity;
 
 namespace donniebot.commands
 {
-    [Name("Audio")]
+    [Name("Music")]
     public class PlayTopCommand : ModuleBase<ShardedCommandContext>
     {
         private readonly AudioService _audio;

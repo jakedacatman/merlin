@@ -8,7 +8,7 @@ using donniebot.classes;
 
 namespace donniebot.commands
 {
-    [Name("Audio")]
+    [Name("Music")]
     public class ResumeCommand : ModuleBase<ShardedCommandContext>
     {
         private readonly AudioService _audio;

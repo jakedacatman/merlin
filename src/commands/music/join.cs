@@ -7,7 +7,7 @@ using Interactivity;
 
 namespace donniebot.commands
 {
-    [Name("Audio")]
+    [Name("Music")]
     public class JoinCommand : ModuleBase<ShardedCommandContext>
     {
         private readonly AudioService _audio;

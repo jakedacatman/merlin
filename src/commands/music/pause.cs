@@ -8,7 +8,7 @@ using Interactivity;
 
 namespace donniebot.commands
 {
-    [Name("Audio")]
+    [Name("Music")]
     public class PauseCommand : ModuleBase<ShardedCommandContext>
     {
         private readonly AudioService _audio;

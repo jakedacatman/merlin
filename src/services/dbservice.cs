@@ -50,6 +50,18 @@ namespace donniebot.services
             }
         }
 
+        public bool AddPrefix(string value, ulong gId)
+        {
+            using (var scope = _services.CreateScope())
+            {
+                var _db = scope.ServiceProvider.GetRequiredService<LiteDatabase>();
+                var collection = _db.GetCollection<GuildPrefix>("prefixes");
+                if (GetPrefix(gId) == null)
+                    return collection.Upsert(new GuildPrefix { GuildId = gId, Prefix = value });
+                else return false;
+            }
+        }
+
         public bool AddAction(ModerationAction action)
         {
             using (var scope = _services.CreateScope())
@@ -95,6 +107,25 @@ namespace donniebot.services
                 var _db = scope.ServiceProvider.GetRequiredService<LiteDatabase>();
                 var collection = _db.GetCollection<Tag>("tags");
                 return collection.Find(Query.Where("GuildId", x => x.AsDouble == gId)).Select(x => x.Key);
+            }
+        }
+
+        public GuildPrefix GetPrefix(ulong gId)
+        {
+            using (var scope = _services.CreateScope())
+            {
+                var _db = scope.ServiceProvider.GetRequiredService<LiteDatabase>();
+                var collection = _db.GetCollection<GuildPrefix>("prefixes");
+                return collection.FindOne(Query.Where("GuildId", x => x.AsDouble == gId));
+            }
+        }
+        public int RemovePrefix(ulong gId)
+        {
+            using (var scope = _services.CreateScope())
+            {
+                var _db = scope.ServiceProvider.GetRequiredService<LiteDatabase>();
+                var collection = _db.GetCollection<GuildPrefix>("prefixes");
+                return collection.Delete(Query.Where("GuildId", x => x.AsDouble == gId));
             }
         }
 

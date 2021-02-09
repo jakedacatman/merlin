@@ -62,6 +62,7 @@ namespace donniebot
                 .AddSingleton(new LiteDatabase("database.db"))
                 .AddSingleton<DbService>()
                 .AddSingleton<MiscService>()
+                .AddSingleton(new GuildPrefix { GuildId = 0, Prefix = defaultPrefix })
                 .AddSingleton(new InteractivityService(_client))
                 .AddSingleton<ImageService>()
                 .AddSingleton<ModerationService>()
@@ -147,7 +148,7 @@ namespace donniebot
 
                 int mentPos = 0;
 
-                var pre = _db.GetItem<GuildPrefix>("prefixes", Query.Where("GuildId", x => x.AsDouble == (double)context.Guild.Id))?.Prefix ?? defaultPrefix;
+                var pre = _db.GetPrefix(context.Guild.Id)?.Prefix ?? defaultPrefix;
                 
                 if (msg.HasMentionPrefix(_client.CurrentUser, ref mentPos))
                 {
