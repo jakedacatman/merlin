@@ -18,6 +18,7 @@
   <ItemGroup>
     <PackageReference Include="Discord.InteractivityAddon" Version="2.2.0-rc8" />
     <ProjectReference Include="../deps/SVGSharpie/src/UkooLabs.SVGSharpie.ImageSharp/UkooLabs.SVGSharpie.ImageSharp.csproj" />
+    <ProjectReference Include="../deps/YoutubeExplode/YoutubeExplode/YoutubeExplode.csproj" />
     <PackageReference Include="Nerdbank.Streams" Version="2.6.81" />
     <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="1.0.0-beta11.1" />
     <PackageReference Include="Discord.Net" Version="2.3.0-dev-20201201.2" />
@@ -33,7 +34,7 @@
     <PackageReference Include="SixLabors.Fonts" Version="1.0.0-unstable0058" />
     <PackageReference Include="SixLabors.ImageSharp" Version="1.0.3-alpha.0.17" />
     <PackageReference Include="SixLabors.Shapes" Version="1.0.0-dev000133" />
-    <PackageReference Include="YoutubeExplode" Version="5.1.9" />
+    <!--> <PackageReference Include="YoutubeExplode" Version="5.1.9" /> <!-->
   </ItemGroup>
 
 </Project>

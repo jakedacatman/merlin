@@ -127,7 +127,12 @@ namespace donniebot.services
             "This isn't my fault... I swear!",
             "You're doing very well!",
             "Is that a JoJo reference?",
-            "Is this funny to you?"
+            "Is this funny to you?",
+            "Where is the funny?",
+            "That's quite sus, innit bruv?",
+            "I could do this all day.",
+            "Ah, Mr. DeVeer!",
+            "No, I am your father."
         };
 
         public async Task<EmbedBuilder> GenerateErrorMessage(Exception e)
@@ -151,20 +156,22 @@ namespace donniebot.services
                 string message = e.Message;
                 if (inex != null) message += $"\n*(inner: {inex.Message})*";
 
-                if (message.Length < 1000)
-                    description += $"its message:\n**{message.Replace("`", @"\`")}**";
+                if (message.Length < 500)
+                    description += $"its message:\n\n**{message.Replace("`", @"\`")}**";
                 else
                     description += $"a [link]({await _net.UploadToPastebinAsync(message)} to its message.";
 
-                description += "\nStack trace:\n";
+                description += "\n\nStack trace:\n";
 
                 string trace = e.StackTrace;
                 if (inex != null) trace += $"\ninner: {inex.StackTrace}";
 
-                if (trace.Length < 1000)
+                if (trace.Length < 500)
                     description += $"```{trace.Replace("`", @"\`")}```";
                 else
                     description += $"[here]({await _net.UploadToPastebinAsync(trace)})";
+
+                description += $"\n\nPlease be sure to DM jakedacatman#6121 on [Discord](https://discord.com) or file an issue on the [Github page](https://github.com/jakedacatman/donniebot) with this information.";
             }
 
             EmbedBuilder embed = new EmbedBuilder()
