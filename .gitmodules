@@ -3,4 +3,5 @@
 	url = https://github.com/UkooLabs/SVGSharpie
 [submodule "deps/YoutubeExplode"]
 	path = deps/YoutubeExplode
-	url = https://github.com/d4n3436/YoutubeExplode/
+	url = https://github.com/d4n3436/YoutubeExplode
+	branch = playlist_fix
