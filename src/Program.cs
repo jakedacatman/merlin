@@ -81,6 +81,7 @@ namespace donniebot
                 Console.WriteLine("What is the bot's token? (only logged to database.db)");
                 apiKey = Console.ReadLine();
                 _db.AddApiKey("discord", apiKey);
+                Console.Clear();
             }
 
             await _client.LoginAsync(TokenType.Bot, apiKey);

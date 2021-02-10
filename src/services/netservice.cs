@@ -26,9 +26,6 @@ namespace donniebot.services
             _hc = new HttpClient();
             _rand = rand;
 
-            uploadKey = db.GetApiKey("upload");
-            pasteKey = db.GetApiKey("pasteKey") ?? uploadKey;
-
             pasteHost = db.GetHost("pastebin");
             if (pasteHost == null)
             {
@@ -43,6 +40,24 @@ namespace donniebot.services
                 imageHost = Console.ReadLine() ?? "https://i.jakedacatman.me/upload";
                 db.AddHost("imageHost", imageHost);
             }
+
+            uploadKey = db.GetApiKey("uploadKey");
+            if (uploadKey == null)
+            {
+                Console.WriteLine("What is the key to that image host? (only logged to database.db)");
+                uploadKey = Console.ReadLine() ?? db.GetApiKey("upload");
+                db.AddApiKey("uploadKey", uploadKey);
+            }
+
+            pasteKey = db.GetApiKey("pasteKey");
+            if (pasteKey == null)
+            {
+                Console.WriteLine("What is the key to that pastebin? (only logged to database.db)");
+                pasteKey = Console.ReadLine() ?? uploadKey;
+                db.AddApiKey("pasteKey", pasteKey);
+            }
+
+            Console.Clear();
         }
 
         public async Task<bool> IsVideoAsync(string url)
@@ -174,8 +189,8 @@ namespace donniebot.services
             var sc = new FormUrlEncodedContent( new Dictionary<string, string> { { "input", stuffToUpload } } );
             sc.Headers.ContentType = new MediaTypeHeaderValue("application/x-www-form-urlencoded");
 
-            if (!string.IsNullOrEmpty(uploadKey))
-                sc.Headers.Add("key", uploadKey); //you can always do don.e _db.AddApiKey("upload", <key>) (and additionally change the host used)
+            if (!string.IsNullOrEmpty(pasteKey))
+                sc.Headers.Add("key", pasteKey); //you can always do don.e _db.AddApiKey("pasteKey", <key>) (and additionally change the host used)
 
             var request = await _hc.PostAsync(pasteHost, sc);
             return await request.Content.ReadAsStringAsync();
@@ -202,8 +217,8 @@ namespace donniebot.services
             {
                 ct.Add(new ByteArrayContent(await File.ReadAllBytesAsync(path)), "file", $"temp.{ext}");
 
-                if (!string.IsNullOrEmpty(pasteKey))
-                    ct.Headers.Add("key", pasteKey); //you can always do don.e _db.AddApiKey("pasteKey", <key>) (and additionally change the host used)
+                if (!string.IsNullOrEmpty(uploadKey))
+                    ct.Headers.Add("key", uploadKey); //you can always do don.e _db.AddApiKey("upload", <key>) (and additionally change the host used)
 
                 var response = await _hc.PostAsync(imageHost, ct);
 
