@@ -8,6 +8,6 @@ how 2 build:
 2. `cd donniebot/src`
 3. `dotnet build`
 
-if the packages do not install do `dotnet add package --prerelease <packagename>`
+if the packages do not install do `dotnet add package --prerelease <packagename>` in `donniebot/src`
   
 you need libsodium, ffmpeg, and opus installed; in Arch you can run `sudo pacman -S libopus libsodium ffmpeg` to install them all
