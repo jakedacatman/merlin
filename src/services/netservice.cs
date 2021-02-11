@@ -41,21 +41,8 @@ namespace donniebot.services
                 db.AddHost("imageHost", imageHost);
             }
 
-            uploadKey = db.GetApiKey("uploadKey");
-            if (uploadKey == null)
-            {
-                Console.WriteLine("What is the key to that image host? (only logged to database.db)");
-                uploadKey = Console.ReadLine() ?? db.GetApiKey("upload");
-                db.AddApiKey("uploadKey", uploadKey);
-            }
-
-            pasteKey = db.GetApiKey("pasteKey");
-            if (pasteKey == null)
-            {
-                Console.WriteLine("What is the key to that pastebin? (only logged to database.db)");
-                pasteKey = Console.ReadLine() ?? uploadKey;
-                db.AddApiKey("pasteKey", pasteKey);
-            }
+            uploadKey = db.GetApiKey("uploadKey") ?? db.GetApiKey("upload");
+            pasteKey = db.GetApiKey("pasteKey") ?? uploadKey;
 
             Console.Clear();
         }
