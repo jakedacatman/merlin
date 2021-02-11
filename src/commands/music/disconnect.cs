@@ -3,7 +3,8 @@ using Discord.Commands;
 using donniebot.services;
 using System.Threading.Tasks;
 using donniebot.classes;
-using Interactivity;
+using Discord.WebSocket;
+using System.Linq;
 
 namespace donniebot.commands
 {
@@ -34,7 +35,10 @@ namespace donniebot.commands
                     return;
                 }
 
-                await _audio.DisconnectAsync(vc);
+                if ((Context.User as SocketGuildUser).VoiceChannel == vc || !_audio.GetListeningUsers(Context.Guild.Id).Any())
+                    await _audio.DisconnectAsync(vc);
+                else
+                    await ReplyAsync("You are not in my voice channel, or there are people still listening.");
             }
             catch (Exception e)
             {
