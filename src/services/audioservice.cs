@@ -13,6 +13,8 @@ using System.Threading.Tasks;
 using YoutubeExplode.Playlists;
 using System.Collections.Generic;
 using YoutubeExplode.Videos.Streams;
+using System.Text.RegularExpressions;
+using System.Net.Http;
 
 namespace donniebot.services
 {
@@ -23,6 +25,7 @@ namespace donniebot.services
         private readonly NetService _net;
         private readonly RandomService _rand;
         private YoutubeClient yt = new YoutubeClient();
+        private HttpClient _hc = new HttpClient();
 
         public AudioService(DiscordShardedClient client, NetService net, RandomService rand)
         {
@@ -182,7 +185,8 @@ namespace donniebot.services
                 if (!GetConnection(id, out var player))
                     player = await ConnectAsync(textChannel, vc);
 
-                song.Info = await GetAudioInfoAsync(song.Url);
+                if (song.Url.Contains("youtube.com"))
+                    song.Info = await GetAudioInfoAsync(song.Url);
                 
                 player.Enqueue(song, position);
                 if (shuffle) Shuffle(player.GuildId);
@@ -304,11 +308,20 @@ namespace donniebot.services
 
                 var discord = connection.Stream;
 
-                var info = song.Info ?? await GetAudioInfoAsync(song.Url);
+                Stream str;
+                if (song.Url.Contains("youtube.com"))
+                {
+                    var info = song.Info ?? await GetAudioInfoAsync(song.Url);
+                    song.Size = info.Size.TotalBytes;
+                    str = await GetAudioAsync(info);
+                }
+                else
+                {
+                    str = await GetAudioAsync(song.Url);
+                    song.Size = await _net.GetContentLengthAsync(song.Url);
+                }
 
-                song.Size = info.Size.TotalBytes;
-
-                using (var str = await GetAudioAsync(info))
+                using (str)
                 using (var downloadStream = new SimplexStream())
                 using (var ffmpeg = CreateStream())
                 using (var output = ffmpeg.StandardOutput.BaseStream)
@@ -455,15 +468,28 @@ namespace donniebot.services
         }
 
         private async Task<Stream> GetAudioAsync(AudioOnlyStreamInfo info) => await yt.Videos.Streams.GetAsync(info);
+        private async Task<Stream> GetAudioAsync(string url) => await _hc.GetStreamAsync(url);
 
         public async Task<Song> CreateSongAsync(string queryOrUrl, ulong guildId, ulong userId)
         {
             Video video;
 
-            if (!Uri.IsWellFormedUriString(queryOrUrl, UriKind.Absolute) || !new Uri(queryOrUrl).Host.Contains("youtube"))
+            if (!Uri.IsWellFormedUriString(queryOrUrl, UriKind.Absolute))
                 video = await GetVideoAsync(queryOrUrl);
-            else
+            else if (queryOrUrl.Contains("youtube.com") || queryOrUrl.Contains("youtu.be"))
                 video = await yt.Videos.GetAsync(new VideoId(queryOrUrl));
+            else
+            {
+                var reg = new Regex(@"Duration: (\d+\:\d+\:\d+\.\d+),");
+                return new Song(
+                    new SongInfo(
+                        "Direct audio stream", 
+                        queryOrUrl, 
+                        "https://i.jakedacatman.me/Mpmor.png", 
+                        $"<@{userId}>", TimeSpan.FromSeconds(0)),
+                        userId,
+                        guildId);
+            }
 
             var info = new SongInfo(video.Title, video.Url, video.Thumbnails.MediumResUrl, video.Author, video.Duration);
 
@@ -480,7 +506,8 @@ namespace donniebot.services
 
             foreach (var video in videos)
                 songs.Add(new Song(
-                    new SongInfo(video.Title, 
+                    new SongInfo(
+                        video.Title, 
                         video.Url, 
                         video.Thumbnails.MediumResUrl, 
                         video.Author, 
