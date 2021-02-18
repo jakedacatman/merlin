@@ -39,9 +39,16 @@ namespace donniebot.commands
         {
             try
             {
+                if (!Uri.IsWellFormedUriString(post, UriKind.Absolute) || !post.Contains("reddit.com"))
+                {
+                    await ReplyAsync("Invalid Reddit link; try a link to the original post.");
+                    return;
+                }
+
                 var msg = await ReplyAsync("Downloading your video...");
-                await _img.DownloadRedditVideoAsync(post, Context.Channel as SocketGuildChannel);
-                _inter.DelayedSendMessageAndDeleteAsync(Context.Channel, deleteDelay: TimeSpan.FromSeconds(30), text: $"{Context.User.Mention}, your video is ready.");
+                var c = Context.Channel as SocketGuildChannel;
+                if (await _img.DownloadRedditVideoAsync(post, c, (c as SocketTextChannel).IsNsfw))
+                    _inter.DelayedSendMessageAndDeleteAsync(Context.Channel, deleteDelay: TimeSpan.FromSeconds(30), text: $"{Context.User.Mention}, your video is ready.");
             }
             catch (System.Net.Http.HttpRequestException e)
             {

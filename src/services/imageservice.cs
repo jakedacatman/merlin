@@ -1146,14 +1146,14 @@ namespace donniebot.services
             return false;
         }
 
-        private readonly SemaphoreSlim dlSem = new SemaphoreSlim(1, 1);
-        public async Task DownloadRedditVideoAsync(string postUrl, SocketGuildChannel channel, bool nsfw = false)
+        private readonly SemaphoreSlim dlSem = new SemaphoreSlim(1, 1); //my bot runs on a raspberry pi so i don't want 10 different videos downloading at once
+        public async Task<bool> DownloadRedditVideoAsync(string postUrl, SocketGuildChannel channel, bool nsfw = false)
         {
             await dlSem.WaitAsync();
             try
             {
                 var post = JsonConvert.DeserializeObject<JArray>(await _net.DownloadAsStringAsync($"{postUrl}.json"))[0];
-                if (!GetImage(post["data"]["children"], channel.Guild.Id, nsfw, out var img, true) || img.Type != "video") return;
+                if (!GetImage(post["data"]["children"], channel.Guild.Id, nsfw, out var img, true) || img.Type != "video") return false;
 
                 var reg = new Regex("DASH_[0-9]{1,4}");
                 var videoUrl = img.Url;
@@ -1169,6 +1169,7 @@ namespace donniebot.services
                 }
 
                 await SendToChannelAsync(fn, channel as ISocketMessageChannel);
+                return true;
             }
             finally
             {

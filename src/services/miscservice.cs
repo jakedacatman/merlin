@@ -542,11 +542,11 @@ namespace donniebot.services
                 if (cmd.Preconditions.Any())
                 foreach (PreconditionAttribute p in cmd.Preconditions)
                 {
-                    var txt = "no info";
+                    var txt = "";
                     if (p is RequireUserPermissionAttribute attr)
-                        txt = attr.GuildPermission.HasValue ? attr.GuildPermission.Value.ToString() : txt;
+                        txt = attr.GuildPermission.HasValue ? $" ({attr.GuildPermission.Value}" : txt;
                     else if (p is RequireBotPermissionAttribute attr2)
-                        txt = attr2.GuildPermission.HasValue ? attr2.GuildPermission.Value.ToString() : txt;
+                        txt = attr2.GuildPermission.HasValue ? $" ({attr2.GuildPermission.Value}" : txt;
 
                     preconditions += $"{preconditionAliases[p.GetType()]} ({txt})\n";
                 }
