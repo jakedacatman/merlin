@@ -4,6 +4,7 @@ using Discord.WebSocket;
 using Discord.Commands;
 using donniebot.services;
 using Interactivity;
+using Discord;
 
 namespace donniebot.commands
 {
@@ -29,8 +30,8 @@ namespace donniebot.commands
             try
             {
                 url = await _img.ParseUrlAsync(url, Context.Message);
-                var img = await _img.Blur(url.Trim('<').Trim('>'), amount);
-                await _img.SendToChannelAsync(img, Context.Channel);
+                var img = await _img.Blur(url, amount);
+                await _img.SendToChannelAsync(img, Context.Channel, new MessageReference(Context.Message.Id));
             }
             catch (Exception e)
             {

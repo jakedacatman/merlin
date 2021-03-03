@@ -6,6 +6,7 @@ using Discord.WebSocket;
 using Discord.Commands;
 using donniebot.services;
 using Interactivity;
+using Discord;
 
 namespace donniebot.commands
 {
@@ -49,7 +50,7 @@ namespace donniebot.commands
                         new EmbedFieldBuilder().WithName("MIME type").WithValue(info.MimeType).WithIsInline(true),
                         new EmbedFieldBuilder().WithName("Resolution").WithValue($"{info.HorizontalResolution} dpi * {info.VerticalResolution} dpi").WithIsInline(true),
                     });
-                await Context.Channel.SendMessageAsync(embed: em.Build());
+                await Context.Channel.SendMessageAsync(embed: em.Build(), messageReference: new MessageReference(Context.Message.Id));
             }
             catch (Exception e)
             {

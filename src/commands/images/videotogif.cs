@@ -4,6 +4,7 @@ using Discord.WebSocket;
 using Discord.Commands;
 using donniebot.services;
 using Interactivity;
+using Discord;
 
 namespace donniebot.commands
 {
@@ -30,7 +31,7 @@ namespace donniebot.commands
             {
                 url = await _img.ParseUrlAsync(url, Context.Message);
                 var path = await _img.VideoToGif(url);
-                await _img.SendToChannelAsync(path, Context.Channel);
+                await _img.SendToChannelAsync(path, Context.Channel, new MessageReference(Context.Message.Id));
             }
             catch (Exception e)
             {

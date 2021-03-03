@@ -42,7 +42,7 @@ namespace donniebot.commands
                     .WithColor(_rand.RandomColor())
                     .WithImageUrl(info)
                     .WithTimestamp(DateTime.UtcNow)
-                ).Build());
+                ).Build(), messageReference: new MessageReference(Context.Message.Id));
             }
             catch (Exception e)
             {

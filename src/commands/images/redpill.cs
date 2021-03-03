@@ -4,6 +4,7 @@ using Discord.WebSocket;
 using Discord.Commands;
 using donniebot.services;
 using Interactivity;
+using Discord;
 
 namespace donniebot.commands
 {
@@ -29,7 +30,7 @@ namespace donniebot.commands
             try
             {
                 var img = await _img.Redpill(choice1, choice2);
-                await _img.SendToChannelAsync(img, Context.Channel);
+                await _img.SendToChannelAsync(img, Context.Channel, new MessageReference(Context.Message.Id));
             }
             catch (Exception e)
             {

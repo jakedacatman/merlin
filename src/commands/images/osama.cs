@@ -4,6 +4,7 @@ using Discord.WebSocket;
 using Discord.Commands;
 using donniebot.services;
 using Interactivity;
+using Discord;
 
 namespace donniebot.commands
 {
@@ -31,7 +32,7 @@ namespace donniebot.commands
                 url = await _img.ParseUrlAsync(url, Context.Message);
                 var osamaUrl = "https://i.jakedacatman.me/UfLp7.jpg";
                 var img = await _img.Overlay(osamaUrl, url, 103, 58, 80, 60, 4f);
-                await _img.SendToChannelAsync(img, Context.Channel);
+                await _img.SendToChannelAsync(img, Context.Channel, new MessageReference(Context.Message.Id));
             }
             catch (Exception e)
             {

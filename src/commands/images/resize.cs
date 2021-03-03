@@ -4,6 +4,7 @@ using Discord.WebSocket;
 using Discord.Commands;
 using donniebot.services;
 using Interactivity;
+using Discord;
 
 namespace donniebot.commands
 {
@@ -32,7 +33,7 @@ namespace donniebot.commands
                 if ((width > 0 && height > 0) && (width <= 2000 && height <= 2000))
                 {
                     var img = await _img.Resize(url, width, height);
-                    await _img.SendToChannelAsync(img, Context.Channel);
+                    await _img.SendToChannelAsync(img, Context.Channel, new MessageReference(Context.Message.Id));
                 }
             }
             catch (Exception e)

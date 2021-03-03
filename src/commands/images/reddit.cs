@@ -7,6 +7,7 @@ using Discord.Commands;
 using donniebot.services;
 using donniebot.classes;
 using Interactivity;
+using Discord;
 
 namespace donniebot.commands
 {
@@ -54,7 +55,7 @@ namespace donniebot.commands
                         .WithFooter($"Posted by {img.Author} • From {img.Subreddit}");
 
                         
-                    await ReplyAsync(embed: embed.Build());
+                    await ReplyAsync(embed: embed.Build(), messageReference: new MessageReference(Context.Message.Id), allowedMentions: AllowedMentions.None);
                 }
                 else
                     await ReplyAsync("Invalid subreddit.");

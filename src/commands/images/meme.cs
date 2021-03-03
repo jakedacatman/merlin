@@ -4,6 +4,7 @@ using Discord.WebSocket;
 using Discord.Commands;
 using donniebot.services;
 using Interactivity;
+using Discord;
 
 namespace donniebot.commands
 {
@@ -44,7 +45,7 @@ namespace donniebot.commands
                 img = _img.Sharpen(img, _rand.RandomFloat(5));
                 img = _img.Jpeg(img, _rand.RandomNumber(1, 15));
 
-                await _img.SendToChannelAsync(img, Context.Channel);
+                await _img.SendToChannelAsync(img, Context.Channel, new MessageReference(Context.Message.Id));
             }
             catch (Exception e)
             {

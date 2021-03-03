@@ -4,6 +4,7 @@ using Discord.WebSocket;
 using Discord.Commands;
 using donniebot.services;
 using Interactivity;
+using Discord;
 
 namespace donniebot.commands
 {
@@ -34,12 +35,12 @@ namespace donniebot.commands
                 if (await _net.IsVideoAsync(url))
                 {
                     var path = await _img.VideoFilter(url, _img.Demotivational, title, text);
-                    await _img.SendToChannelAsync(path, Context.Channel);
+                    await _img.SendToChannelAsync(path, Context.Channel, new MessageReference(Context.Message.Id));
                 }
                 else
                 {
                     var img = await _img.Demotivational(url, title, text);
-                    await _img.SendToChannelAsync(img, Context.Channel);
+                    await _img.SendToChannelAsync(img, Context.Channel, new MessageReference(Context.Message.Id));
                 }
             }
             catch (Exception e)

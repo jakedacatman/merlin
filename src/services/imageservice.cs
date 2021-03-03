@@ -882,7 +882,7 @@ namespace donniebot.services
             }
         }
 
-        public async Task<Image> Resize(string url, int x, int y) => Resize(await DownloadFromUrlAsync(url), x, y);
+        public async Task<Image> Resize(string url, int x, int y) => Resize(await DownloadFromUrlAsync(url, x, y), x, y);
         public Image Resize(Image source, int x, int y)
         {
             if (x > 2000 || y > 2000 || x < 0 || y < 0) throw new ImageException("The dimensions were either too small or too large.");
@@ -890,12 +890,15 @@ namespace donniebot.services
             if (source.Frames.Count > 1)
                 source = ResizeGif(source, x, y);
             else
-                source.Mutate(h => h.Resize(new ResizeOptions
-                {
-                    Mode = ResizeMode.Stretch,
-                    Size = new SixLabors.ImageSharp.Size(x, y),
-                    Sampler = KnownResamplers.MitchellNetravali
-                }));
+            {
+                if (x != source.Width && y != source.Height)
+                    source.Mutate(h => h.Resize(new ResizeOptions
+                    {
+                        Mode = ResizeMode.Stretch,
+                        Size = new SixLabors.ImageSharp.Size(x, y),
+                        Sampler = KnownResamplers.MitchellNetravali
+                    }));
+            }
 
             return source;
         }
@@ -1147,7 +1150,7 @@ namespace donniebot.services
         }
 
         private readonly SemaphoreSlim dlSem = new SemaphoreSlim(1, 1); //my bot runs on a raspberry pi so i don't want 10 different videos downloading at once
-        public async Task<bool> DownloadRedditVideoAsync(string postUrl, SocketGuildChannel channel, bool nsfw = false)
+        public async Task<bool> DownloadRedditVideoAsync(string postUrl, SocketGuildChannel channel, bool nsfw = false, Discord.MessageReference msg = null)
         {
             await dlSem.WaitAsync();
             try
@@ -1168,7 +1171,7 @@ namespace donniebot.services
                     await File.WriteAllBytesAsync(fn, data);
                 }
 
-                await SendToChannelAsync(fn, channel as ISocketMessageChannel);
+                await SendToChannelAsync(fn, channel as ISocketMessageChannel, msg);
                 return true;
             }
             finally
@@ -1288,25 +1291,25 @@ namespace donniebot.services
             }
         }
 
-        public async Task SendToChannelAsync(Image img, ISocketMessageChannel ch) => await SendToChannelAsync(Save(img), ch);
-        public async Task SendToChannelAsync(string path, ISocketMessageChannel ch)
+        public async Task SendToChannelAsync(Image img, ISocketMessageChannel ch, Discord.MessageReference msg = null) => await SendToChannelAsync(Save(img), ch);
+        public async Task SendToChannelAsync(string path, ISocketMessageChannel ch, Discord.MessageReference msg = null)
         {
             var ext = path.Split('.')[1];
             var len = new FileInfo(path).Length;
             if (len > 8388119) //allegedly discord's limit
-                await ch.SendMessageAsync(await _net.UploadAsync(path, ext));
+                await ch.SendMessageAsync(await _net.UploadAsync(path, ext), messageReference: msg, allowedMentions: Discord.AllowedMentions.None);
             else
-                await ch.SendFileAsync(path);
+                await ch.SendFileAsync(path, messageReference: msg, allowedMentions: Discord.AllowedMentions.None);
             File.Delete(path);
         }
 
-        public async Task<Image> DownloadFromUrlAsync(string url)
+        public async Task<Image> DownloadFromUrlAsync(string url, int sizeX = 500, int sizeY = 500)
         {
             if (!url.Contains("svg") && (await _net.GetContentTypeAsync(url))?.ToLower() != "image/svg+xml")
                 return Image.Load(await _net.DownloadFromUrlAsync(url), out _format);
             else 
             {
-                var img = SvgImageRenderer.RenderFromString<Rgba32>(await _net.DownloadAsStringAsync(url), 500, 500);
+                var img = SvgImageRenderer.RenderFromString<Rgba32>(await _net.DownloadAsStringAsync(url), sizeX, sizeY);
                 _format = new SvgFormat();
                 return img;
             }
