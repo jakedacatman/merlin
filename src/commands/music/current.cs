@@ -17,12 +17,14 @@ namespace donniebot.commands
         private readonly AudioService _audio;
         private readonly MiscService _misc;
         private readonly RandomService _rand;
+        private readonly GuildPrefix _defPre;
 
-        public CurrentCommand(AudioService audio, MiscService misc, RandomService rand)
+        public CurrentCommand(AudioService audio, MiscService misc, RandomService rand, GuildPrefix defPre)
         {
             _audio = audio;
             _misc = misc;
             _rand = rand;
+            _defPre = defPre;
         }
 
         [Command("current")]
@@ -36,7 +38,7 @@ namespace donniebot.commands
 
                 if (!_audio.HasSongs(id))
                 {
-                    await ReplyAsync("There are no songs in the queue. Try adding some with `don.add`!");
+                    await ReplyAsync($"There are no songs in the queue. Try adding some with `{_defPre.Prefix}add`!");
                     return;
                 }
 

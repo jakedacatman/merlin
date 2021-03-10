@@ -7,7 +7,6 @@ using Discord.Commands;
 using donniebot.services;
 using donniebot.classes;
 using Interactivity;
-using Discord;
 
 namespace donniebot.commands
 {

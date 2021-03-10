@@ -216,12 +216,13 @@ namespace donniebot.services
                 _audio = _services.GetService<AudioService>()
             };
             globals._globals = globals;
+
             
             var options = Microsoft.CodeAnalysis.Scripting.ScriptOptions.Default
                 .AddReferences(assemblies)
-                .AddImports(globals.Imports)
+                .AddImports(assemblies.Select(x => x.GetTypes().Select(y => y.Namespace)).SelectMany(x => x).Where(x => !string.IsNullOrWhiteSpace(x)))
                 .WithAllowUnsafe(true)
-                .WithLanguageVersion(LanguageVersion.CSharp8);
+                .WithLanguageVersion(LanguageVersion.Preview);
 
             Stopwatch s = Stopwatch.StartNew();
             var script = CSharpScript.Create(code, options, typeof(Globals));
@@ -520,10 +521,15 @@ namespace donniebot.services
             foreach (var a in assemblies)
             {
                 var s = Assembly.Load(a);
-                yield return s;
+                if (!string.IsNullOrEmpty(s.Location))
+                    yield return s;
             }
-            yield return Assembly.GetEntryAssembly();
-            yield return typeof(ILookup<string, string>).GetTypeInfo().Assembly;
+            var entry = Assembly.GetEntryAssembly();
+            var il = typeof(ILookup<string, string>).GetTypeInfo().Assembly;
+            if (!string.IsNullOrEmpty(entry?.Location))
+                yield return entry;
+            if (!string.IsNullOrEmpty(il.Location))
+                yield return il;
         }
 
         public  IEnumerable<string> GetCommands(IEnumerable<CommandInfo> commands)

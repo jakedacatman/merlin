@@ -58,7 +58,7 @@ namespace donniebot.commands
                     .WithColor(_rand.RandomColor())
                     .WithImageUrl(url)
                     .WithCurrentTimestamp()
-                    .Build(), messageReference: new MessageReference(Context.Message.Id));
+                    .Build(), messageReference: new MessageReference(Context.Message.Id), allowedMentions: AllowedMentions.None);
             }
             catch (Exception e)
             {

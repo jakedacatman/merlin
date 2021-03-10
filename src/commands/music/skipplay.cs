@@ -15,12 +15,14 @@ namespace donniebot.commands
         private readonly AudioService _audio;
         private readonly MiscService _misc;
         private readonly CommandService _cmds;
+        private readonly GuildPrefix _defPre;
 
-        public SkipPlayCommand(AudioService audio, MiscService misc, CommandService cmds)
+        public SkipPlayCommand(AudioService audio, MiscService misc, CommandService cmds, GuildPrefix defPre)
         {
             _audio = audio;
             _misc = misc;
             _cmds = cmds;
+            _defPre = defPre;
         }
 
         [Command("skipplay")]
@@ -33,7 +35,7 @@ namespace donniebot.commands
             {
                 if (!_audio.HasSongs(Context.Guild.Id))
                 {
-                    await ReplyAsync("There are no songs to skip! Use don.add instead.");
+                    await ReplyAsync($"There are no songs to skip! Use {_defPre.Prefix}add instead.");
                     return;
                 }
 

@@ -26,7 +26,7 @@ namespace donniebot
 
         public static Task Main() => new Program().Start();
 
-        private readonly string defaultPrefix = "don.";
+        private readonly string defaultPrefix = "mer.";
 
         private DbService _db;
 
