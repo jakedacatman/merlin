@@ -31,7 +31,7 @@
     <PackageReference Include="MoonSharp" Version="2.0.0.0" />
     <PackageReference Include="MoonSharp.Debugger.VsCode" Version="2.0.0" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
-    <PackageReference Include="SixLabors.Fonts" Version="1.0.0-unstable0058" />
+    <PackageReference Include="SixLabors.Fonts" Version="1.0.0-beta13.5.4" />
     <PackageReference Include="SixLabors.ImageSharp" Version="1.0.3-alpha.0.17" />
     <PackageReference Include="SixLabors.Shapes" Version="1.0.0-dev000133" />
     <!--> <PackageReference Include="YoutubeExplode" Version="5.1.9" /> <!-->

@@ -30,12 +30,12 @@ namespace donniebot.commands
                 
                 if (lastMsg.Length > 100)
                 {
-                    await ReplyAsync($"Message too long (max of 100 characters; your message was {lastMsg.Length} long.");
+                    await ReplyAsync($"Message too long (max of 100 characters; your message was {lastMsg.Length} long.)");
                     return;
                 }
                 
                 var split = new List<string>(lastMsg.Split(' '));
-                var ct = lastMsg.Length - lastMsg.Count(x => x != ' ');
+                var ct = lastMsg.Count(x => !char.IsWhiteSpace(x));
                 var sentenceCount = lastMsg.Count(x => x == '.' || x == '?' || x == '!');
                 if (sentenceCount < 1) sentenceCount = 1;
                 
