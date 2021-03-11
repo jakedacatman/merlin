@@ -16,11 +16,13 @@ namespace donniebot.commands
     {
         private readonly MiscService _misc;
         private readonly DbService _db;
+        private readonly InteractivityService _inter;
 
-        public DjRoleCommand(MiscService misc, DbService db)
+        public DjRoleCommand(MiscService misc, DbService db, InteractivityService inter)
         {
             _misc = misc;
             _db = db;
+            _inter = inter;
         }
 
         [Command("djrole")]
@@ -33,8 +35,16 @@ namespace donniebot.commands
             {
                 if (role == null)
                 {
-                    _db.RemoveItems<DjRole>("djroles", Query.EQ("GuildId", Context.Guild.Id));
-                    await ReplyAsync("Unbound the DJ role.");
+                    var res = await _inter.NextMessageAsync(timeout: TimeSpan.FromSeconds(10)); 
+                    if (res.IsSuccess && (res.Value.Content.ToLower().Contains("yes") || res.Value.Content.ToLower() == "y"))
+                    {
+                        _db.RemoveItems<DjRole>("djroles", Query.EQ("GuildId", Context.Guild.Id));
+                        await ReplyAsync("Unbound the DJ role.");
+                    }
+                    else
+                    {
+                        _inter.DelayedSendMessageAndDeleteAsync(Context.Channel, deleteDelay: TimeSpan.FromSeconds(10), text: "The DJ role was not unbound.");
+                    }
                     return;
                 }
                 

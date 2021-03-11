@@ -22,7 +22,7 @@ namespace donniebot.classes
                 .GetItem<DjRole>("djroles", Query.EQ("GuildId", id))?.RoleId ??
                     user.Guild.Roles.FirstOrDefault(x => x.Name == "DJ")?.Id ?? 0;
 
-            if (user == null) return PreconditionResult.FromError("Cannot execute outside of a guild");
+            if (user == null) return PreconditionResult.FromError("Cannot execute outside of a guild.");
 
             var users = (services.GetService(typeof(AudioService)) as AudioService).GetListeningUsers(id);
 
@@ -33,7 +33,7 @@ namespace donniebot.classes
 
             if (user.GuildPermissions.MuteMembers) return PreconditionResult.FromSuccess();
 
-            if (!user.Guild.Roles.Any(x => x.Id == roleId)) return PreconditionResult.FromError("The role does not exist.");
+            if (!user.Guild.Roles.Any(x => x.Id == roleId)) return PreconditionResult.FromError("There is no assigned DJ role. Run the djrole command to assign one!");
 
             return PreconditionResult.FromError("Try this command when you are alone with the bot or if you have the Mute Members permission. Having the DJ role works as well.");
         }

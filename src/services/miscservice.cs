@@ -67,7 +67,8 @@ namespace donniebot.services
             { typeof(string), "string" },
             { typeof(void), "void" },
             { typeof(SocketGuildUser), "user" },
-            { typeof(TimeSpan), "timespan" }
+            { typeof(TimeSpan), "timespan" },
+            { typeof(SocketRole), "role" },
         };
 
         private readonly Dictionary<Type, string> preconditionAliases = new Dictionary<Type, string>()
@@ -550,9 +551,9 @@ namespace donniebot.services
                 {
                     var txt = "";
                     if (p is RequireUserPermissionAttribute attr)
-                        txt = attr.GuildPermission.HasValue ? $" ({attr.GuildPermission.Value}" : txt;
+                        txt = attr.GuildPermission.HasValue ? attr.GuildPermission.Value.ToString() : txt;
                     else if (p is RequireBotPermissionAttribute attr2)
-                        txt = attr2.GuildPermission.HasValue ? $" ({attr2.GuildPermission.Value}" : txt;
+                        txt = attr2.GuildPermission.HasValue ? attr2.GuildPermission.Value.ToString() : txt;
 
                     preconditions += $"{preconditionAliases[p.GetType()]} ({txt})\n";
                 }
