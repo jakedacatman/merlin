@@ -30,7 +30,7 @@ namespace donniebot.commands
             try
             {
                 if (!File.Exists(".version"))
-                    await ReplyAsync("No version file found. If you are the bot owner, make sure that the .version file from the git repository is copied over to the same directory as tht bot executable.");
+                    await ReplyAsync("No version file found. If you are the bot owner, make sure that the .version file from the git repository is copied over to the same directory as the bot executable.");
                 else
                 {
                     var file = File.OpenText(".version");
