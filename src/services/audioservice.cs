@@ -512,6 +512,7 @@ namespace donniebot.services
         public async Task<int> SkipAsync(SocketGuildUser skipper) => GetConnection(skipper.Guild.Id, out var c) ? await c.SkipAsync(skipper) : 0;
 
         public string GetSongPosition(ulong id) => GetConnection(id, out var con) ? $"{con.Position.ToString(@"hh\:mm\:ss")}/{con.Current.Length.ToString(@"hh\:mm\:ss")}" : null;
+        public TimeSpan GetRawPosition(ulong id) => GetConnection(id, out var con) ? con.Current.Length - con.Position : TimeSpan.FromSeconds(0);
         public double GetDownloadedPercent(ulong id) => GetConnection(id, out var con) ? (double)con.BytesDownloaded / con.Current.Size : 0d;
 
         public List<SocketGuildUser> GetListeningUsers(ulong id) => GetConnection(id, out var connection) ? connection.GetListeningUsers().ToList() : new List<SocketGuildUser>();
@@ -529,7 +530,7 @@ namespace donniebot.services
 
                 if (connection.Current != null)
                 {
-                    items.Add($"__**{1}**: {connection.Current.Title} (queued by {GetMention(gId, connection.Current.QueuerId)})__");
+                    items.Add($"__**1**: {connection.Current.Title} (queued by {GetMention(gId, connection.Current.QueuerId)})__");
 
                     for (int i = 0; i < queue.Count; i++)
                         items.Add($"**{i + 2}**: {queue[i].Title} (queued by {GetMention(gId, queue[i].QueuerId)})");

@@ -48,12 +48,21 @@ namespace donniebot.commands
 
                 var chunks = queue.ChunkBy(10);
 
+                var time = _audio.GetRawPosition(guild.Id).TotalSeconds + _audio.GetRawQueue(guild.Id).Sum(x => x.Length.TotalSeconds);
+
                 var pages = new List<PageBuilder>();
 
                 for (int i = 0; i < chunks.Count(); i++)
                 {
                     var chunk = chunks.ElementAt(i);
-                    pages.Add(new PageBuilder().WithColor(_rand.RandomColor()).WithFields(new EmbedFieldBuilder().WithName($"#{i * 10 + 1} to #{i * 10 + chunk.Count()}").WithValue(string.Join('\n', chunk))));
+                    pages.Add(new PageBuilder()
+                        .WithColor(_rand.RandomColor())
+                        .WithFields(new EmbedFieldBuilder()
+                            .WithName($"#{i * 10 + 1} to #{i * 10 + chunk.Count()}")
+                            .WithValue(string.Join('\n', chunk))
+                        )
+                        .WithTitle($"Total time left: {TimeSpan.FromSeconds(time).ToString(@"hh\:mm\:ss")}")
+                    );
                 }
                 
                 await _inter.SendPaginatorAsync(new StaticPaginatorBuilder()
