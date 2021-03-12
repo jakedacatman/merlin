@@ -22,10 +22,9 @@ namespace donniebot.commands
             _inter = inter;
         }
 
-        [Command("poll")]
-        [Alias("pol")]
+        [Command("poll2")]
+        [Alias("pol2")]
         [Summary("Sends a poll and adds reactions for people to vote on.")]
-        [Priority(0)]
         [RequireUserPermission(GuildPermission.ManageChannels)]
         public async Task PollCmd([Summary("The question to vote on.")]string message, [Summary("The reactions to vote with.")]params string[] reactions)
         {
@@ -58,7 +57,6 @@ namespace donniebot.commands
         [Command("poll")]
         [Alias("pol")]
         [Summary("Sends a poll and adds reactions for people to vote on.")]
-        [Priority(1)]
         [RequireUserPermission(GuildPermission.ManageChannels)]
         public async Task PollCmd([Summary("The question to vote on."), Remainder]string message)
         {
