@@ -52,7 +52,13 @@ namespace donniebot.commands
         {
             try
             {
-                var url = (await _client.Rest.GetUserAsync(userId)).GetAvatarUrl(size: 512);
+                var url = (await _client.Rest.GetUserAsync(userId))?.GetAvatarUrl(size: 512);
+
+                if (url == null)
+                {
+                    await ReplyAsync("Invalid user ID.");
+                    return;
+                }
 
                 await ReplyAsync(embed: new EmbedBuilder()
                     .WithColor(_rand.RandomColor())

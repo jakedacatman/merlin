@@ -458,14 +458,18 @@ namespace donniebot.services
 
         public async Task<Song> CreateSongAsync(string queryOrUrl, ulong guildId, ulong userId)
         {
-            Video video;
+            SongInfo info;
 
             if (!Uri.IsWellFormedUriString(queryOrUrl, UriKind.Absolute) || !new Uri(queryOrUrl).Host.Contains("youtube"))
-                video = await GetVideoAsync(queryOrUrl);
+            {
+                var video = await GetVideoAsync(queryOrUrl);
+                info = new SongInfo(video.Title, video.Url, video.Thumbnails.MediumResUrl, video.Author, video.Duration);
+            }
             else
-                video = await yt.Videos.GetAsync(new VideoId(queryOrUrl));
-
-            var info = new SongInfo(video.Title, video.Url, video.Thumbnails.MediumResUrl, video.Author, video.Duration);
+            {
+                var video = await yt.Videos.GetAsync(new VideoId(queryOrUrl));
+                info = new SongInfo(video.Title, video.Url, video.Thumbnails.MediumResUrl, video.Author, video.Duration);
+            }
 
             return new Song(info, userId, guildId);
         }
@@ -503,7 +507,7 @@ namespace donniebot.services
             });
         }
 
-        private async Task<Video> GetVideoAsync(string query) => await yt.Search.GetVideosAsync(query).FirstAsync();
+        private async Task<PlaylistVideo> GetVideoAsync(string query) => await yt.Search.GetVideosAsync(query).FirstAsync();
 
         public bool IsConnected(ulong id) => GetConnection(id, out var _);
 
