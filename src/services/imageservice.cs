@@ -1030,6 +1030,7 @@ namespace donniebot.services
                 var s = r["sourceURL"]?.Value<string>() ?? "unknown";
 
                 //temporary fix until the website is functional
+                /*
                 if (r["source"]?.Value<string>() == "Gelbooru")
                 {
                     var fn = url.Split('/').Last();
@@ -1040,6 +1041,7 @@ namespace donniebot.services
                     var fn = url.Split('/').Last();
                     url = $"https://cdn.donmai.us/original/{fn.Substring(0, 2)}/{fn.Substring(2, 2)}/{fn}";
                 }
+                */
                 
                 image = new GuildImage(url, gId, s, un, title: $"{r["id"]?.Value<string>()} - {r["source"]?.Value<string>()}");
 
