@@ -172,7 +172,7 @@ namespace donniebot.services
                 else
                     description += $"[here]({await _net.UploadToPastebinAsync(trace)})";
 
-                description += $"\n\nPlease be sure to DM jakedacatman#6121 on [Discord](https://discord.com) or file an issue on the [Github page](https://github.com/jakedacatman/donniebot) with this information.";
+                description += $"\n\nPlease be sure to DM jakedacatman#6121 on [Discord](https://discord.com) or file an issue on the [GitHub page](https://github.com/jakedacatman/donniebot) with this information.";
             }
 
             EmbedBuilder embed = new EmbedBuilder()
@@ -218,12 +218,32 @@ namespace donniebot.services
             };
             globals._globals = globals;
 
-            
-            var options = Microsoft.CodeAnalysis.Scripting.ScriptOptions.Default
+            Microsoft.CodeAnalysis.Scripting.ScriptOptions options = Microsoft.CodeAnalysis.Scripting.ScriptOptions.Default
                 .AddReferences(assemblies)
-                .AddImports(assemblies.Select(x => x.GetTypes().Select(y => y.Namespace)).SelectMany(x => x).Where(x => !string.IsNullOrWhiteSpace(x)))
                 .WithAllowUnsafe(true)
                 .WithLanguageVersion(LanguageVersion.Preview);
+            
+            try
+            {
+                options = options
+                    .AddImports(assemblies
+                        .Select(x => x.GetTypes()
+                        .Select(y => y.Namespace))
+                    .SelectMany(x => x)
+                    .Where(x => !string.IsNullOrWhiteSpace(x))
+                );
+            }
+            catch (ReflectionTypeLoadException e)
+            {
+                options = options
+                    .AddImports(e.Types
+                        .Where(x => x is not null)
+                        .Where(x => x != typeof(UkooLabs.SVGSharpie.ImageSharp.Shapes.ArcLineSegemnt))
+                        .Select(y => y.Namespace)
+                        .Where(x => !string.IsNullOrWhiteSpace(x)
+                    )
+                );
+            }
 
             Stopwatch s = Stopwatch.StartNew();
             var script = CSharpScript.Create(code, options, typeof(Globals));
@@ -522,14 +542,16 @@ namespace donniebot.services
             foreach (var a in assemblies)
             {
                 var s = Assembly.Load(a);
-                if (!string.IsNullOrEmpty(s.Location))
+                if (!string.IsNullOrEmpty(s.Location) && s.GetName().Name != "UkooLabs.SVGSharpie.ImageSharp") //this causes issues
                     yield return s;
             }
+
             var entry = Assembly.GetEntryAssembly();
-            var il = typeof(ILookup<string, string>).GetTypeInfo().Assembly;
             if (!string.IsNullOrEmpty(entry?.Location))
                 yield return entry;
-            if (!string.IsNullOrEmpty(il.Location))
+
+            var il = typeof(ILookup<string, string>).GetTypeInfo().Assembly;
+            if (!string.IsNullOrEmpty(il?.Location))
                 yield return il;
         }
 
