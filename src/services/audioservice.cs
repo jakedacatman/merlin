@@ -143,6 +143,12 @@ namespace donniebot.services
 
             var song = await CreateSongAsync(queryOrUrl, id, uId);
 
+            if (song is null)
+            {
+                await channel.SendMessageAsync("Unable to locate a song with that ID or search query; please try again.");
+                return;
+            }
+
             await channel.SendMessageAsync(embed: new EmbedBuilder()
                 .WithTitle("Added song")
                 .WithFields(new List<EmbedFieldBuilder>
@@ -463,11 +469,15 @@ namespace donniebot.services
             if (!Uri.IsWellFormedUriString(queryOrUrl, UriKind.Absolute) || !new Uri(queryOrUrl).Host.Contains("youtube"))
             {
                 var video = await GetVideoAsync(queryOrUrl);
+                if (video is null) return null;
+
                 info = new SongInfo(video.Title, video.Url, video.Thumbnails.MediumResUrl, video.Author, video.Duration);
             }
             else
             {
                 var video = await yt.Videos.GetAsync(new VideoId(queryOrUrl));
+                if (video is null) return null;
+
                 info = new SongInfo(video.Title, video.Url, video.Thumbnails.MediumResUrl, video.Author, video.Duration);
             }
 
@@ -507,7 +517,7 @@ namespace donniebot.services
             });
         }
 
-        private async Task<PlaylistVideo> GetVideoAsync(string query) => await yt.Search.GetVideosAsync(query).FirstAsync();
+        private async Task<PlaylistVideo> GetVideoAsync(string query) => await yt.Search.GetVideosAsync(query).FirstOrDefaultAsync();
 
         public bool IsConnected(ulong id) => GetConnection(id, out var _);
 
