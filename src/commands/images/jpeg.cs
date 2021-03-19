@@ -24,8 +24,8 @@ namespace donniebot.commands
 
         [Command("jpeg")]
         [Alias("jpg", "j")]
-        [Summary("Applies JPEG compression to an image.")]
-        public async Task JpegAsync([Summary("The percent quality to apply to the image.")] int quality = 10,[Summary("The image to compress.")] string url = null)
+        [Summary("Applies JPEG compression to an image. Note: JPEG files do not support a transparent background, so any transparency is converted to black.")]
+        public async Task JpegAsync([Summary("The percent quality to apply to the image.")] int quality = 10, [Summary("The image to compress.")] string url = null)
         {
             try
             {

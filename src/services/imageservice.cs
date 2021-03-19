@@ -1223,7 +1223,7 @@ namespace donniebot.services
                         else
                         {
                             var previousmsg = await _misc.GetPreviousMessageAsync(msg.Channel as SocketTextChannel);
-                            return await ParseUrlAsync(previousmsg.Content, previousmsg as SocketUserMessage, true);
+                            return await ParseUrlAsync(previousmsg.Content, previousmsg as SocketUserMessage, true); //we don't want it iterating through every message
                         }
                     }
                 }
