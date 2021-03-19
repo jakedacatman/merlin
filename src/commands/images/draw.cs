@@ -31,7 +31,7 @@ namespace donniebot.commands
                 if (user == null) user = Context.User as SocketGuildUser;
 
                 string url = await _img.ParseUrlAsync(user.GetAvatarUrl(size: 1024), Context.Message);
-                var img = await _img.PlaceBelow("https://i.jakedacatman.me/9JPyB.png", url);
+                var img = await _img.PlaceBelowAsync("https://i.jakedacatman.me/9JPyB.png", url);
                 await _img.SendToChannelAsync(img, Context.Channel, new MessageReference(Context.Message.Id));
             }
             catch (Exception e)

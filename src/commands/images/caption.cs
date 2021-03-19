@@ -34,12 +34,12 @@ namespace donniebot.commands
                 url = await _img.ParseUrlAsync(url, Context.Message);
                 if (await _net.IsVideoAsync(url))
                 {
-                    var path = await _img.VideoFilter(url, _img.Caption, text);
+                    var path = await _img.VideoFilterAsync(url, _img.Caption, text);
                     await _img.SendToChannelAsync(path, Context.Channel, new MessageReference(Context.Message.Id));
                 }
                 else
                 {
-                    var img = await _img.Caption(url, text);
+                    var img = await _img.CaptionAsync(url, text);
                     await _img.SendToChannelAsync(img, Context.Channel, new MessageReference(Context.Message.Id));
                 }
             }

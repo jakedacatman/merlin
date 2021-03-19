@@ -30,7 +30,7 @@ namespace donniebot.commands
             try
             {
                 url = await _img.ParseUrlAsync(url, Context.Message);
-                var img = await _img.Saturate(url, amount);
+                var img = await _img.SaturateAsync(url, amount);
                 await _img.SendToChannelAsync(img, Context.Channel, new MessageReference(Context.Message.Id));
             }
             catch (Exception e)

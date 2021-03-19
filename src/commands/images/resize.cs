@@ -32,7 +32,7 @@ namespace donniebot.commands
                 url = await _img.ParseUrlAsync(url, Context.Message);
                 if ((width > 0 && height > 0) && (width <= 2000 && height <= 2000))
                 {
-                    var img = await _img.Resize(url, width, height);
+                    var img = await _img.ResizeAsync(url, width, height);
                     await _img.SendToChannelAsync(img, Context.Channel, new MessageReference(Context.Message.Id));
                 }
             }

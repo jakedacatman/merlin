@@ -29,7 +29,7 @@ namespace donniebot.commands
         {
             try
             {
-                var img = await _img.Redpill(choice1, choice2);
+                var img = await _img.RedpillAsync(choice1, choice2);
                 await _img.SendToChannelAsync(img, Context.Channel, new MessageReference(Context.Message.Id));
             }
             catch (Exception e)

@@ -44,7 +44,7 @@ namespace donniebot.services
             _client = client;
         }
 
-        public async Task<Image> Invert(string url) => Invert(await DownloadFromUrlAsync(url));
+        public async Task<Image> InvertAsync(string url) => Invert(await DownloadFromUrlAsync(url));
         public Image Invert(Image source)
         {
             if (source.Frames.Count > 1)
@@ -54,7 +54,7 @@ namespace donniebot.services
             return source;
         }
 
-        public async Task<Image> Brightness(string url, float brightness) => Brightness(await DownloadFromUrlAsync(url), brightness);
+        public async Task<Image> BrightnessAsync(string url, float brightness) => Brightness(await DownloadFromUrlAsync(url), brightness);
         public Image Brightness(Image source, float brightness)
         {
             if (source.Frames.Count > 1)
@@ -64,7 +64,7 @@ namespace donniebot.services
             return source;
         }
 
-        public async Task<Image> Blur(string url, float amount) => Blur(await DownloadFromUrlAsync(url), amount);
+        public async Task<Image> BlurAsync(string url, float amount) => Blur(await DownloadFromUrlAsync(url), amount);
         public Image Blur(Image source, float amount)
         {
             if (source.Frames.Count > 1)
@@ -74,7 +74,7 @@ namespace donniebot.services
             return source;
         }
 
-        public async Task<Image> Greyscale(string url) => Greyscale(await DownloadFromUrlAsync(url));
+        public async Task<Image> GreyscaleAsync(string url) => Greyscale(await DownloadFromUrlAsync(url));
         public Image Greyscale(Image source)
         {
             if (source.Frames.Count > 1)
@@ -84,7 +84,7 @@ namespace donniebot.services
             return source;
         }
 
-        public async Task<Image> Edges(string url) => Edges(await DownloadFromUrlAsync(url));
+        public async Task<Image> EdgesAsync(string url) => Edges(await DownloadFromUrlAsync(url));
         public Image Edges(Image source)
         {
             if (source.Frames.Count > 1)
@@ -94,7 +94,7 @@ namespace donniebot.services
             return source;
         }
 
-        public async Task<Image> Contrast(string url, float amount) => Contrast(await DownloadFromUrlAsync(url), amount);
+        public async Task<Image> ContrastAsync(string url, float amount) => Contrast(await DownloadFromUrlAsync(url), amount);
         public Image Contrast(Image source, float amount)
         {
             if (source.Frames.Count > 1)
@@ -104,7 +104,7 @@ namespace donniebot.services
             return source;
         }
 
-        public async Task<Image> Sharpen(string url, float amount) => Sharpen(await DownloadFromUrlAsync(url), amount);
+        public async Task<Image> SharpenAsync(string url, float amount) => Sharpen(await DownloadFromUrlAsync(url), amount);
         public Image Sharpen(Image source, float amount)
         {
             if (source.Frames.Count > 1)
@@ -114,7 +114,7 @@ namespace donniebot.services
             return source;
         }
 
-        public async Task<Image> Pixelate(string url, int size) => Pixelate(await DownloadFromUrlAsync(url), size);
+        public async Task<Image> PixelateAsync(string url, int size) => Pixelate(await DownloadFromUrlAsync(url), size);
         public Image Pixelate(Image source, int size)
         {
             if (source.Frames.Count > 1)
@@ -124,7 +124,7 @@ namespace donniebot.services
             return source;
         }
         
-        public async Task<Image> Hue(string url, float amount) => Hue(await DownloadFromUrlAsync(url), amount);
+        public async Task<Image> HueAsync(string url, float amount) => Hue(await DownloadFromUrlAsync(url), amount);
 
         public Image Hue(Image source, float amount)
         {
@@ -135,7 +135,7 @@ namespace donniebot.services
             return source;
         }
 
-        public async Task<Image> BackgroundColor(string url, int r, int g, int b) => BackgroundColor(await DownloadFromUrlAsync(url), r, g, b);
+        public async Task<Image> BackgroundColorAsync(string url, int r, int g, int b) => BackgroundColor(await DownloadFromUrlAsync(url), r, g, b);
         public Image BackgroundColor(Image source, int r, int g, int b)
         {
             if (source.Frames.Count > 1)
@@ -145,7 +145,7 @@ namespace donniebot.services
             return source;
         }
 
-        public async Task<Image> Rotate(string url, float r) => Rotate(await DownloadFromUrlAsync(url), r);
+        public async Task<Image> RotateAsync(string url, float r) => Rotate(await DownloadFromUrlAsync(url), r);
         public Image Rotate(Image source, float r)
         {
             if (source.Frames.Count > 1)
@@ -155,7 +155,7 @@ namespace donniebot.services
             return source;
         }
 
-        public async Task<Image> Caption(string url, string text) => Caption(await DownloadFromUrlAsync(url), text);
+        public async Task<Image> CaptionAsync(string url, string text) => Caption(await DownloadFromUrlAsync(url), text);
         public Image Caption(Image source, string text)
         {
             var img = Image.Load(new byte[]
@@ -224,7 +224,7 @@ namespace donniebot.services
             else return Overlay((Image)img, source, new Point(0, height), source.Size());
         }
 
-        public async Task<Image> Overlay(string sourceUrl, string overlayUrl, int x, int y, int width, int height, float rot = 0f)
+        public async Task<Image> OverlayAsync(string sourceUrl, string overlayUrl, int x, int y, int width, int height, float rot = 0f)
         {
             Image source = await DownloadFromUrlAsync(sourceUrl);
             var overlay = await DownloadFromUrlAsync(overlayUrl);
@@ -286,7 +286,7 @@ namespace donniebot.services
             return source;
         }
 
-        public async Task<Image> Saturate(string url, float amount) => Saturate(await DownloadFromUrlAsync(url), amount);
+        public async Task<Image> SaturateAsync(string url, float amount) => Saturate(await DownloadFromUrlAsync(url), amount);
         public Image Saturate(Image source, float amount)
         {
             if (source.Frames.Count > 1)
@@ -296,7 +296,7 @@ namespace donniebot.services
             return source;
         }
 
-        public async Task<Image> Glow(string url) => Glow(await DownloadFromUrlAsync(url));
+        public async Task<Image> GlowAsync(string url) => Glow(await DownloadFromUrlAsync(url));
         public Image Glow(Image source)
         {
             if (source.Frames.Count > 1)
@@ -306,7 +306,7 @@ namespace donniebot.services
             return source;
         }
 
-        public async Task<Image> Polaroid(string url) => Polaroid(await DownloadFromUrlAsync(url));
+        public async Task<Image> PolaroidAsync(string url) => Polaroid(await DownloadFromUrlAsync(url));
         public Image Polaroid(Image source)
         {
             if (source.Frames.Count > 1)
@@ -316,7 +316,7 @@ namespace donniebot.services
             return source;
         }
 
-        public async Task<Image> Jpeg(string url, int quality)=> Jpeg(await DownloadFromUrlAsync(url), quality);
+        public async Task<Image> JpegAsync(string url, int quality)=> Jpeg(await DownloadFromUrlAsync(url), quality);
         public Image Jpeg(Image source, int quality)
         {
             if (source.Frames.Count > 1)
@@ -332,7 +332,7 @@ namespace donniebot.services
             return source;
         }
 
-        public async Task<Image> Demotivational(string url, string title, string text) => Demotivational(await DownloadFromUrlAsync(url), title, text);
+        public async Task<Image> DemotivationalAsync(string url, string title, string text) => Demotivational(await DownloadFromUrlAsync(url), title, text);
         public Image Demotivational(Image source, string title, string text)
         {
             Image bg = Image.Load(new byte[]
@@ -437,7 +437,7 @@ namespace donniebot.services
             return Overlay((Image)bg, source, new Point(bw, bh), source.Size());
         }
 
-        public async Task<Image> Redpill(string choice1, string choice2)
+        public async Task<Image> RedpillAsync(string choice1, string choice2)
         {
             var redpillImg = Image.Load(await _net.DownloadFromUrlAsync("https://i.jakedacatman.me/BIQtx.png"));
 
@@ -514,7 +514,7 @@ namespace donniebot.services
             return redpillImg;
         }
 
-        public async Task<string> VideoFilter(string url, Func<Image, string, Image> func, string arg1)
+        public async Task<string> VideoFilterAsync(string url, Func<Image, string, Image> func, string arg1)
         {
             if (!await _net.IsVideoAsync(url)) throw new VideoException("Not a video.");
 
@@ -548,7 +548,7 @@ namespace donniebot.services
 
             return $"{id}.mp4";
         }
-        public async Task<string> VideoFilter(string url, Func<Image, string, string, Image> func, string arg1, string arg2)
+        public async Task<string> VideoFilterAsync(string url, Func<Image, string, string, Image> func, string arg1, string arg2)
         {
             if (!await _net.IsVideoAsync(url)) throw new VideoException("Not a video.");
 
@@ -782,7 +782,7 @@ namespace donniebot.services
             return newImg;
         }
         
-        public async Task<string> VideoToGif(string url)
+        public async Task<string> VideoToGifAsync(string url)
         {
             if (!await _net.IsVideoAsync(url)) throw new VideoException("Not a video.");
 
@@ -799,7 +799,7 @@ namespace donniebot.services
             return tmp;
         }
 
-        public async Task<Image> PlaceBelow(string url, string belowUrl, bool resize = true) => PlaceBelow(await DownloadFromUrlAsync(url), await DownloadFromUrlAsync(belowUrl), resize);
+        public async Task<Image> PlaceBelowAsync(string url, string belowUrl, bool resize = true) => PlaceBelow(await DownloadFromUrlAsync(url), await DownloadFromUrlAsync(belowUrl), resize);
         public Image PlaceBelow(Image source, Image below, bool resize = true)
         {
             var src = (Image)Image.Load(new byte[]
@@ -831,7 +831,7 @@ namespace donniebot.services
             return src;
         }
 
-        public async Task<Image> DrawText(string url, string text, string topText = null) => DrawText(await DownloadFromUrlAsync(url), text, topText);
+        public async Task<Image> DrawTextAsync(string url, string text, string topText = null) => DrawText(await DownloadFromUrlAsync(url), text, topText);
         public Image DrawText(Image source, string text, string bottomText = null)
         {
             if (source.Frames.Count > 1)
@@ -882,7 +882,7 @@ namespace donniebot.services
             }
         }
 
-        public async Task<Image> Resize(string url, int x, int y) => Resize(await DownloadFromUrlAsync(url, x, y), x, y);
+        public async Task<Image> ResizeAsync(string url, int x, int y) => Resize(await DownloadFromUrlAsync(url, x, y), x, y);
         public Image Resize(Image source, int x, int y)
         {
             if (x > 2000 || y > 2000 || x < 0 || y < 0) throw new ImageException("The dimensions were either too small or too large.");
@@ -902,7 +902,7 @@ namespace donniebot.services
 
             return source;
         }
-        public async Task<Image> Resize(string url, float scaleX, float scaleY) => Resize(await DownloadFromUrlAsync(url), scaleX, scaleY);
+        public async Task<Image> ResizeAsync(string url, float scaleX, float scaleY) => Resize(await DownloadFromUrlAsync(url), scaleX, scaleY);
         public Image Resize(Image source, float scaleX, float scaleY)
         {
             var x = (int)Math.Round(source.Width * scaleX);
@@ -923,7 +923,7 @@ namespace donniebot.services
             return source;
         }
 
-        public async Task<Image> SpeedUp(string url, double speed) => SpeedUp(await DownloadFromUrlAsync(url), 2);
+        public async Task<Image> SpeedUpAsync(string url, double speed) => SpeedUp(await DownloadFromUrlAsync(url), 2);
         public Image SpeedUp(Image source, double speed)
         {
             if (speed > 1000d || speed <= 0d) speed = 2d;
@@ -942,7 +942,7 @@ namespace donniebot.services
         }
         
 
-        public async Task<Image> Reverse(string url) => Reverse(await DownloadFromUrlAsync(url));
+        public async Task<Image> ReverseAsync(string url) => Reverse(await DownloadFromUrlAsync(url));
         public Image Reverse(Image source)
         {
             var ct = source.Frames.Count;

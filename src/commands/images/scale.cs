@@ -30,7 +30,7 @@ namespace donniebot.commands
             {
                 url = await _img.ParseUrlAsync(url, Context.Message);
                 
-                var img = await _img.Resize(url, xScale, yScale);
+                var img = await _img.ResizeAsync(url, xScale, yScale);
                 await _img.SendToChannelAsync(img, Context.Channel, new MessageReference(Context.Message.Id));
             }
             catch (Exception e)
@@ -47,7 +47,7 @@ namespace donniebot.commands
             {
                 url = await _img.ParseUrlAsync(url, Context.Message);
                 
-                var img = await _img.Resize(url, scale, scale);
+                var img = await _img.ResizeAsync(url, scale, scale);
                 await _img.SendToChannelAsync(img, Context.Channel, new MessageReference(Context.Message.Id));
             }
             catch (Exception e)

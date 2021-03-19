@@ -72,6 +72,7 @@ namespace donniebot.services
 
             if (GetConnection(id, out var connection))
             {
+                connection.IsPlaying = false;
                 await connection.LeaveAsync();
 
                 _connections.Remove(connection);
@@ -266,22 +267,29 @@ namespace donniebot.services
 
         public async Task OnVoiceUpdate(SocketUser user, SocketVoiceState oldS, SocketVoiceState newS)
         {
-            if (user != _client.CurrentUser) return;
+            try
+            {
+                if (user != _client.CurrentUser) return;
 
-            var oldVc = oldS.VoiceChannel;
-            var newVc = newS.VoiceChannel;
+                var oldVc = oldS.VoiceChannel;
+                var newVc = newS.VoiceChannel;
 
-            if (oldVc == null) return;
+                if (oldVc == null) return;
 
-            if (GetConnection(oldVc.Guild.Id, out var connection))
-                if (newVc == null)
-                {
-                    var queue = connection.Queue;
-                    queue.RemoveRange(0, queue.Count);
-                    await DisconnectAsync(connection.VoiceChannel);
-                }
-                else
-                    await connection.UpdateAsync(newVc);
+                if (GetConnection(oldVc.Guild.Id, out var connection))
+                    if (newVc == null)
+                    {
+                        var queue = connection.Queue;
+                        queue.RemoveRange(0, queue.Count);
+                        await DisconnectAsync(connection.VoiceChannel);
+                    }
+                    else
+                        await connection.UpdateAsync(newVc);
+            }
+            catch (Discord.Net.WebSocketClosedException e)
+            {
+                Console.WriteLine(e + "\n" + e.StackTrace);
+            }
         }
 
         public async Task PlayAsync(ulong id)
@@ -437,6 +445,11 @@ namespace donniebot.services
                     catch (AggregateException) //allows for skipping
                     {
 
+                    }
+                    finally
+                    {
+                        await discord.FlushAsync();
+                        if (!ffmpeg.HasExited) ffmpeg.Kill();
                     }
                 }
             }

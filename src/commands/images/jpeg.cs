@@ -31,7 +31,7 @@ namespace donniebot.commands
             {
                 url = await _img.ParseUrlAsync(url, Context.Message);
                 if (quality < 0 || quality > 100) quality = 10;
-                var img = await _img.Jpeg(url, quality);
+                var img = await _img.JpegAsync(url, quality);
                 await _img.SendToChannelAsync(img, Context.Channel, new MessageReference(Context.Message.Id));
             }
             catch (Exception e)

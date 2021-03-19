@@ -92,6 +92,7 @@ namespace donniebot.classes
         public async Task UpdateAsync(SocketVoiceChannel channel)
         {
             VoiceChannel = channel;
+            await channel.DisconnectAsync();
             Connection = await channel.ConnectAsync(true, false);
             Stream = Connection.CreatePCMStream(AudioApplication.Mixed);
             HasDisconnected = false;
