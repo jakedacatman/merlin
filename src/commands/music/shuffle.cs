@@ -28,7 +28,7 @@ namespace donniebot.commands
         [Alias("sh")]
         [RequireDjRole]
         [Summary("Shuffles the song queue.")]
-        public async Task ShuffleCmd()
+        public async Task ShuffleAsync()
         {
             try
             {
@@ -46,7 +46,7 @@ namespace donniebot.commands
             }
             catch (Exception e)
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
+                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
             }
         }
     }

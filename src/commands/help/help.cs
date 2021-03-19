@@ -30,7 +30,7 @@ namespace donniebot.commands
         [Command("help")]
         [Alias("h")]
         [Summary("Brings up information about a specific command.")]
-        public async Task HelpCmd([Summary("The command to get information about."), Remainder] string command = null)
+        public async Task HelpAsync([Summary("The command to get information about."), Remainder] string command = null)
         {
             try
             {
@@ -61,7 +61,7 @@ namespace donniebot.commands
             }
             catch (Exception e)
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
+                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
             }
         }
     }

@@ -25,7 +25,7 @@ namespace donniebot.commands
         [Alias("e", "evaluate")]
         [Summary("Evaluates C# code.")]
         [RequireOwner]
-        public async Task EvalCmd([Summary("The code to evaluate."), Remainder] string code)
+        public async Task EvalAsync([Summary("The code to evaluate."), Remainder] string code)
         {
             try
             {
@@ -35,7 +35,7 @@ namespace donniebot.commands
             }
             catch (Exception e)
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
+                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
             }
         }
     }

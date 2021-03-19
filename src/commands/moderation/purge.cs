@@ -26,7 +26,7 @@ namespace donniebot.commands
         [Alias("prune")]
         [RequireUserPermission(GuildPermission.ManageMessages)]
         [Summary("Deletes up to 1000 messages from the current channel, or 100 from a user in the current channel.")]
-        public async Task PurgeCmd([Summary("The amount of messages to delete.")] int count = 100)
+        public async Task PurgeAsync([Summary("The amount of messages to delete.")] int count = 100)
         {
             try
             {
@@ -38,7 +38,7 @@ namespace donniebot.commands
             }
             catch (Exception e)
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
+                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
             }
         }
 
@@ -46,7 +46,7 @@ namespace donniebot.commands
         [Alias("prune")]
         [RequireUserPermission(GuildPermission.ManageMessages)]
         [Summary("Deletes up to 100 messages from a user in the current channel.")]
-        public async Task PurgeCmd([Summary("The user to purge messages from.")]SocketGuildUser user, [Summary("The amount of messages to delete.")] int count = 100)
+        public async Task PurgeAsync([Summary("The user to purge messages from.")]SocketGuildUser user, [Summary("The amount of messages to delete.")] int count = 100)
         {
             try
             {
@@ -59,7 +59,7 @@ namespace donniebot.commands
             }
             catch (Exception e)
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
+                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
             }
         }
     }

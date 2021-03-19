@@ -23,8 +23,8 @@ namespace donniebot.commands
         }
 
         [Command("draw")]
-        [Summary("Surprise!")]
-        public async Task BlurCmd([Summary("The user.")] SocketGuildUser user = null)
+        [Summary("Try it and see.")]
+        public async Task DrawAsync([Summary("The user.")] SocketGuildUser user = null)
         {
             try
             {
@@ -36,7 +36,7 @@ namespace donniebot.commands
             }
             catch (Exception e)
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
+                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
             }
         }
     }

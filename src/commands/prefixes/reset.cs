@@ -29,7 +29,7 @@ namespace donniebot.commands
         [Command("reset")]
         [Summary("Resets the prefix to default.")]
         [RequireUserPermission(GuildPermission.ManageMessages)]
-        public async Task ResetCmd()
+        public async Task ResetAsync()
         {
             try
             {
@@ -38,7 +38,7 @@ namespace donniebot.commands
             }
             catch (Exception e)
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
+                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
             }
         }
     }

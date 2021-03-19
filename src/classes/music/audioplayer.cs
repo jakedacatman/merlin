@@ -174,6 +174,8 @@ namespace donniebot.classes
             return _skips;
         }
 
+
+        #pragma warning disable VSTHRD100 //Avoid "async void" methods, because any exceptions not handled by the method will crash the process. (what else can i do? if i make it return Task the inheritance does not work)
         public async void Dispose()
         {
             HasDisconnected = true;
@@ -183,5 +185,6 @@ namespace donniebot.classes
             Connection.Dispose();
             await Stream.DisposeAsync();
         }
+        #pragma warning restore VSTHRD100
     }
 }

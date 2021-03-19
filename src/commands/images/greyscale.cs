@@ -25,7 +25,7 @@ namespace donniebot.commands
         [Command("greyscale")]
         [Alias("gr", "grey", "gray", "grayscale")]
         [Summary("Makes an image greyscale.")]
-        public async Task GreyscaleCmd([Summary("The image to convert to greyscale.")] string url = null)
+        public async Task GreyscaleAsync([Summary("The image to convert to greyscale.")] string url = null)
         {
             try
             {
@@ -35,7 +35,7 @@ namespace donniebot.commands
             }
             catch (Exception e)
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
+                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
             }
         }
     }

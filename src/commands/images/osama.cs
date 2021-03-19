@@ -25,7 +25,7 @@ namespace donniebot.commands
         [Command("osama")]
         [Alias("os")]
         [Summary("Makes Osama bin Laden watch something.")]
-        public async Task OverlayCmd([Summary("The image to have him watch.")] string url = null)
+        public async Task OsamaAsync([Summary("The image to have him watch.")] string url = null)
         {
             try
             {
@@ -36,7 +36,7 @@ namespace donniebot.commands
             }
             catch (Exception e)
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
+                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
             }
         }
     }

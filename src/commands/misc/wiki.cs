@@ -25,7 +25,7 @@ namespace donniebot.commands
         [Command("wiki")]
         [Alias("w", "wikipedia")]
         [Summary("Searches Wikipedia for an article.")]
-        public async Task WikiCmd([Summary("The search term."), Remainder] string term)
+        public async Task WikiAsync([Summary("The search term."), Remainder] string term)
         {
             try
             {
@@ -42,7 +42,7 @@ namespace donniebot.commands
             }
             catch (Exception e)
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
+                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
             }
         }
     }

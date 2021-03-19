@@ -28,7 +28,7 @@ namespace donniebot.commands
         [Alias("r34", "bo")]
         [Summary("Grabs a random NSFW image from any of several *booru websites.")]
         [RequireNsfw]
-        public async Task BooruCmd([Summary("The search query."), Remainder] string query)
+        public async Task BooruAsync([Summary("The search query."), Remainder] string query)
         {
             try
             {
@@ -52,7 +52,7 @@ namespace donniebot.commands
             }
             catch (Exception e)
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
+                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
             }
         }
     }

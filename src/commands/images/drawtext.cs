@@ -27,7 +27,7 @@ namespace donniebot.commands
         [Command("drawtext")]
         [Alias("d")]
         [Summary("Draws text on an image.")]
-        public async Task DrawTextCmd([Summary("The text to draw.")]string text, [Summary("The optional bottom text to draw.")] string bottomText = null, [Summary("The image to modify.")] string url = null)
+        public async Task DrawTextAsync([Summary("The text to draw.")]string text, [Summary("The optional bottom text to draw.")] string bottomText = null, [Summary("The image to modify.")] string url = null)
         {
             try
             {
@@ -45,7 +45,7 @@ namespace donniebot.commands
             }
             catch (Exception e)
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
+                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
             }
         }
     }

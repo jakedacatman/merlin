@@ -28,12 +28,12 @@ namespace donniebot.commands
         [Command("info")]
         [Alias("i", "inf")]
         [Summary("Gets some information about an image.")]
-        public async Task ImageInfoCmd([Summary("The image to get the information for.")] string url = null)
+        public async Task ImageInfoAsync([Summary("The image to get the information for.")] string url = null)
         {
             try
             {
                 url = await _img.ParseUrlAsync(url, Context.Message);
-                var info = await _img.GetInfo(url);
+                var info = await _img.GetInfoAsync(url);
                 var em = new EmbedBuilder()
                     .WithColor(_rand.RandomColor())
                     .WithCurrentTimestamp()
@@ -53,7 +53,7 @@ namespace donniebot.commands
             }
             catch (Exception e)
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
+                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
             }
         }
     }

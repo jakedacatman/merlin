@@ -25,7 +25,7 @@ namespace donniebot.commands
         [Command("edges")]
         [Alias("ed")]
         [Summary("Detects an image's edges..")]
-        public async Task EdgesCmd([Summary("The image to modify.")] string url = null)
+        public async Task EdgesAsync([Summary("The image to modify.")] string url = null)
         {
             try
             {
@@ -35,7 +35,7 @@ namespace donniebot.commands
             }
             catch (Exception e)
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
+                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
             }
         }
     }

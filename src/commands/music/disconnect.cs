@@ -24,7 +24,7 @@ namespace donniebot.commands
         [Alias("di", "dis", "leave")]
         [RequireDjRole]
         [Summary("Leaves the current voice channel.")]
-        public async Task LeaveCmd()
+        public async Task LeaveAsync()
         {
             try
             {
@@ -42,7 +42,7 @@ namespace donniebot.commands
             }
             catch (Exception e)
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
+                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
             }
         }
     }

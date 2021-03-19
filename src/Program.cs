@@ -24,13 +24,13 @@ namespace donniebot
         private CommandService _commands;
         private IServiceProvider _services;
 
-        public static Task Main() => new Program().Start();
+        public static Task Main() => new Program().StartAsync();
 
         private readonly string defaultPrefix = "mer.";
 
         private DbService _db;
 
-        public async Task Start()
+        public async Task StartAsync()
         {
             _client = new DiscordShardedClient(new DiscordSocketConfig
             {
@@ -89,8 +89,8 @@ namespace donniebot
 
             await _client.SetActivityAsync(new Game($"myself start up {_client.Shards.Count} shards", ActivityType.Watching));
 
-            _client.Log += Log;
-            _client.MessageReceived += MsgReceived;
+            _client.Log += LogAsync;
+            _client.MessageReceived += MsgReceivedAsync;
 
             int counter = 1;
 
@@ -100,12 +100,12 @@ namespace donniebot
                 {
                     try
                     {
-                        await UpdateStatus(counter);
+                        await UpdateStatusAsync(counter);
                     }
                     catch (Exception e)
                     {
                         Console.WriteLine(e);
-                        await UpdateStatus(counter);
+                        await UpdateStatusAsync(counter);
                     }
                 }
                 else
@@ -115,7 +115,7 @@ namespace donniebot
                 }
             };
 
-            _commands.Log += Log;
+            _commands.Log += LogAsync;
 
             if (!File.Exists("nsfw.txt"))
                 await File.WriteAllTextAsync("nsfw.txt", await _services.GetService<NetService>().DownloadAsStringAsync("https://paste.jakedacatman.me/raw/YU4vA"));
@@ -123,7 +123,7 @@ namespace donniebot
             await Task.Delay(-1);
         }
 
-        private Task Log(LogMessage msg)
+        private Task LogAsync(LogMessage msg)
         {
             try
             {
@@ -139,7 +139,7 @@ namespace donniebot
             }
         }
 
-        private async Task MsgReceived(SocketMessage _msg)
+        private async Task MsgReceivedAsync(SocketMessage _msg)
         {
             try
             {
@@ -183,6 +183,6 @@ namespace donniebot
             }
         }
 
-        private async Task UpdateStatus(int counter) => await _client.SetActivityAsync(new Game($"over {counter} out of {_client.Shards.Count} shard{(_client.Shards.Count > 1 ? "s" : "")}", ActivityType.Watching));
+        private async Task UpdateStatusAsync(int counter) => await _client.SetActivityAsync(new Game($"over {counter} out of {_client.Shards.Count} shard{(_client.Shards.Count > 1 ? "s" : "")}", ActivityType.Watching));
     }
 }

@@ -26,7 +26,7 @@ namespace donniebot.commands
         [Alias("pol2")]
         [Summary("Sends a poll and adds reactions for people to vote on.")]
         [RequireUserPermission(GuildPermission.ManageChannels)]
-        public async Task PollCmd([Summary("The question to vote on.")]string message, [Summary("The reactions to vote with.")]params string[] reactions)
+        public async Task PollAsync([Summary("The question to vote on.")]string message, [Summary("The reactions to vote with.")]params string[] reactions)
         {
             IUserMessage msg = null;
             try
@@ -51,14 +51,14 @@ namespace donniebot.commands
             }
             catch (Exception e)
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
+                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
             }
         }
         [Command("poll")]
         [Alias("pol")]
         [Summary("Sends a poll and adds reactions for people to vote on.")]
         [RequireUserPermission(GuildPermission.ManageChannels)]
-        public async Task PollCmd([Summary("The question to vote on."), Remainder]string message)
+        public async Task PollAsync([Summary("The question to vote on."), Remainder]string message)
         {
             IUserMessage msg = null;
             try
@@ -69,7 +69,7 @@ namespace donniebot.commands
             }
             catch (Exception e)
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
+                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
             }
         }
     }

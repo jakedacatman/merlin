@@ -22,7 +22,7 @@ namespace donniebot.commands
         [Command("skip")]
         [Alias("sk")]
         [Summary("Votes to skip the current song.")]
-        public async Task SkipCmd()
+        public async Task SkipAsync()
         {
             try
             {
@@ -30,7 +30,7 @@ namespace donniebot.commands
             }
             catch (Exception e)
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
+                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
             }
         }
     }

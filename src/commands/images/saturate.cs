@@ -25,7 +25,7 @@ namespace donniebot.commands
         [Command("saturate")]
         [Alias("sa")]
         [Summary("Saturates an image.")]
-        public async Task SaturateCmd([Summary("The amount to saturate.")] float amount = 3, [Summary("The image to saturate.")] string url = null)
+        public async Task SaturateAsync([Summary("The amount to saturate.")] float amount = 3, [Summary("The image to saturate.")] string url = null)
         {
             try
             {
@@ -35,7 +35,7 @@ namespace donniebot.commands
             }
             catch (Exception e)
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
+                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
             }
         }
     }

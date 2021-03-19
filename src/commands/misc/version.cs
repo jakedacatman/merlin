@@ -25,7 +25,7 @@ namespace donniebot.commands
         [Command("version")]
         [Alias("ver", "v")]
         [Summary("Gets the bot's current version as determined by its latest git commit.")]
-        public async Task VersionCmd()
+        public async Task VersionAsync()
         {
             try
             {
@@ -42,7 +42,7 @@ namespace donniebot.commands
             }
             catch (Exception e)
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
+                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
             }
         }
     }

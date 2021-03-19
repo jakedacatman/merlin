@@ -12,7 +12,7 @@ namespace donniebot.commands
         [Summary("Removes the specified tag.")]
         [RequireUserPermission(GuildPermission.ManageMessages)]
         [Priority(1)]
-        public async Task RemoveCmd([Summary("The name of the tag."), Remainder] string tag)
+        public async Task RemoveAsync([Summary("The name of the tag."), Remainder] string tag)
         {
             try
             {
@@ -24,7 +24,7 @@ namespace donniebot.commands
             }
             catch (Exception e)
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
+                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
             }
         }
     }

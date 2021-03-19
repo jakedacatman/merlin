@@ -28,7 +28,7 @@ namespace donniebot.commands
         [Alias("pt", "tp")]
         [RequireDjRole]
         [Summary("Adds a song or playlist to the beginning of the queue.")]
-        public async Task PlayCmd([Summary("The URL or YouTube search query."), Remainder] string queryOrUrl = null)
+        public async Task PlayTopAsync([Summary("The URL or YouTube search query."), Remainder] string queryOrUrl = null)
         {
             try
             {
@@ -36,7 +36,7 @@ namespace donniebot.commands
             }
             catch (Exception e)
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
+                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
             }
         }
     }

@@ -520,17 +520,17 @@ namespace donniebot.services
 
             var id = await _net.DownloadToFileAsync(url);
             
-            var framerate = _reg.Match(await Shell.Run($"ffprobe -hide_banner -show_streams {id}", true)).Value.Replace(" fps", "");
+            var framerate = _reg.Match(await Shell.RunAsync($"ffprobe -hide_banner -show_streams {id}", true)).Value.Replace(" fps", "");
 
             var tmp = Directory.CreateDirectory($"tmp-{id}");
-            await Shell.Ffmpeg($"-i {id} -hide_banner -vn {tmp.Name}/{id}.aac", true);
-            await Shell.Ffmpeg($"-i {id} -r {framerate} -f image2 -hide_banner {tmp.Name}/frame-%d.png", true);
+            await Shell.FfmpegAsync($"-i {id} -hide_banner -vn {tmp.Name}/{id}.aac", true);
+            await Shell.FfmpegAsync($"-i {id} -r {framerate} -f image2 -hide_banner {tmp.Name}/frame-%d.png", true);
 
             var files = tmp.EnumerateFiles().Where(x => x.Name.Contains(".png"));
             for (int i = 0; i < files.Count(); i++)
             {
                 var f = files.ElementAt(i);
-                var img = Image.Load(f.FullName);
+                var img = await Image.LoadAsync(f.FullName);
 
                 if (i == 0 && (img.Width > 1000 || img.Height > 1000))
                     throw new VideoException("Video too large.");
@@ -541,7 +541,7 @@ namespace donniebot.services
                 Save(img, f.FullName);
             }
 
-            await Shell.Ffmpeg($"-f image2 -framerate {framerate} -i {tmp.Name}/frame-%d.png -i {tmp.Name}/{id}.aac -hide_banner -c:v libx264 -c:a copy {id}.mp4", true);
+            await Shell.FfmpegAsync($"-f image2 -framerate {framerate} -i {tmp.Name}/frame-%d.png -i {tmp.Name}/{id}.aac -hide_banner -c:v libx264 -c:a copy {id}.mp4", true);
 
             File.Delete(id);
             Directory.Delete(tmp.Name, true);
@@ -554,15 +554,15 @@ namespace donniebot.services
 
             var id = await _net.DownloadToFileAsync(url);
             
-            var framerate = _reg.Match(await Shell.Run($"ffprobe -hide_banner -show_streams {id}", true)).Value.Replace(" fps", "");
+            var framerate = _reg.Match(await Shell.RunAsync($"ffprobe -hide_banner -show_streams {id}", true)).Value.Replace(" fps", "");
 
             var tmp = Directory.CreateDirectory($"tmp-{id}");
-            await Shell.Ffmpeg($"-i {id} -hide_banner -vn {tmp.Name}/{id}.aac", true);
-            await Shell.Ffmpeg($"-i {id} -r {framerate} -f image2 -hide_banner {tmp.Name}/frame-%04d.png", true);
+            await Shell.FfmpegAsync($"-i {id} -hide_banner -vn {tmp.Name}/{id}.aac", true);
+            await Shell.FfmpegAsync($"-i {id} -r {framerate} -f image2 -hide_banner {tmp.Name}/frame-%04d.png", true);
 
             foreach (var f in tmp.EnumerateFiles().Where(x => x.Name.Contains(".png")))
             {
-                var img = Image.Load(f.FullName);
+                var img = await Image.LoadAsync(f.FullName);
 
                 if (img.Width > 1000 || img.Height > 1000)
                     throw new VideoException("Video too large.");
@@ -573,7 +573,7 @@ namespace donniebot.services
                 Save(img, f.FullName);
             }
 
-            await Shell.Ffmpeg($"-f image2 -framerate {framerate} -i {tmp.Name}/frame-%04d.png -i {tmp.Name}/{id}.aac -hide_banner -c:v libx264 -c:a copy {id}.mp4", true);
+            await Shell.FfmpegAsync($"-f image2 -framerate {framerate} -i {tmp.Name}/frame-%04d.png -i {tmp.Name}/{id}.aac -hide_banner -c:v libx264 -c:a copy {id}.mp4", true);
 
             File.Delete(id);
             Directory.Delete(tmp.Name, true);
@@ -789,9 +789,9 @@ namespace donniebot.services
             var id = await _net.DownloadToFileAsync(url);
             var tmp = $"{id}.gif";
 
-            var framerate = _reg.Match(await Shell.Run($"ffprobe -hide_banner -show_streams {id}", true)).Value.Replace(" fps", "");    
+            var framerate = _reg.Match(await Shell.RunAsync($"ffprobe -hide_banner -show_streams {id}", true)).Value.Replace(" fps", "");    
 
-            Console.WriteLine(await Shell.Ffmpeg($"-i {id} -r {framerate} -vf \"split[s0][s1];[s0]palettegen=stats_mode=diff[p];[s1][p]paletteuse\" -loop 0 {tmp}", true));
+            Console.WriteLine(await Shell.FfmpegAsync($"-i {id} -r {framerate} -vf \"split[s0][s1];[s0]palettegen=stats_mode=diff[p];[s1][p]paletteuse\" -loop 0 {tmp}", true));
 
 
             File.Delete(id);
@@ -1166,7 +1166,7 @@ namespace donniebot.services
                 var fn = $"{_rand.GenerateId()}.mp4";
 
                 if (await _net.IsSuccessAsync(audioUrl))
-                    await Shell.Ffmpeg($"-i \"{videoUrl}\" -i \"{audioUrl}\" {fn}");
+                    await Shell.FfmpegAsync($"-i \"{videoUrl}\" -i \"{audioUrl}\" {fn}");
                 else
                 {
                     var data = await _net.DownloadFromUrlAsync(videoUrl);
@@ -1182,7 +1182,7 @@ namespace donniebot.services
             }
         }
 
-        public async Task<ImageProperties> GetInfo(string url)
+        public async Task<ImageProperties> GetInfoAsync(string url)
         {
             var img = await DownloadFromUrlAsync(url);
             return new ImageProperties(img.Width, img.Height, img.Frames.Count, img.PixelType.BitsPerPixel, 

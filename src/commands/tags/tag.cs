@@ -24,7 +24,7 @@ namespace donniebot.commands
         [Command("")]
         [Summary("Gets the specified tag.")]
         [Priority(0)]
-        public async Task TagCmd([Summary("The name of the tag."), Remainder] string tag)
+        public async Task TagAsync([Summary("The name of the tag."), Remainder] string tag)
         {
             try
             {
@@ -36,7 +36,7 @@ namespace donniebot.commands
             }
             catch (Exception e)
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
+                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
             }
         }
     }

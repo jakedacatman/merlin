@@ -25,7 +25,7 @@ namespace donniebot.commands
         [Command("mute")]
         [RequireUserPermission(GuildPermission.MuteMembers)]
         [Summary("Mutes a user.")]
-        public async Task MuteCmd([Summary("The user to mute.")] SocketGuildUser user)
+        public async Task MuteAsync([Summary("The user to mute.")] SocketGuildUser user)
         {
             try
             {
@@ -36,7 +36,7 @@ namespace donniebot.commands
             }
             catch (Exception e)
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
+                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
             }
         }
     }

@@ -33,7 +33,7 @@ namespace donniebot.commands
         [Command("queue")]
         [Alias("q")]
         [Summary("Gets the song queue for the current guild.")]
-        public async Task QueueCmd()
+        public async Task QueueAsync()
         {
             try
             {
@@ -74,7 +74,7 @@ namespace donniebot.commands
             }
             catch (Exception e)
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
+                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
             }
         }
     }

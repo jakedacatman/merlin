@@ -27,7 +27,7 @@ namespace donniebot.commands
         [Command("nuke")]
         [Alias("nu")]
         [Summary("Nukes an image.")]
-        public async Task NukeCmd([Summary("The image to nuke.")] string url = null)
+        public async Task NukeAsync([Summary("The image to nuke.")] string url = null)
         {
             try
             {
@@ -43,7 +43,7 @@ namespace donniebot.commands
             }
             catch (Exception e)
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
+                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
             }
         }
     }

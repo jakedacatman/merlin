@@ -24,17 +24,17 @@ namespace donniebot.commands
         [Command("shell")]
         [Summary("Runs a shell command.")]
         [RequireOwner]
-        public async Task ShellCmd([Summary("The command to run"), Remainder]string command)
+        public async Task ShellAsync([Summary("The command to run"), Remainder]string command)
         {
             try
             {
-                var output = await Shell.Run(command);
+                var output = await Shell.RunAsync(command);
                 if (string.IsNullOrWhiteSpace(output)) output = " ";
                 await ReplyAsync($"```{output}```");
             }
             catch (Exception e)
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
+                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
             }
         }
     }

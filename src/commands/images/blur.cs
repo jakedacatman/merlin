@@ -25,7 +25,7 @@ namespace donniebot.commands
         [Command("blur")]
         [Alias("bl")]
         [Summary("Blurs an image.")]
-        public async Task BlurCmd([Summary("The amount to blur.")] float amount = 1,[Summary("The image to blur.")] string url = null)
+        public async Task BlurAsync([Summary("The amount to blur.")] float amount = 1,[Summary("The image to blur.")] string url = null)
         {
             try
             {
@@ -35,7 +35,7 @@ namespace donniebot.commands
             }
             catch (Exception e)
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
+                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
             }
         }
     }

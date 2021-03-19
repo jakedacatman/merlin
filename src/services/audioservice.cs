@@ -30,10 +30,10 @@ namespace donniebot.services
             _net = net;
             _rand = rand;
 
-            SongAdded += OnSongAdded;
-            SongEnded += OnSongEnded;
+            SongAdded += OnSongAddedAsync;
+            SongEnded += OnSongEndedAsync;
 
-            _client.UserVoiceStateUpdated += OnVoiceUpdate;
+            _client.UserVoiceStateUpdated += OnVoiceUpdateAsync;
         }
 
         public event Func<ulong, AudioPlayer, Song, Task> SongAdded;
@@ -122,7 +122,7 @@ namespace donniebot.services
             {
                 var playlist = await GetPlaylistAsync(queryOrUrl, id, user.Id);
 
-                await EnqueueMany(channel, vc, playlist.Songs, shuffle, position);
+                await EnqueueManyAsync(channel, vc, playlist.Songs, shuffle, position);
 
                 await channel.SendMessageAsync(embed: new EmbedBuilder()
                     .WithTitle("Added playlist")
@@ -164,7 +164,7 @@ namespace donniebot.services
                 .WithCurrentTimestamp()
             .Build());
 
-            await Enqueue(channel, vc, song, shuffle, position);
+            await EnqueueAsync(channel, vc, song, shuffle, position);
         }
 
         public async Task ResumeAsync(ulong guildId)
@@ -180,7 +180,7 @@ namespace donniebot.services
         }
 
         private readonly SemaphoreSlim enq = new SemaphoreSlim(1, 1);
-        public async Task Enqueue(SocketTextChannel textChannel, SocketVoiceChannel vc, Song song, bool shuffle = false, int? position = null)
+        public async Task EnqueueAsync(SocketTextChannel textChannel, SocketVoiceChannel vc, Song song, bool shuffle = false, int? position = null)
         {
             await enq.WaitAsync();
             try
@@ -200,7 +200,7 @@ namespace donniebot.services
                 enq.Release();
             }
         }
-        public async Task EnqueueMany(SocketTextChannel textChannel, SocketVoiceChannel vc, IEnumerable<Song> songs, bool shuffle = false, int? position = null)
+        public async Task EnqueueManyAsync(SocketTextChannel textChannel, SocketVoiceChannel vc, IEnumerable<Song> songs, bool shuffle = false, int? position = null)
         {
             await enq.WaitAsync();
             try
@@ -218,13 +218,13 @@ namespace donniebot.services
                 enq.Release();
             }
 
-#pragma warning disable CS4014
+            #pragma warning disable CS4014 //Because this call is not awaited, execution of the current method continues before the call is completed. Consider applying the 'await' operator to the result of the call.
             Task.Run(async () => //let it run in the background... we don't really care about the output
             {
                 foreach (var song in songs)
                     song.Info = await GetAudioInfoAsync(song.Url);
             });
-#pragma warning restore CS4014
+            #pragma warning restore CS4014
         }
 
         public void RemoveAt(ulong id, int index)
@@ -248,13 +248,13 @@ namespace donniebot.services
             c.Shuffle();
         }
 
-        public async Task OnSongAdded(ulong id, AudioPlayer player, Song s)
+        public async Task OnSongAddedAsync(ulong id, AudioPlayer player, Song s)
         {
             if (!player.IsPlaying)
                 await PlayAsync(id);
         }
 
-        public async Task OnSongEnded(Song s, AudioPlayer player)
+        public async Task OnSongEndedAsync(Song s, AudioPlayer player)
         {
             if (player.Queue.Count > 0)
             {
@@ -265,7 +265,7 @@ namespace donniebot.services
             }
         }
 
-        public async Task OnVoiceUpdate(SocketUser user, SocketVoiceState oldS, SocketVoiceState newS)
+        public async Task OnVoiceUpdateAsync(SocketUser user, SocketVoiceState oldS, SocketVoiceState newS)
         {
             try
             {
@@ -436,7 +436,9 @@ namespace donniebot.services
 
                     try //allows for skipping
                     {
+                        #pragma warning disable VSTHRD103 //WaitAll synchronously blocks. Use await instead. (only way i could make it work tbh)
                         Task.WaitAll(new[] { download, read, write }, token);
+                        #pragma warning restore VSTHRD103
                     }
                     catch (OperationCanceledException) //allows for skipping
                     {

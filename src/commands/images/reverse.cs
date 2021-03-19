@@ -25,7 +25,7 @@ namespace donniebot.commands
         [Command("reverse")]
         [Alias("rs", "rev")]
         [Summary("Reverses a GIF.")]
-        public async Task ReverseCmd([Summary("The GIF to reverse.")] string url = null)
+        public async Task ReverseAsync([Summary("The GIF to reverse.")] string url = null)
         {
             try
             {
@@ -35,7 +35,7 @@ namespace donniebot.commands
             }
             catch (Exception e)
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
+                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
             }
         }
     }

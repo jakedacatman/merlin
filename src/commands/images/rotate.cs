@@ -25,7 +25,7 @@ namespace donniebot.commands
         [Command("rotate")]
         [Alias("ro", "rot")]
         [Summary("Rotates an image.")]
-        public async Task RotateCmd([Summary("The amount in degrees to rotate.")] float deg, [Summary("The image to rotate.")] string url = null)
+        public async Task RotateAsync([Summary("The amount in degrees to rotate.")] float deg, [Summary("The image to rotate.")] string url = null)
         {
             try
             {
@@ -35,7 +35,7 @@ namespace donniebot.commands
             }
             catch (Exception e)
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
+                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
             }
         }
     }

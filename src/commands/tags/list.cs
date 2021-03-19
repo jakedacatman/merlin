@@ -12,7 +12,7 @@ namespace donniebot.commands
         [Command("list")]
         [Summary("Gets all tags for the current guild.")]
         [Priority(1)]
-        public async Task ListCmd()
+        public async Task ListAsync()
         {
             try
             {
@@ -26,7 +26,7 @@ namespace donniebot.commands
             }
             catch (Exception e)
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
+                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
             }
         }
     }

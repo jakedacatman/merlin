@@ -30,7 +30,7 @@ namespace donniebot.classes
             return sl;
         }
 
-        public async Task Save(string fileName, SubredditCollection list)
+        public async Task SaveAsync(string fileName, SubredditCollection list)
         {
             if (File.Exists(fileName))
                 File.Delete(fileName);

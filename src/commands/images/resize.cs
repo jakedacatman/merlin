@@ -25,7 +25,7 @@ namespace donniebot.commands
         [Command("resize")]
         [Alias("r")]
         [Summary("Resizes an image.")]
-        public async Task ResizeCmd([Summary("The width to change the size to.")] int width, [Summary("The height to change the size to.")] int height, [Summary("The image to change.")] string url = null)
+        public async Task ResizeAsync([Summary("The width to change the size to.")] int width, [Summary("The height to change the size to.")] int height, [Summary("The image to change.")] string url = null)
         {
             try
             {
@@ -38,7 +38,7 @@ namespace donniebot.commands
             }
             catch (Exception e)
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
+                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
             }
         }
     }

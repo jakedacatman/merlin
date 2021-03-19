@@ -27,7 +27,7 @@ namespace donniebot.commands
         [Command("avatar")]
         [Alias("a", "av")]
         [Summary("Gets a user's avatar.")]
-        public async Task AvatarCmd([Summary("The user.")] SocketGuildUser user = null)
+        public async Task AvatarAsync([Summary("The user.")] SocketGuildUser user = null)
         {
             try
             {
@@ -42,13 +42,13 @@ namespace donniebot.commands
             }
             catch (Exception e)
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
+                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
             }
         }
         [Command("avatar")]
         [Alias("a", "av")]
         [Summary("Gets a user's avatar.")]
-        public async Task AvatarCmd([Summary("The user.")] ulong userId)
+        public async Task AvatarAsync([Summary("The user.")] ulong userId)
         {
             try
             {
@@ -68,7 +68,7 @@ namespace donniebot.commands
             }
             catch (Exception e)
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
+                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
             }
         }
     }

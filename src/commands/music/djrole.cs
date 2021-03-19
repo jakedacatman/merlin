@@ -29,7 +29,7 @@ namespace donniebot.commands
         [Alias("dj")]
         [RequireUserPermission(GuildPermission.MuteMembers)]
         [Summary("Changes the DJ role to the specified role.")]
-        public async Task DjRoleCmd([Summary("The new role."), Remainder] SocketRole role = null)
+        public async Task DjRoleAsync([Summary("The new role."), Remainder] SocketRole role = null)
         {
             try
             {
@@ -58,7 +58,7 @@ namespace donniebot.commands
             }
             catch (Exception e)
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
+                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
             }
         }
     }

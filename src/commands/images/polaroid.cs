@@ -25,7 +25,7 @@ namespace donniebot.commands
         [Command("polaroid")]
         [Alias("po")]
         [Summary("Applies a Polaroid effect to an image.")]
-        public async Task PolaroidCmd([Summary("The image to apply the effect to.")] string url = null)
+        public async Task PolaroidAsync([Summary("The image to apply the effect to.")] string url = null)
         {
             try
             {
@@ -35,7 +35,7 @@ namespace donniebot.commands
             }
             catch (Exception e)
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
+                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
             }
         }
     }

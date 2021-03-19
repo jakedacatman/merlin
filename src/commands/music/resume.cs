@@ -24,7 +24,7 @@ namespace donniebot.commands
         [Alias("re", "res")]
         [RequireDjRole]
         [Summary("Resumes playback.")]
-        public async Task ResumeCmd()
+        public async Task ResumeAsync()
         {
             try
             {
@@ -39,7 +39,7 @@ namespace donniebot.commands
             }
             catch (Exception e)
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
+                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
             }
         }
     }

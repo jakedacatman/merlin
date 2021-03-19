@@ -25,7 +25,7 @@ namespace donniebot.commands
         [Command("videotogif")]
         [Alias("vtg", "v2g")]
         [Summary("Converts a video to a GIF.")]
-        public async Task VideoToGifCmd([Summary("The video to convert.")] string url = null)
+        public async Task VideoToGifAsync([Summary("The video to convert.")] string url = null)
         {
             try
             {
@@ -35,7 +35,7 @@ namespace donniebot.commands
             }
             catch (Exception e)
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
+                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
             }
         }
     }

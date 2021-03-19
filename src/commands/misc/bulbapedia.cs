@@ -24,7 +24,7 @@ namespace donniebot.commands
         [Command("bulbapedia")]
         [Alias("bu", "pokedex")]
         [Summary("Searches Bulbapedia for an article.")]
-        public async Task BulbapediaCmd([Summary("The search term."), Remainder] string term)
+        public async Task BulbapediaAsync([Summary("The search term."), Remainder] string term)
         {
             try
             {
@@ -42,7 +42,7 @@ namespace donniebot.commands
             }
             catch (Exception e)
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
+                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
             }
         }
     }

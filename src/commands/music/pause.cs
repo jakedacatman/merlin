@@ -24,7 +24,7 @@ namespace donniebot.commands
         [Alias("pa", "pau")]
         [RequireDjRole]
         [Summary("Pauses playback.")]
-        public async Task PauseCmd()
+        public async Task PauseAsync()
         {
             try
             {
@@ -39,7 +39,7 @@ namespace donniebot.commands
             }
             catch (Exception e)
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
+                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
             }
         }
     }

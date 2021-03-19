@@ -25,7 +25,7 @@ namespace donniebot.commands
         [Command("brightness")]
         [Alias("br", "bright")]
         [Summary("Changes an image's brightness.")]
-        public async Task BrightnessCmd([Summary("The value to change the brightness by.")] float brightness = 1,[Summary("The image to change.")] string url = null)
+        public async Task BrightnessAsync([Summary("The value to change the brightness by.")] float brightness = 1,[Summary("The image to change.")] string url = null)
         {
             try
             {
@@ -35,7 +35,7 @@ namespace donniebot.commands
             }
             catch (Exception e)
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
+                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
             }
         }
     }

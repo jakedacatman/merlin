@@ -23,7 +23,7 @@ namespace donniebot.commands
         [Command("ping")]
         [Alias("pi")]
         [Summary("Gets the bot's latency.")]
-        public async Task PingCmd()
+        public async Task PingAsync()
         {
             try
             {
@@ -45,7 +45,7 @@ namespace donniebot.commands
             }
             catch (Exception e)
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
+                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
             }
         }
     }

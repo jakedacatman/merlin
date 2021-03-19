@@ -28,7 +28,7 @@ namespace donniebot.commands
         [Alias("rem")]
         [RequireDjRole]
         [Summary("Removes the song at the specified index.")]
-        public async Task ShuffleCmd(int index)
+        public async Task RemoveAsync(int index)
         {
             try
             {
@@ -46,7 +46,7 @@ namespace donniebot.commands
             }
             catch (Exception e)
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
+                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
             }
         }
     }

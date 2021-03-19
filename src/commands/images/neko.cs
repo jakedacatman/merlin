@@ -27,7 +27,7 @@ namespace donniebot.commands
         [Command("neko")]
         [Alias("ne", "nek")]
         [Summary("Grabs an image from the nekos.life API.")]
-        public async Task NekoCmd([Summary("The endpoint to pull from. Run the command with argument `list` for a list of endpoints.")] string ep = "neko")
+        public async Task NekoAsync([Summary("The endpoint to pull from. Run the command with argument `list` for a list of endpoints.")] string ep = "neko")
         {
             try
             {
@@ -46,7 +46,7 @@ namespace donniebot.commands
             }
             catch (Exception e)
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
+                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
             }
         }
     }

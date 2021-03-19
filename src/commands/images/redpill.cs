@@ -25,7 +25,7 @@ namespace donniebot.commands
         [Command("redpill")]
         [Alias("rp")]
         [Summary("Creates an image with two choices..")]
-        public async Task RedpillCmd([Summary("The first choice (red pill).")] string choice1, [Summary("The second choice (blue pill).")] string choice2)
+        public async Task RedpillAsync([Summary("The first choice (red pill).")] string choice1, [Summary("The second choice (blue pill).")] string choice2)
         {
             try
             {
@@ -34,7 +34,7 @@ namespace donniebot.commands
             }
             catch (Exception e)
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
+                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
             }
         }
     }

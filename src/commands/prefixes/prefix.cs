@@ -32,7 +32,7 @@ namespace donniebot.commands
         [Alias("get")]
         [Summary("Gets the current prefix.")]
         [RequireUserPermission(GuildPermission.ManageMessages)]
-        public async Task PrefixCmd()
+        public async Task PrefixAsync()
         {
             try
             {
@@ -40,7 +40,7 @@ namespace donniebot.commands
             }
             catch (Exception e)
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
+                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
             }
         }
     }

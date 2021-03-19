@@ -22,7 +22,7 @@ namespace donniebot.commands
         [Command("join")]
         [Alias("jo")]
         [Summary("Joins the current voice channel.")]
-        public async Task JoinCmd()
+        public async Task JoinAsync()
         {
             try
             {
@@ -37,7 +37,7 @@ namespace donniebot.commands
             }
             catch (Exception e)
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
+                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
             }
         }
     }

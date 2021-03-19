@@ -25,7 +25,7 @@ namespace donniebot.commands
         [Command("speedup")]
         [Alias("su")]
         [Summary("Speeds up a GIF.")]
-        public async Task SpeedUpCmd([Summary("The speed to change the playback to (in times).")] double speed, [Summary("The image to change.")] string url = null)
+        public async Task SpeedUpAsync([Summary("The speed to change the playback to (in times).")] double speed, [Summary("The image to change.")] string url = null)
         {
             try
             {
@@ -35,7 +35,7 @@ namespace donniebot.commands
             }
             catch (Exception e)
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
+                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
             }
         }
     }

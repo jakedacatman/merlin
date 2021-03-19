@@ -21,7 +21,7 @@ namespace donniebot.commands
         [Command("squidwardsuicide")]
         [Alias("ss")]
         [Summary("Replaces the last two words of the previous message with \"squidward suicide\".")]
-        public async Task SquidwardSuicideCmd()
+        public async Task SquidwardSuicideAsync()
         {
             try
             {
@@ -42,7 +42,7 @@ namespace donniebot.commands
             }
             catch (Exception e)
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
+                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
             }
         }
     }

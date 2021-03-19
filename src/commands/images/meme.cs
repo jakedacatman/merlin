@@ -27,7 +27,7 @@ namespace donniebot.commands
         [Command("meme")]
         [Alias("m")]
         [Summary("Takes the last-sent message and memes it.")]
-        public async Task MemeCmd()
+        public async Task MemeAsync()
         {
             try
             {
@@ -49,7 +49,7 @@ namespace donniebot.commands
             }
             catch (Exception e)
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
+                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
             }
         }
     }

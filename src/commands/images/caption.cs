@@ -27,7 +27,7 @@ namespace donniebot.commands
         [Command("caption")]
         [Alias("c", "cap")]
         [Summary("Captions an image.")]
-        public async Task CaptionCmd([Summary("The text to caption.")]string text, [Summary("The image to caption.")] string url = null)
+        public async Task CaptionAsync([Summary("The text to caption.")]string text, [Summary("The image to caption.")] string url = null)
         {
             try
             {
@@ -45,7 +45,7 @@ namespace donniebot.commands
             }
             catch (Exception e)
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
+                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
             }
         }
     }

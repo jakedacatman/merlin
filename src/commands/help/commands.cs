@@ -29,7 +29,7 @@ namespace donniebot.commands
         [Command("commands")]
         [Alias("cmds")]
         [Summary("Sends a list of bot commands.")]
-        public async Task CommandsCmd([Summary("The category to view the commands of.")] string category = null)
+        public async Task CommandsAsync([Summary("The category to view the commands of.")] string category = null)
         {
             try
             {
@@ -92,7 +92,7 @@ namespace donniebot.commands
             }
             catch (Exception e)
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
+                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
             }
         }
     }

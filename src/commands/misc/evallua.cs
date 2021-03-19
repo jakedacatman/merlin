@@ -24,7 +24,7 @@ namespace donniebot.commands
         [Command("evallua")]
         [Alias("el", "elua", "evaluatelua")]
         [Summary("Evaluates Lua code.")]
-        public async Task EvalLuaCmd([Summary("The code to evaluate."), Remainder] string code)
+        public async Task EvalLuaAsync([Summary("The code to evaluate."), Remainder] string code)
         {
             try
             {
@@ -35,7 +35,7 @@ namespace donniebot.commands
             }
             catch (Exception e)
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
+                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
             }
         }
     }

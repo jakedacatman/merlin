@@ -22,7 +22,7 @@ namespace donniebot.commands
         [Command("yba")]
         [Alias("y")]
         [Summary("Generates a copypasta based on the previous message.")]
-        public async Task SquidwardSuicideCmd()
+        public async Task YbaAsync()
         {
             try
             {
@@ -47,7 +47,7 @@ namespace donniebot.commands
             }
             catch (Exception e)
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
+                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
             }
         }
     }

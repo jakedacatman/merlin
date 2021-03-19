@@ -25,7 +25,7 @@ namespace donniebot.commands
         [Command("jpeg")]
         [Alias("jpg", "j")]
         [Summary("Applies JPEG compression to an image.")]
-        public async Task JpegCmd([Summary("The percent quality to apply to the image.")] int quality = 10,[Summary("The image to compress.")] string url = null)
+        public async Task JpegAsync([Summary("The percent quality to apply to the image.")] int quality = 10,[Summary("The image to compress.")] string url = null)
         {
             try
             {
@@ -36,7 +36,7 @@ namespace donniebot.commands
             }
             catch (Exception e)
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
+                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
             }
         }
     }

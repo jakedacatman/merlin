@@ -24,7 +24,7 @@ namespace donniebot.commands
         [Command("scale")]
         [Alias("sc")]
         [Summary("Scales an image.")]
-        public async Task ScaleCmd([Summary("The scale to adjust the width (x-value) to.")] float xScale, [Summary("The scale to adjust the height (y-value) to.")] float yScale, [Summary("The image to scale.")] string url = null)
+        public async Task ScaleAsync([Summary("The scale to adjust the width (x-value) to.")] float xScale, [Summary("The scale to adjust the height (y-value) to.")] float yScale, [Summary("The image to scale.")] string url = null)
         {
             try
             {
@@ -35,13 +35,13 @@ namespace donniebot.commands
             }
             catch (Exception e)
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
+                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
             }
         }
         [Command("scale")]
         [Alias("sc")]
         [Summary("Scales an image.")]
-        public async Task ScaleCmd([Summary("The scale to adjust both width and height to.")] float scale, [Summary("The image to scale.")] string url = null)
+        public async Task ScaleAsync([Summary("The scale to adjust both width and height to.")] float scale, [Summary("The image to scale.")] string url = null)
         {
             try
             {
@@ -52,7 +52,7 @@ namespace donniebot.commands
             }
             catch (Exception e)
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
+                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
             }
         }
     }

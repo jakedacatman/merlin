@@ -25,7 +25,7 @@ namespace donniebot.commands
         [Command("pixelate")]
         [Alias("px")]
         [Summary("Changes an image's pixel size to the given size.")]
-        public async Task PixelateCmd([Summary("The value to change the pixel size to.")] int size = 1,[Summary("The image to change.")] string url = null)
+        public async Task PixelateAsync([Summary("The value to change the pixel size to.")] int size = 1,[Summary("The image to change.")] string url = null)
         {
             try
             {
@@ -35,7 +35,7 @@ namespace donniebot.commands
             }
             catch (Exception e)
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
+                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
             }
         }
     }

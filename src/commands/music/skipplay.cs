@@ -29,7 +29,7 @@ namespace donniebot.commands
         [Alias("sp", "skp", "skpl")]
         [RequireDjRole]
         [Summary("Skips the current song to play another.")]
-        public async Task SkipPlayCmd([Summary("The URL or YouTube search query."), Remainder] string queryOrUrl = null)
+        public async Task SkipPlayAsync([Summary("The URL or YouTube search query."), Remainder] string queryOrUrl = null)
         {
             try
             {
@@ -44,7 +44,7 @@ namespace donniebot.commands
             }
             catch (Exception e)
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
+                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
             }
         }
     }

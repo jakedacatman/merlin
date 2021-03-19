@@ -30,7 +30,7 @@ namespace donniebot.commands
         [Alias("change")]
         [Summary("Changes the prefix to the specified string.")]
         [RequireUserPermission(GuildPermission.ManageMessages)]
-        public async Task SetCmd([Summary("The new prefix."), Remainder] string prefix = null)
+        public async Task SetAsync([Summary("The new prefix."), Remainder] string prefix = null)
         {
             try
             {
@@ -71,7 +71,7 @@ namespace donniebot.commands
             }
             catch (Exception e)
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
+                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
             }
         }
     }

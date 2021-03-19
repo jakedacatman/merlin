@@ -14,7 +14,7 @@ namespace donniebot.commands
         [Summary("Adds the specified tag.")]
         [RequireUserPermission(GuildPermission.ManageMessages)]
         [Priority(1)]
-        public async Task AddCmd([Summary("The name of the tag.")] string tag, [Summary("The value of the tag."), Remainder] string value = null)
+        public async Task AddAsync([Summary("The name of the tag.")] string tag, [Summary("The value of the tag."), Remainder] string value = null)
         {
             try
             {
@@ -79,7 +79,7 @@ namespace donniebot.commands
             }
             catch (Exception e)
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
+                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
             }
         }
     }

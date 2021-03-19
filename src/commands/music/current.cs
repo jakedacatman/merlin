@@ -30,7 +30,7 @@ namespace donniebot.commands
         [Command("current")]
         [Alias("nowplaying", "np")]
         [Summary("Gets the currently-playing song, if any.")]
-        public async Task QueueCmd()
+        public async Task CurrentAsync()
         {
             try
             {
@@ -68,7 +68,7 @@ namespace donniebot.commands
             }
             catch (Exception e)
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
+                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
             }
         }
     }

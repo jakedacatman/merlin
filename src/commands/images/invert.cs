@@ -25,7 +25,7 @@ namespace donniebot.commands
         [Command("invert")]
         [Alias("inv")]
         [Summary("Inverts an image.")]
-        public async Task InvertCmd([Summary("The image to invert.")] string url = null)
+        public async Task InvertAsync([Summary("The image to invert.")] string url = null)
         {
             try
             {
@@ -35,7 +35,7 @@ namespace donniebot.commands
             }
             catch (Exception e)
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
+                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
             }
         }
     }

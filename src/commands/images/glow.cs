@@ -25,7 +25,7 @@ namespace donniebot.commands
         [Command("glow")]
         [Alias("g")]
         [Summary("Makes an image glow.")]
-        public async Task GlowCmd([Summary("The image to make glow.")] string url = null)
+        public async Task GlowAsync([Summary("The image to make glow.")] string url = null)
         {
             try
             {
@@ -35,7 +35,7 @@ namespace donniebot.commands
             }
             catch (Exception e)
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
+                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
             }
         }
     }

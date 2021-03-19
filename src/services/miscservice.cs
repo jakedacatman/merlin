@@ -136,7 +136,7 @@ namespace donniebot.services
             "No, I am your father."
         };
 
-        public async Task<EmbedBuilder> GenerateErrorMessage(Exception e)
+        public async Task<EmbedBuilder> GenerateErrorMessageAsync(Exception e)
         {
             var description = "";
             if (e is Discord.Net.HttpException ex && ex.DiscordCode == 40005)
@@ -336,6 +336,7 @@ namespace donniebot.services
             script.Options
                 .DebugPrint = s => sb.Append(s + "\n");
 
+            #pragma warning disable VSTHRD101 //Avoid using async lambda for a void returning delegate type, because any exceptions not handled by the delegate will crash the process. (i handle it lol)
             script.Globals["XD"] = (Action)(async () => 
             {
                 try
@@ -345,7 +346,7 @@ namespace donniebot.services
                 }
                 catch (Exception e)
                 {
-                    throw e;
+                    Console.WriteLine(e);
                 }
             });
             script.Globals["sendMessage"] = (Action<string>)(async (string text) => 
@@ -360,9 +361,10 @@ namespace donniebot.services
                 }
                 catch (Exception e)
                 {
-                    throw e;
+                    Console.WriteLine(e);
                 }
             });
+            #pragma warning restore VSTHRD101
 
             DynValue eval;
             Stopwatch c = Stopwatch.StartNew();
