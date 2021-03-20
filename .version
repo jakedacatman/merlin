@@ -1,6 +1,6 @@
-Fri Mar 19 02:35:39 UTC 2021
-commit 270b66dad8eb7198b6640bc01efd4ee61b856708
+Sat Mar 20 21:15:55 UTC 2021
+commit 4121fc2e3e2bcc42dce57de578a4b707d9409098
 Author: jakedacatman <helloihaxxedu@gmail.com>
-Date:   Thu Mar 18 22:35:14 2021 -0400
+Date:   Sat Mar 20 17:15:33 2021 -0400
 
-    minor details
+    change image url parsing a bit
