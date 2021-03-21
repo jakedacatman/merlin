@@ -77,7 +77,8 @@ namespace donniebot.services
             { typeof(RequireUserPermissionAttribute), "user requires perms" },
             { typeof(RequireNsfwAttribute), "requires nsfw channel" },
             { typeof(RequireBotPermissionAttribute), "bot requires perms" },
-            { typeof(RequireContextAttribute), "must be invoked in a guild or dm" }
+            { typeof(RequireContextAttribute), "must be invoked in a guild or dm" },
+	    { typeof(RequireDjRoleAttribute), "requires dj role" }
         };
 
         private readonly List<string> prefixes = new List<string>
