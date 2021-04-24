@@ -42,13 +42,15 @@ namespace donniebot.commands
                     var date = lines[3].Substring(8); //Date:   <date in iso format>
                     
                     await ReplyAsync(embed: new EmbedBuilder()
-                        .WithTitle(commit.Substring(0, 7))
+                        .WithTitle($"Commit {commit.Substring(0, 7)}")
                         .WithColor(_rand.RandomColor())
                         .WithAuthor(new EmbedAuthorBuilder()
-                            .WithName(author)
+                            .WithName($"Author: {author}")
                             .WithUrl($"https://github.com/{author}")
                         )
-                        .WithTimestamp(DateTime.Parse(date))
+                        .WithFooter(new EmbedFooterBuilder()
+                            .WithText($"Published at {DateTime.Parse(date)}")
+                        )
                         .WithFields(new List<EmbedFieldBuilder>
                         {
                             new EmbedFieldBuilder().WithName("Message").WithValue(lines[5].Substring(4)).WithIsInline(false)

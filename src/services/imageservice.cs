@@ -1287,7 +1287,7 @@ namespace donniebot.services
             }
         }
 
-        public async Task SendToChannelAsync(ISImage img, ISocketMessageChannel ch, Discord.MessageReference msg = null) => await SendToChannelAsync(Save(img), ch);
+        public async Task SendToChannelAsync(ISImage img, ISocketMessageChannel ch, Discord.MessageReference msg = null) => await SendToChannelAsync(Save(img), ch, msg);
         public async Task SendToChannelAsync(string path, ISocketMessageChannel ch, Discord.MessageReference msg = null)
         {
             var ext = path.Split('.')[1];
