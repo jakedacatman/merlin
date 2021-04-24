@@ -1,6 +1,6 @@
-Sun Mar 21 03:35:42 UTC 2021
-commit 5aacd5c49c9ec3d14be4b9fa28c94474ff808799
-Author: jakedacatman <jacob@DESKTOP-1PGUF2M.localdomain>
-Date:   Sat Mar 20 23:35:07 2021 -0400
+Sat Apr 24 20:48:51 UTC 2021
+commit 532f03788ed2176682795b6cd38e2c5dad64cf30
+Author: jakedacatman <helloihaxxedu@gmail.com>
+Date:   Sat Apr 24 16:48:32 2021 -0400
 
-    fix help command
+    fixed url parsing
