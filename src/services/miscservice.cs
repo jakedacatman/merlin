@@ -515,11 +515,11 @@ namespace donniebot.services
             }
 
             var entry = Assembly.GetEntryAssembly();
-            if (!string.IsNullOrEmpty(entry?.Location))
+            if (!string.IsNullOrEmpty(entry?.Location) || !string.IsNullOrEmpty(System.AppContext.BaseDirectory))
                 yield return entry;
 
             var il = typeof(ILookup<string, string>).GetTypeInfo().Assembly;
-            if (!string.IsNullOrEmpty(il?.Location))
+            if (!string.IsNullOrEmpty(il?.Location) || !string.IsNullOrEmpty(System.AppContext.BaseDirectory))
                 yield return il;
         }
 

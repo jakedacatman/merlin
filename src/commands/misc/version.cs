@@ -16,10 +16,12 @@ namespace donniebot.commands
     public class VersionCommand : ModuleBase<ShardedCommandContext>
     {
         private readonly MiscService _misc;
+        private readonly RandomService _rand;
 
-        public VersionCommand(MiscService misc)
+        public VersionCommand(MiscService misc, RandomService rand)
         {
             _misc = misc;
+            _rand = rand;
         }
 
         [Command("version")]
@@ -33,11 +35,26 @@ namespace donniebot.commands
                     await ReplyAsync("No version file found. If you are the bot owner, make sure that the .version file from the git repository is copied over to the same directory as the bot executable.");
                 else
                 {
-                    var file = File.OpenText(".version");
-                    await file.ReadLineAsync();
-                    var commit = (await file.ReadLineAsync()).Replace("commit ", "");
+                    var lines = await File.ReadAllLinesAsync(".version");
+                    var commit = lines[1].Substring(7); //commit <commit>
+                    var author = lines[2].Substring(8); //Author: <author> <[email]>
+                    author = author.Substring(0, author.IndexOf(' '));
+                    var date = lines[3].Substring(8); //Date:   <date in iso format>
                     
-                    await ReplyAsync($"My current version is `{commit.Substring(0, 7)}` (long commit: `{commit}`)");
+                    await ReplyAsync(embed: new EmbedBuilder()
+                        .WithTitle(commit.Substring(0, 7))
+                        .WithColor(_rand.RandomColor())
+                        .WithAuthor(new EmbedAuthorBuilder()
+                            .WithName(author)
+                            .WithUrl($"https://github.com/{author}")
+                        )
+                        .WithTimestamp(DateTime.Parse(date))
+                        .WithFields(new List<EmbedFieldBuilder>
+                        {
+                            new EmbedFieldBuilder().WithName("Message").WithValue(lines[5].Substring(4)).WithIsInline(false)
+                        })
+                        .Build()
+                    );
                 }
             }
             catch (Exception e)
