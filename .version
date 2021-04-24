@@ -1,6 +1,6 @@
-Sat Apr 24 21:19:45 UTC 2021
-commit aedd36f515917fe976f5469232ca3a1167af165b
+Sat Apr 24 21:29:39 UTC 2021
+commit f6e80c9f77c49dc0f50d9d90d91c1bd6c3b19d9e
 Author: jakedacatman <helloihaxxedu@gmail.com>
-Date:   2021-04-24 17:19:29 -0400
+Date:   2021-04-24 17:29:22 -0400
 
-    change version command
+    fix image replying + change version command a bit
