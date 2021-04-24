@@ -100,42 +100,7 @@ namespace donniebot.services
             _rand = rand;
         }
 
-        private readonly string[] errorMessages = new string[]
-        {
-            "Whoops!",
-            "Sorry!",
-            "An error has occured.",
-            "well frick",
-            "Okay, this is not epic",
-            "Uh-oh!",
-            "Something went wrong.",
-            "Oh snap!",
-            "Oops!",
-            "Darn...",
-            "I can't believe you've done this.",
-            "SAD!",
-            "Thank you Discord user, very cool",
-            "bruh",
-            "HTTP 418 I'm a teapot",
-            "I don't feel so good...",
-            "On your left!",
-            "[insert funny phrase]",
-            "This wasn't supposed to happen.",
-            "How could you, you monster?",
-            "Don't worry, everything is normal.",
-            "Did you *have* to do that?",
-            "Why...?",
-            "Here's your gift for being such a dear user!",
-            "This isn't my fault... I swear!",
-            "You're doing very well!",
-            "Is that a JoJo reference?",
-            "Is this funny to you?",
-            "Where is the funny?",
-            "That's quite sus, innit bruv?",
-            "I could do this all day.",
-            "Ah, Mr. DeVeer!",
-            "No, I am your father."
-        };
+        private readonly PhraseCollection errorPhrases = PhraseCollection.Load("phrases.txt", "phrases");
 
         public async Task<EmbedBuilder> GenerateErrorMessageAsync(Exception e)
         {
@@ -181,7 +146,7 @@ namespace donniebot.services
                 .WithCurrentTimestamp()
                 .WithFooter(e.GetType().ToString())
                 .WithDescription(description)
-                .WithTitle(errorMessages[_random.Next(errorMessages.Length)]);
+                .WithTitle(errorPhrases[_random.Next(errorPhrases.Count)]);
 
             return embed;
             

@@ -843,7 +843,7 @@ namespace donniebot.services
                 if (string.IsNullOrEmpty(text) && string.IsNullOrEmpty(bottomText))
                     throw new ImageException("Text cannot be blank.");
             
-                var size = Math.Min(source.Height / 10, source.Width / 10);
+                var size = Math.Min(source.Height / 10f, source.Width / 10f);
                 Font f = SystemFonts.CreateFont("Impact", size);
 
                 float padding = 0.05f * source.Width;
@@ -1198,19 +1198,7 @@ namespace donniebot.services
             {
                 if (Discord.MentionUtils.TryParseUser(url, out var uId))
                     return _client.GetUser(uId).GetAvatarUrl(size: 512);
-                else
-                {
-                    var user = await (msg.Channel?
-                        .GetUsersAsync()
-                        .Flatten())
-                        .FirstOrDefaultAsync(x => x.Username == url);
-
-                    if (user is not null)
-                        return user.GetAvatarUrl(size: 512);
-                }
-
-
-                if (Discord.Emote.TryParse(url, out var e) && await _net.IsSuccessAsync(e.Url))
+                else if (Discord.Emote.TryParse(url, out var e) && await _net.IsSuccessAsync(e.Url))
                     return e.Url;
                 else
                 {
@@ -1234,7 +1222,7 @@ namespace donniebot.services
                     if (!string.IsNullOrWhiteSpace(url) && Uri.IsWellFormedUriString(url, UriKind.Absolute))
                         return url;
                     else if (msg.Attachments.Any())
-                        return msg.Attachments.First().Url;
+                        return msg?.Attachments.First().Url;
                     else if (isNext)
                         throw new ImageException("Try the command with a url, or attach an image.");
                     else
@@ -1246,6 +1234,9 @@ namespace donniebot.services
             }
             else
             {
+                if (msg.Attachments.Any())
+                    return msg?.Attachments.First().Url;
+
                 var previousmsg = await _misc.GetPreviousMessageAsync(msg.Channel as SocketTextChannel);
                 return await ParseUrlAsync(previousmsg.Content, previousmsg as SocketUserMessage, true); //we don't want it iterating through every message
             }

@@ -5,28 +5,28 @@ using System.IO;
 
 namespace donniebot.classes
 {
-    public class SubredditCollection : List<string>
+    public class PhraseCollection : List<string>
     {
         [BsonId]
         public string Name { get; set; }
 
-        public SubredditCollection(string name)
+        public PhraseCollection(string name)
         {
             Name = name;
         }
 
-        public static SubredditCollection Load(string fileName, string name)
+        public static PhraseCollection Load(string fileName, string name)
         {
-            var sl = new SubredditCollection(name);
+            var pc = new PhraseCollection(name);
             if (!File.Exists(fileName))
-                return sl;
+                return pc;
             
             var lines = File.ReadAllLines(fileName);
-            sl.AddRange(lines);
-            return sl;
+            pc.AddRange(lines);
+            return pc;
         }
 
-        public async Task SaveAsync(string fileName, SubredditCollection list)
+        public async Task SaveAsync(string fileName, PhraseCollection list)
         {
             if (File.Exists(fileName))
                 File.Delete(fileName);
