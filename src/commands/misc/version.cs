@@ -35,25 +35,25 @@ namespace donniebot.commands
                     await ReplyAsync("No version file found. If you are the bot owner, make sure that the .version file from the git repository is copied over to the same directory as the bot executable.");
                 else
                 {
-                    var lines = await File.ReadAllLinesAsync(".version");
+                    var lines = await File.ReadAllLinesAsync(".version"); //echo `date` > .version && git log --date=iso >> .version
                     var commit = lines[1].Substring(7); //commit <commit>
-                    var author = lines[2].Substring(8); //Author: <author> <[email]>
+                    var author = lines[2].Substring(8); //Author: <author> <email>
                     author = author.Substring(0, author.IndexOf(' '));
                     var date = lines[3].Substring(8); //Date:   <date in iso format>
                     
                     await ReplyAsync(embed: new EmbedBuilder()
-                        .WithTitle($"Commit {commit.Substring(0, 7)}")
+                        .WithTitle($"Commit {commit.Substring(0, 7)}") //7 character commit string like github
                         .WithColor(_rand.RandomColor())
                         .WithAuthor(new EmbedAuthorBuilder()
                             .WithName($"Author: {author}")
-                            .WithUrl($"https://github.com/{author}")
+                            .WithUrl($"https://github.com/{author}") //their profile
                         )
                         .WithFooter(new EmbedFooterBuilder()
-                            .WithText($"Published at {DateTime.Parse(date)}")
+                            .WithText($"Published at {DateTime.Parse(date, styles: System.Globalization.DateTimeStyles.AdjustToUniversal )}") //utc
                         )
                         .WithFields(new List<EmbedFieldBuilder>
                         {
-                            new EmbedFieldBuilder().WithName("Message").WithValue(lines[5].Substring(4)).WithIsInline(false)
+                            new EmbedFieldBuilder().WithName("Message").WithValue(lines[5].Substring(4)).WithIsInline(false) //commit message
                         })
                         .Build()
                     );

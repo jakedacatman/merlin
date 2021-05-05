@@ -174,10 +174,50 @@ namespace donniebot
                         return;
                 }
 
-                var result = await _commands.ExecuteAsync(context, argPos, _services, MultiMatchHandling.Best);
+                var res = await _commands.ExecuteAsync(context, argPos, _services, MultiMatchHandling.Best);
 
-                if (result is PreconditionResult res && !res.IsSuccess)
-                    await context.Channel.SendMessageAsync($"🛑 You lack the permissions to run this command. ({res.ErrorReason})");
+                if (!res.IsSuccess)
+                {
+                    var em = new EmbedBuilder()
+                        .WithColor(_services
+                            .GetService<RandomService>()
+                            .RandomColor()
+                        )
+                        .WithCurrentTimestamp()
+                        .WithFooter(context.Message.Content)
+                        .WithAuthor(x => 
+                        {
+                            x.Name = context.User.Username;
+                            x.IconUrl = context.User.GetAvatarUrl(size: 512);
+                        });
+
+                    switch (res.Error)
+                    {
+                        case CommandError.UnmetPrecondition:
+                        {
+                            em
+                                .WithTitle("🛑 Command failed precondition check")
+                                .WithDescription($"Either you or I lack the permissions to run this command, or the command can only be run in an NSFW channel.\nMessage: `{res.ErrorReason}`");
+                            break;
+                        }
+                        case CommandError.BadArgCount:
+                        {
+                            em
+                                .WithTitle("⁉️ Improper amount of arguments")
+                                .WithDescription(res.ErrorReason);
+                            break;
+                        }
+                        case CommandError.UnknownCommand:
+                        {
+                            em
+                                .WithTitle("❓ That command does not exist.")
+                                .WithDescription(res.ErrorReason);
+                            break;
+                        }
+                    }
+
+                    await context.Channel.SendMessageAsync(embed: em.Build(), messageReference: new MessageReference(context.Message.Id), allowedMentions: AllowedMentions.None);
+                }
             }   
             catch (Exception e)
             {
