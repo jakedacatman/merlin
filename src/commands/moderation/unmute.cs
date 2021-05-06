@@ -23,6 +23,7 @@ namespace donniebot.commands
         }
 
         [Command("unmute")]
+        [RequireBotPermission(GuildPermission.MuteMembers)]
         [RequireUserPermission(GuildPermission.MuteMembers)]
         [Summary("Unmutes a user.")]
         public async Task UnmuteAsync([Summary("The user to unmute.")] SocketGuildUser user)

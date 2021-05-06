@@ -24,6 +24,7 @@ namespace donniebot.commands
 
         [Command("purge")]
         [Alias("prune")]
+        [RequireBotPermission(GuildPermission.ManageMessages)]
         [RequireUserPermission(GuildPermission.ManageMessages)]
         [Summary("Deletes up to 1000 messages from the current channel, or 100 from a user in the current channel.")]
         public async Task PurgeAsync([Summary("The amount of messages to delete.")] int count = 100)
