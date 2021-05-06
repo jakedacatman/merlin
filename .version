@@ -1,6 +1,6 @@
-Wed May 5 22:05:05 UTC 2021
-commit 3ef669e707406086417e72f98976dfd410f39953
+Thu May 6 00:55:57 UTC 2021
+commit 3ec49e6eb035cc0faa3d8cb78c4425ed15ea3544
 Author: jakedacatman <helloihaxxedu@gmail.com>
-Date:   2021-05-05 18:04:45 -0400
+Date:   2021-05-05 20:55:36 -0400
 
-    comments to version cmd + improved error messages
+    add bot preconditions
