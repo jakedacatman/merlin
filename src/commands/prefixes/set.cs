@@ -63,6 +63,7 @@ namespace donniebot.commands
                 
                 var gp = new GuildPrefix { GuildId = Context.Guild.Id, Prefix = prefix };
 
+                _db.RemovePrefix(Context.Guild.Id);
                 var suc = _db.AddItem<GuildPrefix>("prefixes", gp);
                 if (suc) 
                     await ReplyAsync($"Changed the prefix to `{prefix}`.");
