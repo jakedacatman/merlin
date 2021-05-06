@@ -189,7 +189,9 @@ namespace donniebot
                         {
                             x.Name = context.User.Username;
                             x.IconUrl = context.User.GetAvatarUrl(size: 512);
-                        });
+                        })
+                        .WithTitle("Command failed")
+                        .WithDescription(res.ErrorReason);
 
                     switch (res.Error)
                     {

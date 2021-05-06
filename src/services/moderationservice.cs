@@ -19,7 +19,7 @@ namespace donniebot.services
             _db = db;
         }
 
-        public async Task<bool> TryMuteUserAsync(SocketGuild guild, SocketGuildUser moderator, SocketGuildUser user)
+        public async Task<MuteResult> TryMuteUserAsync(SocketGuild guild, SocketGuildUser moderator, SocketGuildUser user)
         {
             try
             {
@@ -45,23 +45,22 @@ namespace donniebot.services
                 }
 
                 if (role.Position < user.Roles.OrderBy(x => x.Position).Last().Position)
-                    return false;
+                    return MuteResult.FromError("The `Muted` role is below the user's highest role.", user.Id);
 
-                if (user.Roles.Contains(role)) return false;
+                if (user.Roles.Contains(role)) return MuteResult.FromError("The user is already muted.", user.Id);
 
                 await user.AddRoleAsync(role);
                 
                 //await user.ModifyAsync(x => x.Mute = true);
-                return true;
+                return MuteResult.FromSuccess("", user.Id);
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
-                return false;
+                return MuteResult.FromError($"There was an exception while muting the user. ({e.Message})", user.Id);
             }
         }
 
-        public async Task<bool> TryUnmuteUserAsync(SocketGuild guild, SocketGuildUser user)
+        public async Task<MuteResult> TryUnmuteUserAsync(SocketGuild guild, SocketGuildUser user)
         {
             try
             {
@@ -69,22 +68,21 @@ namespace donniebot.services
 
                 if (guild.Roles.Any(x => x.Name == "Muted"))
                     role = guild.Roles.FirstOrDefault(x => x.Name == "Muted");
-                else return false;
+                else return MuteResult.FromError("There is not a `Muted` role in the server.", user.Id);
 
                 if (role.Position < user.Roles.OrderBy(x => x.Position).Last().Position)
-                    return false;
+                    return MuteResult.FromError("The `Muted` role is below the user's highest role.", user.Id);
 
-                if (!user.Roles.Contains(role)) return false;
+                if (!user.Roles.Contains(role)) return MuteResult.FromError("The user is already unmuted.", user.Id);
 
                 await user.RemoveRoleAsync(role);
 
                 //await user.ModifyAsync(x => x.Mute = false);
-                return true;
+                return MuteResult.FromSuccess("", user.Id);
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
-                return false;
+                return MuteResult.FromError($"There was an exception while unmuting the user. ({e.Message})", user.Id);
             }
         }
 

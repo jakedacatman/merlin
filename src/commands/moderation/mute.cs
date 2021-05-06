@@ -23,17 +23,18 @@ namespace donniebot.commands
         }
 
         [Command("mute")]
-        [RequireBotPermission(GuildPermission.MuteMembers)]
+        [RequireBotPermission(GuildPermission.MuteMembers | GuildPermission.ManageRoles)]
         [RequireUserPermission(GuildPermission.MuteMembers)]
         [Summary("Mutes a user.")]
         public async Task MuteAsync([Summary("The user to mute.")] SocketGuildUser user)
         {
             try
             {
-                if (await _mod.TryMuteUserAsync(Context.Guild, (Context.User as SocketGuildUser), user))
+                var res = await _mod.TryMuteUserAsync(Context.Guild, (Context.User as SocketGuildUser), user);
+                if (res.IsSuccess)
                     await ReplyAsync($"Consider it done, {Context.User.Mention}.");
                 else
-                    await ReplyAsync("Failed to mute the user.");
+                    await ReplyAsync($"Failed to mute the user. (`{res.Message}`)");
             }
             catch (Exception e)
             {

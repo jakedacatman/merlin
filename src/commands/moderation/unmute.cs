@@ -23,17 +23,19 @@ namespace donniebot.commands
         }
 
         [Command("unmute")]
-        [RequireBotPermission(GuildPermission.MuteMembers)]
+        [RequireBotPermission(GuildPermission.MuteMembers | GuildPermission.ManageRoles)]
         [RequireUserPermission(GuildPermission.MuteMembers)]
         [Summary("Unmutes a user.")]
         public async Task UnmuteAsync([Summary("The user to unmute.")] SocketGuildUser user)
         {
             try
             {
-                if (await _mod.TryUnmuteUserAsync(Context.Guild, user))
+                var res = await _mod.TryUnmuteUserAsync(Context.Guild, user);
+                
+                if (res.IsSuccess)
                     await ReplyAsync($"Consider it done, {Context.User.Mention}.");
                 else
-                    await ReplyAsync("Failed to unmute the user.");
+                    await ReplyAsync($"Failed to unmute the user. (`{res.Message}`)");
             }
             catch (Exception e)
             {
