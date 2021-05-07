@@ -80,7 +80,7 @@ namespace donniebot.commands
             var em = new EmbedBuilder()
                 .WithAuthor(x =>
                 {
-                    x.Name = $"{user}{Context.User.Discriminator}";
+                    x.Name = $"{user}#{Context.User.Discriminator}";
                     x.IconUrl = Context.User.GetAvatarUrl(size: 512);
                 })
                 .WithColor(_rand.RandomColor())
