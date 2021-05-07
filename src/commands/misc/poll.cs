@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using donniebot.services;
 using Discord.WebSocket;
 using Discord.Net;
+using System.Linq;
 
 namespace donniebot.commands
 {
@@ -14,17 +15,20 @@ namespace donniebot.commands
     public class PollCommand : ModuleBase<ShardedCommandContext>
     {
         private readonly MiscService _misc;
+        private readonly RandomService _rand;
         private readonly InteractivityService _inter;
 
-        public PollCommand(MiscService misc, InteractivityService inter)
+        public PollCommand(MiscService misc, InteractivityService inter, RandomService rand)
         {
             _misc = misc;
             _inter = inter;
+            _rand = rand;
         }
 
-        [Command("poll2")]
-        [Alias("pol2")]
-        [Summary("Sends a poll and adds reactions for people to vote on.")]
+        [Command("custompoll")]
+        [Alias("cpol", "poll2", "pol2")]
+        [RequireBotPermission(GuildPermission.AddReactions | GuildPermission.ManageMessages)]
+        [Summary("Sends a poll and adds specified reactions for people to vote on.")]
         [RequireUserPermission(GuildPermission.ManageChannels)]
         public async Task PollAsync([Summary("The question to vote on.")]string message, [Summary("The reactions to vote with.")]params string[] reactions)
         {
@@ -39,10 +43,7 @@ namespace donniebot.commands
                     else 
                         emotes.Add(new Emoji(r));
                 }
-
-                await Context.Message.DeleteAsync();
-                msg = await ReplyAsync(message);
-                await msg.AddReactionsAsync(emotes.ToArray());
+                await CreatePollAsync(msg, message, emotes);
             }
             catch (HttpException he) when (he.HttpCode == System.Net.HttpStatusCode.BadRequest) 
             {
@@ -56,21 +57,41 @@ namespace donniebot.commands
         }
         [Command("poll")]
         [Alias("pol")]
-        [Summary("Sends a poll and adds reactions for people to vote on.")]
+        [Summary("Sends a poll and adds a thumbs-up and thumbs-down for people to vote on.")]
+        [RequireBotPermission(GuildPermission.AddReactions | GuildPermission.ManageMessages)]
         [RequireUserPermission(GuildPermission.ManageChannels)]
         public async Task PollAsync([Summary("The question to vote on."), Remainder]string message)
         {
             IUserMessage msg = null;
             try
             {
-                await Context.Message.DeleteAsync();
-                msg = await ReplyAsync(message);
-                await msg.AddReactionsAsync(new[] { new Emoji("👍"), new Emoji("👎") });
+                await CreatePollAsync(msg, message, new[] { new Emoji("👍"), new Emoji("👎") });
             }
             catch (Exception e)
             {
                 await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
             }
+        }
+
+        private async Task CreatePollAsync(IUserMessage msg, string message, IEnumerable<IEmote> reactions)
+        {
+            var user = Context.User.Username;
+
+            var em = new EmbedBuilder()
+                .WithAuthor(x =>
+                {
+                    x.Name = $"{user}{Context.User.Discriminator}";
+                    x.IconUrl = Context.User.GetAvatarUrl(size: 512);
+                })
+                .WithColor(_rand.RandomColor())
+                .WithTitle($"{user} asks:")
+                .WithDescription(message)
+                .WithCurrentTimestamp();
+
+            if (Context.Message is not null) await Context.Message.DeleteAsync();
+            
+            msg = await ReplyAsync(embed: em.Build());
+            await msg.AddReactionsAsync(reactions.ToArray());
         }
     }
 }
