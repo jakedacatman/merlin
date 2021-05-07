@@ -32,17 +32,10 @@ namespace donniebot.commands
             [Summary("The height of the foreground image.")] int height = 0, 
             [Summary("The image to be overlaid upon/background image.")] string url = null)
         {
-            try
-            {
-                url = await _img.ParseUrlAsync(url, Context.Message);
-                overlayUrl = await _img.ParseUrlAsync(overlayUrl, Context.Message);
-                var img = await _img.OverlayAsync(url, overlayUrl, x, y, width, height);
-                await _img.SendToChannelAsync(img, Context.Channel, new MessageReference(Context.Message.Id));
-            }
-            catch (Exception e)
-            {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
-            }
+            url = await _img.ParseUrlAsync(url, Context.Message);
+            overlayUrl = await _img.ParseUrlAsync(overlayUrl, Context.Message);
+            var img = await _img.OverlayAsync(url, overlayUrl, x, y, width, height);
+            await _img.SendToChannelAsync(img, Context.Channel, new MessageReference(Context.Message.Id));
         }
     }
 }

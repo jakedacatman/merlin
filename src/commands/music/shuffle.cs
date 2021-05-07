@@ -30,24 +30,17 @@ namespace donniebot.commands
         [Summary("Shuffles the song queue.")]
         public async Task ShuffleAsync()
         {
-            try
-            {
-                var id = Context.Guild.Id;
+            var id = Context.Guild.Id;
 
-                if (!_audio.HasSongs(id))
-                {
-                    await ReplyAsync("There are no songs in the queue.");
-                    return;
-                }
-
-                _audio.Shuffle(id);
-                
-                await ReplyAsync("Shuffled the queue.");
-            }
-            catch (Exception e)
+            if (!_audio.HasSongs(id))
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
+                await ReplyAsync("There are no songs in the queue.");
+                return;
             }
+
+            _audio.Shuffle(id);
+            
+            await ReplyAsync("Shuffled the queue.");
         }
     }
 }

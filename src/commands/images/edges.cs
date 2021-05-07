@@ -27,16 +27,9 @@ namespace donniebot.commands
         [Summary("Detects an image's edges..")]
         public async Task EdgesAsync([Summary("The image to modify.")] string url = null)
         {
-            try
-            {
-                url = await _img.ParseUrlAsync(url, Context.Message);
-                var img = await _img.EdgesAsync(url);
-                await _img.SendToChannelAsync(img, Context.Channel, new MessageReference(Context.Message.Id));
-            }
-            catch (Exception e)
-            {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
-            }
+            url = await _img.ParseUrlAsync(url, Context.Message);
+            var img = await _img.EdgesAsync(url);
+            await _img.SendToChannelAsync(img, Context.Channel, new MessageReference(Context.Message.Id));
         }
     }
 }

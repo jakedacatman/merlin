@@ -29,23 +29,16 @@ namespace donniebot.commands
         [Summary("Creates a demotivational poster from an image and some text.")]
         public async Task DemotivationalAsync([Summary("The text to write.")]string text, [Summary("The text to put above.")]string title, [Summary("The image to create a poster of.")] string url = null)
         {
-            try
+            url = await _img.ParseUrlAsync(url, Context.Message);
+            if (await _net.IsVideoAsync(url))
             {
-                url = await _img.ParseUrlAsync(url, Context.Message);
-                if (await _net.IsVideoAsync(url))
-                {
-                    var path = await _img.VideoFilterAsync(url, _img.Demotivational, title, text);
-                    await _img.SendToChannelAsync(path, Context.Channel, new MessageReference(Context.Message.Id));
-                }
-                else
-                {
-                    var img = await _img.DemotivationalAsync(url, title, text);
-                    await _img.SendToChannelAsync(img, Context.Channel, new MessageReference(Context.Message.Id));
-                }
+                var path = await _img.VideoFilterAsync(url, _img.Demotivational, title, text);
+                await _img.SendToChannelAsync(path, Context.Channel, new MessageReference(Context.Message.Id));
             }
-            catch (Exception e)
+            else
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
+                var img = await _img.DemotivationalAsync(url, title, text);
+                await _img.SendToChannelAsync(img, Context.Channel, new MessageReference(Context.Message.Id));
             }
         }
     }

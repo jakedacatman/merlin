@@ -29,22 +29,15 @@ namespace donniebot.commands
         [Summary("Nukes an image.")]
         public async Task NukeAsync([Summary("The image to nuke.")] string url = null)
         {
-            try
-            {
-                url = await _img.ParseUrlAsync(url, Context.Message);
-                var img = await _img.BackgroundColorAsync(url, _rand.RandomNumber(0, 255), _rand.RandomNumber(0, 255), _rand.RandomNumber(0, 255));
-                img = _img.Saturate(img, _rand.RandomFloat(1, 5));
-                img = _img.Brightness(img, _rand.RandomFloat(1, 5));
-                img = _img.Blur(img, _rand.RandomFloat(1, 5));
-                img = _img.Pixelate(img, _rand.RandomNumber(1, 4));
-                img = _img.Sharpen(img, _rand.RandomFloat(1, 5));
-                img = _img.Jpeg(img, _rand.RandomNumber(1, 15));
-                await _img.SendToChannelAsync(img, Context.Channel, new MessageReference(Context.Message.Id));
-            }
-            catch (Exception e)
-            {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
-            }
+            url = await _img.ParseUrlAsync(url, Context.Message);
+            var img = await _img.BackgroundColorAsync(url, _rand.RandomNumber(0, 255), _rand.RandomNumber(0, 255), _rand.RandomNumber(0, 255));
+            img = _img.Saturate(img, _rand.RandomFloat(1, 5));
+            img = _img.Brightness(img, _rand.RandomFloat(1, 5));
+            img = _img.Blur(img, _rand.RandomFloat(1, 5));
+            img = _img.Pixelate(img, _rand.RandomNumber(1, 4));
+            img = _img.Sharpen(img, _rand.RandomFloat(1, 5));
+            img = _img.Jpeg(img, _rand.RandomNumber(1, 15));
+            await _img.SendToChannelAsync(img, Context.Channel, new MessageReference(Context.Message.Id));
         }
     }
 }

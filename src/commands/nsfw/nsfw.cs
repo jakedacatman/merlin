@@ -74,10 +74,6 @@ namespace donniebot.commands
             {
                 await ReplyAsync("Invalid subreddit.");
             }
-            catch (Exception e)
-            {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
-            }
         }
     }
 }

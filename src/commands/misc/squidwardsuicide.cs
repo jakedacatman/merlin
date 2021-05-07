@@ -23,27 +23,20 @@ namespace donniebot.commands
         [Summary("Replaces the last two words of the previous message with \"squidward suicide\".")]
         public async Task SquidwardSuicideAsync()
         {
-            try
+            var lastMsg = (await _misc.GetPreviousMessageAsync(Context.Channel as SocketTextChannel)).Content;
+            var split = new List<string>(lastMsg.Split(' '));
+            string msg;
+            var ct = split.Count;
+            if (ct < 2) msg = "squidward suicide";
+            else 
             {
-                var lastMsg = (await _misc.GetPreviousMessageAsync(Context.Channel as SocketTextChannel)).Content;
-                var split = new List<string>(lastMsg.Split(' '));
-                string msg;
-                var ct = split.Count;
-                if (ct < 2) msg = "squidward suicide";
-                else 
-                {
-                    split[ct - 2] = "squidward";
-                    split[ct - 1] = "suicide";
+                split[ct - 2] = "squidward";
+                split[ct - 1] = "suicide";
 
-                    msg = string.Join(' ', split);
-                }
+                msg = string.Join(' ', split);
+            }
 
-                await ReplyAsync(msg);
-            }
-            catch (Exception e)
-            {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
-            }
+            await ReplyAsync(msg);
         }
     }
 }

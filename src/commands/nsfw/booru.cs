@@ -30,30 +30,23 @@ namespace donniebot.commands
         [RequireNsfw]
         public async Task BooruAsync([Summary("The search query."), Remainder] string query)
         {
-            try
-            {
-                var img = await _img.GetBooruImageAsync(Context.Guild.Id, query);
+            var img = await _img.GetBooruImageAsync(Context.Guild.Id, query);
 
-                if (img.Url == null)
-                {
-                    await ReplyAsync("There are no more images.");
-                    return;
-                }
-
-                var embed = new EmbedBuilder()
-                    .WithTitle(img.Title)
-                    .WithUrl(img.Url)
-                    .WithImageUrl(img.Url)
-                    .WithColor(_rand.RandomColor())
-                    .WithTimestamp(DateTime.UtcNow)
-                    .WithFooter($"Posted by {img.Author}");
-                        
-                await ReplyAsync(embed: embed.Build());
-            }
-            catch (Exception e)
+            if (img.Url == null)
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
+                await ReplyAsync("There are no more images.");
+                return;
             }
+
+            var embed = new EmbedBuilder()
+                .WithTitle(img.Title)
+                .WithUrl(img.Url)
+                .WithImageUrl(img.Url)
+                .WithColor(_rand.RandomColor())
+                .WithTimestamp(DateTime.UtcNow)
+                .WithFooter($"Posted by {img.Author}");
+                    
+            await ReplyAsync(embed: embed.Build());
         }
     }
 }

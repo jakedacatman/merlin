@@ -26,34 +26,20 @@ namespace donniebot.commands
         [Summary("Scales an image.")]
         public async Task ScaleAsync([Summary("The scale to adjust the width (x-value) to.")] float xScale, [Summary("The scale to adjust the height (y-value) to.")] float yScale, [Summary("The image to scale.")] string url = null)
         {
-            try
-            {
-                url = await _img.ParseUrlAsync(url, Context.Message);
-                
-                var img = await _img.ResizeAsync(url, xScale, yScale);
-                await _img.SendToChannelAsync(img, Context.Channel, new MessageReference(Context.Message.Id));
-            }
-            catch (Exception e)
-            {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
-            }
+            url = await _img.ParseUrlAsync(url, Context.Message);
+            
+            var img = await _img.ResizeAsync(url, xScale, yScale);
+            await _img.SendToChannelAsync(img, Context.Channel, new MessageReference(Context.Message.Id));
         }
         [Command("scale")]
         [Alias("sc")]
         [Summary("Scales an image.")]
         public async Task ScaleAsync([Summary("The scale to adjust both width and height to.")] float scale, [Summary("The image to scale.")] string url = null)
         {
-            try
-            {
-                url = await _img.ParseUrlAsync(url, Context.Message);
-                
-                var img = await _img.ResizeAsync(url, scale, scale);
-                await _img.SendToChannelAsync(img, Context.Channel, new MessageReference(Context.Message.Id));
-            }
-            catch (Exception e)
-            {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
-            }
+            url = await _img.ParseUrlAsync(url, Context.Message);
+            
+            var img = await _img.ResizeAsync(url, scale, scale);
+            await _img.SendToChannelAsync(img, Context.Channel, new MessageReference(Context.Message.Id));
         }
     }
 }

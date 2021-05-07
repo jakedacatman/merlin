@@ -26,21 +26,14 @@ namespace donniebot.commands
         [Summary("Pauses playback.")]
         public async Task PauseAsync()
         {
-            try
+            var vc = (Context.User as SocketGuildUser).VoiceChannel;
+            if (vc == null)
             {
-                var vc = (Context.User as SocketGuildUser).VoiceChannel;
-                if (vc == null)
-                {
-                    await ReplyAsync("You must be in a voice channel.");
-                    return;
-                }
+                await ReplyAsync("You must be in a voice channel.");
+                return;
+            }
 
-                await _audio.PauseAsync(Context.Guild.Id);
-            }
-            catch (Exception e)
-            {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
-            }
+            await _audio.PauseAsync(Context.Guild.Id);
         }
     }
 }

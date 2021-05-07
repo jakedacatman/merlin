@@ -27,15 +27,8 @@ namespace donniebot.commands
         [Summary("Creates an image with two choices..")]
         public async Task RedpillAsync([Summary("The first choice (red pill).")] string choice1, [Summary("The second choice (blue pill).")] string choice2)
         {
-            try
-            {
-                var img = await _img.RedpillAsync(choice1, choice2);
-                await _img.SendToChannelAsync(img, Context.Channel, new MessageReference(Context.Message.Id));
-            }
-            catch (Exception e)
-            {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
-            }
+            var img = await _img.RedpillAsync(choice1, choice2);
+            await _img.SendToChannelAsync(img, Context.Channel, new MessageReference(Context.Message.Id));
         }
     }
 }

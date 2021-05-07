@@ -29,23 +29,16 @@ namespace donniebot.commands
         [Summary("Captions an image.")]
         public async Task CaptionAsync([Summary("The text to caption.")]string text, [Summary("The image to caption.")] string url = null)
         {
-            try
+            url = await _img.ParseUrlAsync(url, Context.Message);
+            if (await _net.IsVideoAsync(url))
             {
-                url = await _img.ParseUrlAsync(url, Context.Message);
-                if (await _net.IsVideoAsync(url))
-                {
-                    var path = await _img.VideoFilterAsync(url, _img.Caption, text);
-                    await _img.SendToChannelAsync(path, Context.Channel, new MessageReference(Context.Message.Id));
-                }
-                else
-                {
-                    var img = await _img.CaptionAsync(url, text);
-                    await _img.SendToChannelAsync(img, Context.Channel, new MessageReference(Context.Message.Id));
-                }
+                var path = await _img.VideoFilterAsync(url, _img.Caption, text);
+                await _img.SendToChannelAsync(path, Context.Channel, new MessageReference(Context.Message.Id));
             }
-            catch (Exception e)
+            else
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
+                var img = await _img.CaptionAsync(url, text);
+                await _img.SendToChannelAsync(img, Context.Channel, new MessageReference(Context.Message.Id));
             }
         }
     }

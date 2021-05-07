@@ -27,16 +27,9 @@ namespace donniebot.commands
         [Summary("Inverts an image.")]
         public async Task InvertAsync([Summary("The image to invert.")] string url = null)
         {
-            try
-            {
-                url = await _img.ParseUrlAsync(url, Context.Message);
-                var img = await _img.InvertAsync(url);
-                await _img.SendToChannelAsync(img, Context.Channel, new MessageReference(Context.Message.Id));
-            }
-            catch (Exception e)
-            {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
-            }
+            url = await _img.ParseUrlAsync(url, Context.Message);
+            var img = await _img.InvertAsync(url);
+            await _img.SendToChannelAsync(img, Context.Channel, new MessageReference(Context.Message.Id));
         }
     }
 }

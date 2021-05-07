@@ -27,16 +27,9 @@ namespace donniebot.commands
         [Summary("Reverses a GIF.")]
         public async Task ReverseAsync([Summary("The GIF to reverse.")] string url = null)
         {
-            try
-            {
-                url = await _img.ParseUrlAsync(url, Context.Message);
-                var img = await _img.ReverseAsync(url);
-                await _img.SendToChannelAsync(img, Context.Channel, new MessageReference(Context.Message.Id));
-            }
-            catch (Exception e)
-            {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
-            }
+            url = await _img.ParseUrlAsync(url, Context.Message);
+            var img = await _img.ReverseAsync(url);
+            await _img.SendToChannelAsync(img, Context.Channel, new MessageReference(Context.Message.Id));
         }
     }
 }

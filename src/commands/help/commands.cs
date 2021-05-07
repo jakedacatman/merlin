@@ -31,69 +31,66 @@ namespace donniebot.commands
         [Summary("Sends a list of bot commands.")]
         public async Task CommandsAsync([Summary("The category to view the commands of.")] string category = null)
         {
-            try
+            Dictionary<string, List<string>> modules = new Dictionary<string, List<string>>();
+
+            var msg = await ReplyAsync("fart");
+            await msg.DeleteAsync();
+            await msg.DeleteAsync();
+
+            foreach (ModuleInfo module in _commands.Modules)
             {
-                Dictionary<string, List<string>> modules = new Dictionary<string, List<string>>();
-
-                foreach (ModuleInfo module in _commands.Modules)
+                if (module.Name == "") continue;
+                List<string> names = new List<string>();
+                if (!modules.ContainsKey(module.Name))
+                    modules.Add(module.Name, names);
+                else
+                    names = modules[module.Name];
+                foreach (CommandInfo cmd in module.Commands)
                 {
-                    if (module.Name == "") continue;
-                    List<string> names = new List<string>();
-                    if (!modules.ContainsKey(module.Name))
-                        modules.Add(module.Name, names);
-                    else
-                        names = modules[module.Name];
-                    foreach (CommandInfo cmd in module.Commands)
-                    {
-                        if (cmd.Summary == null) continue;
-                        if (!names.Contains($"{cmd.Module.Group} {cmd.Name}".TrimEnd(' '))) names.Add($"{cmd.Module.Group} {cmd.Name}".TrimEnd(' '));
-                    }
+                    if (cmd.Summary == null) continue;
+                    if (!names.Contains($"{cmd.Module.Group} {cmd.Name}".TrimEnd(' '))) names.Add($"{cmd.Module.Group} {cmd.Name}".TrimEnd(' '));
                 }
+            }
 
-                if (string.IsNullOrEmpty(category))
-                {
-                    var pages = new List<PageBuilder>();
-                    foreach (var module in modules)
-                        pages.Add(new PageBuilder()
-                            .WithTitle("Commands")
-                            .WithFields(new EmbedFieldBuilder().WithName(module.Key).WithValue(string.Join(", ", module.Value)))
-                            .WithColor(_rand.RandomColor()));
+            if (string.IsNullOrEmpty(category))
+            {
+                var pages = new List<PageBuilder>();
+                foreach (var module in modules)
+                    pages.Add(new PageBuilder()
+                        .WithTitle("Commands")
+                        .WithFields(new EmbedFieldBuilder().WithName(module.Key).WithValue(string.Join(", ", module.Value)))
+                        .WithColor(_rand.RandomColor()));
 
-                    await _inter.SendPaginatorAsync(new StaticPaginatorBuilder()
-                        .WithDeletion(DeletionOptions.AfterCapturedContext)
-                        .WithUsers(Context.User)
-                        .WithDefaultEmotes()
-                        .WithFooter(PaginatorFooter.PageNumber)
-                        .WithPages(pages)
-                        .Build(), Context.Channel);
+                await _inter.SendPaginatorAsync(new StaticPaginatorBuilder()
+                    .WithDeletion(DeletionOptions.AfterCapturedContext)
+                    .WithUsers(Context.User)
+                    .WithDefaultEmotes()
+                    .WithFooter(PaginatorFooter.PageNumber)
+                    .WithPages(pages)
+                    .Build(), Context.Channel);
                 }
                 else
                 {
-                    KeyValuePair<string, List<string>> module;
-                    var query = modules.Where(x => x.Key.ToLower() == category.ToLower());
-                    if (query.Any()) 
-                        module = query.First();
-                    else
-                    {
-                        await ReplyAsync("Category not found.");
-                        return;
-                    }
-
-
-                    var fields = new List<EmbedFieldBuilder> { new EmbedFieldBuilder().WithIsInline(true).WithName(module.Key).WithValue(string.Join(", ", module.Value)) };
-
-                    var embed = new EmbedBuilder()
-                        .WithColor(_rand.RandomColor())
-                        .WithTitle("Commands")
-                        .WithFields(fields)
-                        .WithCurrentTimestamp();
-
-                    await ReplyAsync(embed: embed.Build());
+                KeyValuePair<string, List<string>> module;
+                var query = modules.Where(x => x.Key.ToLower() == category.ToLower());
+                if (query.Any()) 
+                    module = query.First();
+                else
+                {
+                    await ReplyAsync("Category not found.");
+                    return;
                 }
-            }
-            catch (Exception e)
-            {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
+
+
+                var fields = new List<EmbedFieldBuilder> { new EmbedFieldBuilder().WithIsInline(true).WithName(module.Key).WithValue(string.Join(", ", module.Value)) };
+
+                var embed = new EmbedBuilder()
+                    .WithColor(_rand.RandomColor())
+                    .WithTitle("Commands")
+                    .WithFields(fields)
+                    .WithCurrentTimestamp();
+
+                await ReplyAsync(embed: embed.Build());
             }
         }
     }

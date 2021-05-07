@@ -24,21 +24,14 @@ namespace donniebot.commands
         [Summary("Joins the current voice channel.")]
         public async Task JoinAsync()
         {
-            try
+            var vc = (Context.User as SocketGuildUser).VoiceChannel;
+            if (vc == null)
             {
-                var vc = (Context.User as SocketGuildUser).VoiceChannel;
-                if (vc == null)
-                {
-                    await ReplyAsync("You must be in a voice channel.");
-                    return;
-                }
+                await ReplyAsync("You must be in a voice channel.");
+                return;
+            }
 
-                await _audio.ConnectAsync(Context.Channel as SocketTextChannel, vc);
-            }
-            catch (Exception e)
-            {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
-            }
+            await _audio.ConnectAsync(Context.Channel as SocketTextChannel, vc);
         }
     }
 }

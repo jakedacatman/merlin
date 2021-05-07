@@ -26,17 +26,9 @@ namespace donniebot.commands
         [Summary("Changes an image's sharpness.")]
         public async Task SharpenAsync([Summary("The value to change the sharpness by.")] float sharpness = 1,[Summary("The image to change.")] string url = null)
         {
-            try
-            {
-                url = await _img.ParseUrlAsync(url, Context.Message);
-                var img = await _img.SharpenAsync(url, sharpness);
-                await _img.SendToChannelAsync(img, Context.Channel, new Discord.MessageReference(Context.Message.Id)
-                );
-            }
-            catch (Exception e)
-            {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
-            }
+            url = await _img.ParseUrlAsync(url, Context.Message);
+            var img = await _img.SharpenAsync(url, sharpness);
+            await _img.SendToChannelAsync(img, Context.Channel, new Discord.MessageReference(Context.Message.Id));
         }
     }
 }

@@ -35,47 +35,40 @@ namespace donniebot.commands
         [Summary("Gets the song queue for the current guild.")]
         public async Task QueueAsync()
         {
-            try
+            var guild = Context.Guild;
+            var queue = _audio.GetQueue(guild.Id);
+
+            if (!queue.Any())
             {
-                var guild = Context.Guild;
-                var queue = _audio.GetQueue(guild.Id);
-
-                if (!queue.Any())
-                {
-                    await ReplyAsync($"There are no songs in the queue. Try adding some with `{_defPre.Prefix}add`!");
-                    return;
-                }
-
-                var chunks = queue.ChunkBy(10);
-
-                var time = _audio.GetRawPosition(guild.Id).TotalSeconds + _audio.GetRawQueue(guild.Id).Sum(x => x.Length.TotalSeconds);
-
-                var pages = new List<PageBuilder>();
-
-                for (int i = 0; i < chunks.Count(); i++)
-                {
-                    var chunk = chunks.ElementAt(i);
-                    pages.Add(new PageBuilder()
-                        .WithColor(_rand.RandomColor())
-                        .WithFields(new EmbedFieldBuilder()
-                            .WithName($"#{i * 10 + 1} to #{i * 10 + chunk.Count()}")
-                            .WithValue(string.Join('\n', chunk))
-                        )
-                        .WithTitle($"Total time left: {TimeSpan.FromSeconds(time).ToString(@"hh\:mm\:ss")}")
-                    );
-                }
-                
-                await _inter.SendPaginatorAsync(new StaticPaginatorBuilder()
-                    .WithUsers(Context.User)
-                    .WithDefaultEmotes()
-                    .WithFooter(PaginatorFooter.PageNumber)
-                    .WithPages(pages)
-                    .Build(), Context.Channel);
+                await ReplyAsync($"There are no songs in the queue. Try adding some with `{_defPre.Prefix}add`!");
+                return;
             }
-            catch (Exception e)
+
+            var chunks = queue.ChunkBy(10);
+
+            var time = _audio.GetRawPosition(guild.Id).TotalSeconds + _audio.GetRawQueue(guild.Id).Sum(x => x.Length.TotalSeconds);
+
+            var pages = new List<PageBuilder>();
+
+            for (int i = 0; i < chunks.Count(); i++)
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
+                var chunk = chunks.ElementAt(i);
+                pages.Add(new PageBuilder()
+                    .WithColor(_rand.RandomColor())
+                    .WithFields(new EmbedFieldBuilder()
+                        .WithName($"#{i * 10 + 1} to #{i * 10 + chunk.Count()}")
+                        .WithValue(string.Join('\n', chunk))
+                    )
+                    .WithTitle($"Total time left: {TimeSpan.FromSeconds(time).ToString(@"hh\:mm\:ss")}")
+                );
             }
+            
+            await _inter.SendPaginatorAsync(new StaticPaginatorBuilder()
+                .WithUsers(Context.User)
+                .WithDefaultEmotes()
+                .WithFooter(PaginatorFooter.PageNumber)
+                .WithPages(pages)
+                .Build(), Context.Channel);
         }
     }
 }

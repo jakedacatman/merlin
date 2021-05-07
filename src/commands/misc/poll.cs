@@ -50,11 +50,8 @@ namespace donniebot.commands
                 _inter.DelayedSendMessageAndDeleteAsync(Context.Channel, deleteDelay: TimeSpan.FromSeconds(10), text: "One of your reactions was invalid.");
                 if (msg != null) await msg.DeleteAsync(); 
             }
-            catch (Exception e)
-            {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
-            }
         }
+        
         [Command("poll")]
         [Alias("pol")]
         [Summary("Sends a poll and adds a thumbs-up and thumbs-down for people to vote on.")]
@@ -63,14 +60,7 @@ namespace donniebot.commands
         public async Task PollAsync([Summary("The question to vote on."), Remainder]string message)
         {
             IUserMessage msg = null;
-            try
-            {
-                await CreatePollAsync(msg, message, new[] { new Emoji("👍"), new Emoji("👎") });
-            }
-            catch (Exception e)
-            {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
-            }
+            await CreatePollAsync(msg, message, new[] { new Emoji("👍"), new Emoji("👎") });
         }
 
         private async Task CreatePollAsync(IUserMessage msg, string message, IEnumerable<IEmote> reactions)

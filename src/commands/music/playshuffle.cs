@@ -34,16 +34,6 @@ namespace donniebot.commands
         [Alias("ps", "playsh", "plsh")]
         [Summary("Adds a song or playlist to the queue, then shuffles the queue.")]
         [RequireDjRole]
-        public async Task PlayShuffleAsync([Summary("The URL or YouTube search query."), Remainder] string queryOrUrl = null)
-        {
-            try
-            {
-                await _audio.AddAsync(Context.User as SocketGuildUser, Context.Channel as SocketTextChannel, queryOrUrl, true);
-            }
-            catch (Exception e)
-            {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
-            }
-        }
+        public async Task PlayShuffleAsync([Summary("The URL or YouTube search query."), Remainder] string queryOrUrl = null) => await _audio.AddAsync(Context.User as SocketGuildUser, Context.Channel as SocketTextChannel, queryOrUrl, true);
     }
 }

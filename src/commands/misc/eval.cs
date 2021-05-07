@@ -27,16 +27,9 @@ namespace donniebot.commands
         [RequireOwner]
         public async Task EvalAsync([Summary("The code to evaluate."), Remainder] string code)
         {
-            try
-            {
-                var msg = await _misc.EvaluateAsync(Context, code.Replace("--noreply", ""));
-                if (!code.Contains("--noreply"))
-                    await ReplyAsync(embed: msg.Build());
-            }
-            catch (Exception e)
-            {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
-            }
+            var msg = await _misc.EvaluateAsync(Context, code.Replace("--noreply", ""));
+            if (!code.Contains("--noreply"))
+                await ReplyAsync(embed: msg.Build());
         }
     }
 }

@@ -26,16 +26,9 @@ namespace donniebot.commands
         [RequireOwner]
         public async Task ShellAsync([Summary("The command to run"), Remainder]string command)
         {
-            try
-            {
-                var output = await Shell.RunAsync(command);
-                if (string.IsNullOrWhiteSpace(output)) output = " ";
-                await ReplyAsync($"```{output}```");
-            }
-            catch (Exception e)
-            {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
-            }
+            var output = await Shell.RunAsync(command);
+            if (string.IsNullOrWhiteSpace(output)) output = " ";
+            await ReplyAsync($"```{output}```");
         }
     }
 }

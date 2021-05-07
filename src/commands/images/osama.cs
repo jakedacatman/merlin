@@ -27,17 +27,10 @@ namespace donniebot.commands
         [Summary("Makes Osama bin Laden watch something.")]
         public async Task OsamaAsync([Summary("The image to have him watch.")] string url = null)
         {
-            try
-            {
-                url = await _img.ParseUrlAsync(url, Context.Message);
-                var osamaUrl = "https://i.jakedacatman.me/UfLp7.jpg";
-                var img = await _img.OverlayAsync(osamaUrl, url, 103, 58, 80, 60, 4f);
-                await _img.SendToChannelAsync(img, Context.Channel, new MessageReference(Context.Message.Id));
-            }
-            catch (Exception e)
-            {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
-            }
+            url = await _img.ParseUrlAsync(url, Context.Message);
+            var osamaUrl = "https://i.jakedacatman.me/UfLp7.jpg";
+            var img = await _img.OverlayAsync(osamaUrl, url, 103, 58, 80, 60, 4f);
+            await _img.SendToChannelAsync(img, Context.Channel, new MessageReference(Context.Message.Id));
         }
     }
 }

@@ -31,35 +31,28 @@ namespace donniebot.commands
         [Summary("Changes the DJ role to the specified role.")]
         public async Task DjRoleAsync([Summary("The new role."), Remainder] SocketRole role = null)
         {
-            try
+            if (role == null)
             {
-                if (role == null)
+                var res = await _inter.NextMessageAsync(timeout: TimeSpan.FromSeconds(10)); 
+                if (res.IsSuccess && (res.Value.Content.ToLower().Contains("yes") || res.Value.Content.ToLower() == "y"))
                 {
-                    var res = await _inter.NextMessageAsync(timeout: TimeSpan.FromSeconds(10)); 
-                    if (res.IsSuccess && (res.Value.Content.ToLower().Contains("yes") || res.Value.Content.ToLower() == "y"))
-                    {
-                        _db.RemoveItems<DjRole>("djroles", Query.EQ("GuildId", Context.Guild.Id));
-                        await ReplyAsync("Unbound the DJ role.");
-                    }
-                    else
-                    {
-                        _inter.DelayedSendMessageAndDeleteAsync(Context.Channel, deleteDelay: TimeSpan.FromSeconds(10), text: "The DJ role was not unbound.");
-                    }
-                    return;
+                    _db.RemoveItems<DjRole>("djroles", Query.EQ("GuildId", Context.Guild.Id));
+                    await ReplyAsync("Unbound the DJ role.");
                 }
-                
-                var djrole = new DjRole(Context.Guild.Id, role.Id);
+                else
+                {
+                    _inter.DelayedSendMessageAndDeleteAsync(Context.Channel, deleteDelay: TimeSpan.FromSeconds(10), text: "The DJ role was not unbound.");
+                }
+                return;
+            }
+            
+            var djrole = new DjRole(Context.Guild.Id, role.Id);
 
-                var suc = _db.AddItem<DjRole>("djroles", djrole);
-                if (suc) 
-                    await ReplyAsync($"Changed the DJ role to {role.Mention}.", allowedMentions: AllowedMentions.None);
-                else 
-                    await ReplyAsync("Failed to change the DJ role.");
-            }
-            catch (Exception e)
-            {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
-            }
+            var suc = _db.AddItem<DjRole>("djroles", djrole);
+            if (suc) 
+                await ReplyAsync($"Changed the DJ role to {role.Mention}.", allowedMentions: AllowedMentions.None);
+            else 
+                await ReplyAsync("Failed to change the DJ role.");
         }
     }
 }

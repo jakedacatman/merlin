@@ -31,21 +31,14 @@ namespace donniebot.commands
         [Summary("Skips the current song to play another.")]
         public async Task SkipPlayAsync([Summary("The URL or YouTube search query."), Remainder] string queryOrUrl = null)
         {
-            try
+            if (!_audio.HasSongs(Context.Guild.Id))
             {
-                if (!_audio.HasSongs(Context.Guild.Id))
-                {
-                    await ReplyAsync($"There are no songs to skip! Use {_defPre.Prefix}add instead.");
-                    return;
-                }
+                await ReplyAsync($"There are no songs to skip! Use {_defPre.Prefix}add instead.");
+                return;
+            }
 
-                await _audio.SkipAsync(Context.User as SocketGuildUser);
-                await _audio.AddAsync(Context.User as SocketGuildUser, Context.Channel as SocketTextChannel, queryOrUrl, false, 0);
-            }
-            catch (Exception e)
-            {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
-            }
+            await _audio.SkipAsync(Context.User as SocketGuildUser);
+            await _audio.AddAsync(Context.User as SocketGuildUser, Context.Channel as SocketTextChannel, queryOrUrl, false, 0);
         }
     }
 }

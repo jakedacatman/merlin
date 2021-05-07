@@ -30,24 +30,17 @@ namespace donniebot.commands
         [Summary("Removes the song at the specified index.")]
         public async Task RemoveAsync(int index)
         {
-            try
-            {
-                var id = Context.Guild.Id;
+            var id = Context.Guild.Id;
 
-                if (!_audio.HasSongs(id))
-                {
-                    await ReplyAsync("There are no songs in the queue.");
-                    return;
-                }
-
-                _audio.RemoveAt(id, index - 1);
-                
-                await ReplyAsync($"Removed the song at index {index}.");
-            }
-            catch (Exception e)
+            if (!_audio.HasSongs(id))
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
+                await ReplyAsync("There are no songs in the queue.");
+                return;
             }
+
+            _audio.RemoveAt(id, index - 1);
+            
+            await ReplyAsync($"Removed the song at index {index}.");
         }
     }
 }

@@ -117,6 +117,8 @@ namespace donniebot
 
             _commands.Log += LogAsync;
 
+            _commands.CommandExecuted += CommandExecutedAsync;
+
             if (!File.Exists("nsfw.txt"))
                 await File.WriteAllTextAsync("nsfw.txt", await _services.GetService<NetService>().DownloadAsStringAsync("https://paste.jakedacatman.me/raw/YU4vA"));
             if (!File.Exists("phrases.txt"))
@@ -174,56 +176,65 @@ namespace donniebot
                         return;
                 }
 
-                var res = await _commands.ExecuteAsync(context, argPos, _services, MultiMatchHandling.Best);
-
-                if (!res.IsSuccess)
-                {
-                    var em = new EmbedBuilder()
-                        .WithColor(_services
-                            .GetService<RandomService>()
-                            .RandomColor()
-                        )
-                        .WithCurrentTimestamp()
-                        .WithFooter(context.Message.Content)
-                        .WithAuthor(x => 
-                        {
-                            x.Name = context.User.Username;
-                            x.IconUrl = context.User.GetAvatarUrl(size: 512);
-                        })
-                        .WithTitle("Command failed")
-                        .WithDescription(res.ErrorReason);
-
-                    switch (res.Error)
-                    {
-                        case CommandError.UnmetPrecondition:
-                        {
-                            em
-                                .WithTitle("🛑 Command failed precondition check")
-                                .WithDescription($"Either you or I lack the permissions to run this command, or the command can only be run in an NSFW channel.\nMessage: `{res.ErrorReason}`");
-                            break;
-                        }
-                        case CommandError.BadArgCount:
-                        {
-                            em
-                                .WithTitle("⁉️ Improper amount of arguments")
-                                .WithDescription(res.ErrorReason);
-                            break;
-                        }
-                        case CommandError.UnknownCommand:
-                        {
-                            em
-                                .WithTitle("❓ That command does not exist.")
-                                .WithDescription(res.ErrorReason);
-                            break;
-                        }
-                    }
-
-                    await context.Channel.SendMessageAsync(embed: em.Build(), messageReference: new MessageReference(context.Message.Id), allowedMentions: AllowedMentions.None);
-                }
+                await _commands.ExecuteAsync(context, argPos, _services, MultiMatchHandling.Best);
             }   
             catch (Exception e)
             {
                 Console.WriteLine(e);
+            }
+        }
+
+        private async Task CommandExecutedAsync(Optional<CommandInfo> info, ICommandContext context, IResult res)
+        {
+            if (!res.IsSuccess)
+            {
+                var em = new EmbedBuilder()
+                    .WithColor(_services
+                        .GetService<RandomService>()
+                        .RandomColor()
+                    )
+                    .WithCurrentTimestamp()
+                    .WithFooter(context.Message.Content)
+                    .WithAuthor(x => 
+                    {
+                        x.Name = context.User.Username;
+                        x.IconUrl = context.User.GetAvatarUrl(size: 512);
+                    })
+                    .WithTitle("Command failed")
+                    .WithDescription(res.ErrorReason);
+
+                switch (res.Error)
+                {
+                    case CommandError.UnmetPrecondition:
+                    {
+                        em
+                            .WithTitle("🛑 Command failed precondition check")
+                                .WithDescription($"Either you or I lack the permissions to run this command, or the command can only be run in an NSFW channel.\nMessage: `{res.ErrorReason}`");
+                        break;
+                    }
+                    case CommandError.BadArgCount:
+                    {
+                        em
+                            .WithTitle("⁉️ Improper amount of arguments")
+                            .WithDescription(res.ErrorReason);
+                        break;
+                    }
+                    case CommandError.UnknownCommand:
+                    {
+                        em
+                            .WithTitle("❓ That command does not exist.")
+                            .WithDescription(res.ErrorReason);
+                        break;
+                    }
+
+                    case CommandError.Exception:
+                    {
+                        em = await _services.GetService<MiscService>().GenerateErrorMessageAsync(((ExecuteResult)res).Exception);
+                        break;
+                    }
+                }
+
+                await context.Channel.SendMessageAsync(embed: em.Build(), messageReference: new MessageReference(context.Message.Id), allowedMentions: AllowedMentions.None);
             }
         }
 

@@ -31,15 +31,8 @@ namespace donniebot.commands
         [RequireUserPermission(GuildPermission.ManageMessages)]
         public async Task ResetAsync()
         {
-            try
-            {
-                _db.RemovePrefix(Context.Guild.Id);
-                await ReplyAsync("The prefix has been reset to default; mention me if you are unsure of what that is.");
-            }
-            catch (Exception e)
-            {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
-            }
+            _db.RemovePrefix(Context.Guild.Id);
+            await ReplyAsync("The prefix has been reset to default; mention me if you are unsure of what that is.");
         }
     }
 }

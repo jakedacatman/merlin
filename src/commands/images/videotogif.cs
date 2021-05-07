@@ -27,16 +27,9 @@ namespace donniebot.commands
         [Summary("Converts a video to a GIF.")]
         public async Task VideoToGifAsync([Summary("The video to convert.")] string url = null)
         {
-            try
-            {
-                url = await _img.ParseUrlAsync(url, Context.Message);
-                var path = await _img.VideoToGifAsync(url);
-                await _img.SendToChannelAsync(path, Context.Channel, new MessageReference(Context.Message.Id));
-            }
-            catch (Exception e)
-            {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
-            }
+            url = await _img.ParseUrlAsync(url, Context.Message);
+            var path = await _img.VideoToGifAsync(url);
+            await _img.SendToChannelAsync(path, Context.Channel, new MessageReference(Context.Message.Id));
         }
     }
 }

@@ -27,16 +27,9 @@ namespace donniebot.commands
         [Summary("Saturates an image.")]
         public async Task SaturateAsync([Summary("The amount to saturate.")] float amount = 3, [Summary("The image to saturate.")] string url = null)
         {
-            try
-            {
-                url = await _img.ParseUrlAsync(url, Context.Message);
-                var img = await _img.SaturateAsync(url, amount);
-                await _img.SendToChannelAsync(img, Context.Channel, new MessageReference(Context.Message.Id));
-            }
-            catch (Exception e)
-            {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
-            }
+            url = await _img.ParseUrlAsync(url, Context.Message);
+            var img = await _img.SaturateAsync(url, amount);
+            await _img.SendToChannelAsync(img, Context.Channel, new MessageReference(Context.Message.Id));
         }
     }
 }

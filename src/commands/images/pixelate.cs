@@ -27,16 +27,9 @@ namespace donniebot.commands
         [Summary("Changes an image's pixel size to the given size.")]
         public async Task PixelateAsync([Summary("The value to change the pixel size to.")] int size = 1,[Summary("The image to change.")] string url = null)
         {
-            try
-            {
-                url = await _img.ParseUrlAsync(url, Context.Message);
-                var img = await _img.PixelateAsync(url, size);
-                await _img.SendToChannelAsync(img, Context.Channel, new MessageReference(Context.Message.Id));
-            }
-            catch (Exception e)
-            {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
-            }
+            url = await _img.ParseUrlAsync(url, Context.Message);
+            var img = await _img.PixelateAsync(url, size);
+            await _img.SendToChannelAsync(img, Context.Channel, new MessageReference(Context.Message.Id));
         }
     }
 }

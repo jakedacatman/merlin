@@ -22,16 +22,6 @@ namespace donniebot.commands
         [Command("skip")]
         [Alias("sk")]
         [Summary("Votes to skip the current song.")]
-        public async Task SkipAsync()
-        {
-            try
-            {
-                await _audio.SkipAsync(Context.User as SocketGuildUser);
-            }
-            catch (Exception e)
-            {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
-            }
-        }
+        public async Task SkipAsync() => await _audio.SkipAsync(Context.User as SocketGuildUser);
     }
 }

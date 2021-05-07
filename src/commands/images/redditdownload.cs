@@ -57,10 +57,6 @@ namespace donniebot.commands
             {
                 await ReplyAsync($"Downloading encountered an error: `{e.Message}`");
             }
-            catch (Exception e)
-            {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
-            }
         }
     }
 }

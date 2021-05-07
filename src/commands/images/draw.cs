@@ -26,18 +26,11 @@ namespace donniebot.commands
         [Summary("Try it and see.")]
         public async Task DrawAsync([Summary("The user.")] SocketGuildUser user = null)
         {
-            try
-            {
-                if (user == null) user = Context.User as SocketGuildUser;
+            if (user == null) user = Context.User as SocketGuildUser;
 
-                string url = await _img.ParseUrlAsync(user.GetAvatarUrl(size: 1024), Context.Message);
-                var img = await _img.PlaceBelowAsync("https://i.jakedacatman.me/9JPyB.png", url);
-                await _img.SendToChannelAsync(img, Context.Channel, new MessageReference(Context.Message.Id));
-            }
-            catch (Exception e)
-            {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
-            }
+            string url = await _img.ParseUrlAsync(user.GetAvatarUrl(size: 1024), Context.Message);
+            var img = await _img.PlaceBelowAsync("https://i.jakedacatman.me/9JPyB.png", url);
+            await _img.SendToChannelAsync(img, Context.Channel, new MessageReference(Context.Message.Id));
         }
     }
 }

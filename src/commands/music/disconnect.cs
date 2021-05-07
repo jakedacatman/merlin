@@ -26,24 +26,17 @@ namespace donniebot.commands
         [Summary("Leaves the current voice channel.")]
         public async Task LeaveAsync()
         {
-            try
+            var vc = Context.Guild.CurrentUser.VoiceChannel;
+            if (vc == null)
             {
-                var vc = Context.Guild.CurrentUser.VoiceChannel;
-                if (vc == null)
-                {
-                    await ReplyAsync("I am not connected to a voice channel.");
-                    return;
-                }
+                await ReplyAsync("I am not connected to a voice channel.");
+                return;
+            }
 
-                if ((Context.User as SocketGuildUser).VoiceChannel == vc || !_audio.GetListeningUsers(Context.Guild.Id).Any())
-                    await _audio.DisconnectAsync(vc);
-                else
-                    await ReplyAsync("You are not in my voice channel, or there are people still listening.");
-            }
-            catch (Exception e)
-            {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessageAsync(e)).Build());
-            }
+            if ((Context.User as SocketGuildUser).VoiceChannel == vc || !_audio.GetListeningUsers(Context.Guild.Id).Any())
+                await _audio.DisconnectAsync(vc);
+            else
+                await ReplyAsync("You are not in my voice channel, or there are people still listening.");
         }
     }
 }
