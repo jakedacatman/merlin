@@ -541,11 +541,11 @@ namespace donniebot.services
                 {
                     var txt = "";
                     if (p is RequireUserPermissionAttribute attr)
-                        txt = attr.GuildPermission.HasValue ? attr.GuildPermission.Value.ToString() : txt;
+                        txt = attr.GuildPermission.HasValue ? $" ({attr.GuildPermission.Value.ToString()})" : txt;
                     else if (p is RequireBotPermissionAttribute attr2)
-                        txt = attr2.GuildPermission.HasValue ? attr2.GuildPermission.Value.ToString() : txt;
+                        txt = attr2.GuildPermission.HasValue ? $" ({attr2.GuildPermission.Value.ToString()})" : txt;
 
-                    preconditions += $"{preconditionAliases[p.GetType()]} ({txt})\n";
+                    preconditions += $"{preconditionAliases[p.GetType()]}{txt}\n";
                 }
 
                 var name = ((string.IsNullOrEmpty(cmd.Module.Group) ? "" : $"{cmd.Module.Group} ") + cmd.Name).TrimEnd(' ');

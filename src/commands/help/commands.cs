@@ -60,6 +60,7 @@ namespace donniebot.commands
                             .WithColor(_rand.RandomColor()));
 
                     await _inter.SendPaginatorAsync(new StaticPaginatorBuilder()
+                        .WithDeletion(DeletionOptions.AfterCapturedContext)
                         .WithUsers(Context.User)
                         .WithDefaultEmotes()
                         .WithFooter(PaginatorFooter.PageNumber)
@@ -79,7 +80,7 @@ namespace donniebot.commands
                     }
 
 
-                    var fields = new List<EmbedFieldBuilder> { new EmbedFieldBuilder().WithIsInline(true).WithName(module.Key).WithValue($"**{string.Join(", ", module.Value)}**") };
+                    var fields = new List<EmbedFieldBuilder> { new EmbedFieldBuilder().WithIsInline(true).WithName(module.Key).WithValue(string.Join(", ", module.Value)) };
 
                     var embed = new EmbedBuilder()
                         .WithColor(_rand.RandomColor())
