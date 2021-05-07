@@ -30,6 +30,7 @@ namespace donniebot.services
         private readonly MiscService _misc;
         private readonly NetService _net;
         private readonly RandomService _rand;
+        private readonly DbService _db;
         private readonly DiscordShardedClient _client;
 
         private IImageFormat _format;
@@ -37,11 +38,12 @@ namespace donniebot.services
         private readonly Regex _reg = new Regex(@"[0-9]+(\.[0-9]{1,2})? fps");
         private readonly NekoEndpoints _nkeps;
 
-        public ImageService(MiscService misc, NetService net, RandomService rand, NekoEndpoints nkeps, DiscordShardedClient client)
+        public ImageService(MiscService misc, NetService net, RandomService rand, DbService db, NekoEndpoints nkeps, DiscordShardedClient client)
         {
             _misc = misc;
             _net = net;
             _rand = rand;
+            _db = db;
             _nkeps = nkeps;
             _client = client;
         }
@@ -1224,6 +1226,24 @@ namespace donniebot.services
                     }
 
                     return robloxUrl;
+                }
+                else if (url.Substring(0, 4) == "tag:")
+                {
+                    var key = url.Substring(4);
+                    var tag = _db.GetTag(key, (msg.Channel as SocketGuildChannel).Guild.Id);
+
+                    if (tag is null)
+                        throw new ImageException("That tag does not exist.");
+                    else
+                    {
+                        var reg = new Regex(@"http[s]?:\/\/");
+                        var value = tag.Value;
+
+                        if (!reg.Match(value).Success || !await _net.IsSuccessAsync(value)) 
+                            return await ParseUrlAsync(value, msg, true);
+                        else 
+                            return value; 
+                    }
                 }
                 else
                 {

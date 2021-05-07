@@ -97,7 +97,7 @@ namespace donniebot.services
         public async Task<bool> IsSuccessAsync(string url)
         {
             url = ParseUrl(url);
-            if (url == null || !Uri.TryCreate(url, UriKind.Absolute, out var uri)) return false;
+            if (url == null || !Uri.IsWellFormedUriString(url, UriKind.Absolute) || !Uri.TryCreate(url, UriKind.Absolute, out var uri)) return false;
 
             var res = await _hc.SendAsync(new HttpRequestMessage(HttpMethod.Head, uri));
 
