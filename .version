@@ -1,6 +1,6 @@
-Fri May 7 17:38:50 UTC 2021
-commit 9facb08c5b0d2623429671d1223863ff18238cc9
+Fri May 7 17:47:41 UTC 2021
+commit 4e1f0dd8e8ac328e23c6fed02f331b5dfe5e9182
 Author: jakedacatman <helloihaxxedu@gmail.com>
-Date:   2021-05-07 13:38:31 -0400
+Date:   2021-05-07 13:47:23 -0400
 
-    fix typo
+    clean up help/cmds
