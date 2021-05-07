@@ -1,6 +1,6 @@
-Fri May 7 22:37:36 UTC 2021
-commit d8b0badb9002a5462d345a3704da169b1921a098
+Fri May 7 22:38:09 UTC 2021
+commit 35fcf55d4d3bb613bfdf7a5db6b8bddb7c16e15f
 Author: jakedacatman <helloihaxxedu@gmail.com>
-Date:   2021-05-07 18:37:17 -0400
+Date:   2021-05-07 18:37:56 -0400
 
-    switch most error handling to Program.cs
+    Merge branch 'master' of https://github.com/jakedacatman/donniebot
