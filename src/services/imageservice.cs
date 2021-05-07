@@ -1265,7 +1265,7 @@ namespace donniebot.services
 
                     url = url.Trim('<').Trim('>');
 
-                    if (!string.IsNullOrWhiteSpace(url) && reg.Match(url).Success)
+                    if (!string.IsNullOrWhiteSpace(url) && reg.Match(url).Success && Uri.IsWellFormedUriString(url, UriKind.Absolute))
                         return url;
                     else if (msg.Attachments.Any())
                         return msg?.Attachments.First().Url;
