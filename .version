@@ -1,6 +1,6 @@
-Fri May 7 01:20:31 UTC 2021
-commit 02a4049c3b11424648008f16e3bb59c2166addf5
+Fri May 7 02:01:54 UTC 2021
+commit 9d14878d3b56e291c0f8b01eeb0a28345a4578a2
 Author: jakedacatman <helloihaxxedu@gmail.com>
-Date:   2021-05-06 21:20:16 -0400
+Date:   2021-05-06 21:45:29 -0400
 
-    Merge branch 'master' of https://github.com/jakedacatman/donniebot
+    fix image detection
