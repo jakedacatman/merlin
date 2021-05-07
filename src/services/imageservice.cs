@@ -1198,6 +1198,8 @@ namespace donniebot.services
         {
             if (url is not null) 
             {
+                var reg = new Regex(@"http[s]?:\/\/");
+
                 if (Discord.MentionUtils.TryParseUser(url, out var uId))
                     return _client.GetUser(uId).GetAvatarUrl(size: 512);
                 else if (Discord.Emote.TryParse(url, out var e) && await _net.IsSuccessAsync(e.Url))
@@ -1236,7 +1238,6 @@ namespace donniebot.services
                         throw new ImageException("That tag does not exist.");
                     else
                     {
-                        var reg = new Regex(@"http[s]?:\/\/");
                         var value = tag.Value;
 
                         if (!reg.Match(value).Success || !await _net.IsSuccessAsync(value)) 
@@ -1264,7 +1265,7 @@ namespace donniebot.services
 
                     url = url.Trim('<').Trim('>');
 
-                    if (!string.IsNullOrWhiteSpace(url) && Uri.IsWellFormedUriString(url, UriKind.Absolute))
+                    if (!string.IsNullOrWhiteSpace(url) && reg.Match(url).Success)
                         return url;
                     else if (msg.Attachments.Any())
                         return msg?.Attachments.First().Url;
