@@ -1217,7 +1217,7 @@ namespace donniebot.services
                     return _client.GetUser(uId).GetAvatarUrl(size: 512);
                 else if (Discord.Emote.TryParse(url, out var e) && await _net.IsSuccessAsync(e.Url))
                     return e.Url;
-                else if (url.Substring(0, 7) == "roblox:")
+                else if (url.Length > 7 && url.Substring(0, 7) == "roblox:")
                 {
                     var usernameOrId = url.Substring(7);
 
@@ -1242,7 +1242,7 @@ namespace donniebot.services
 
                     return robloxUrl;
                 }
-                else if (url.Substring(0, 4) == "tag:")
+                else if (url.Length > 4 && url.Substring(0, 4) == "tag:")
                 {
                     var key = url.Substring(4);
                     var tag = _db.GetTag(key, (msg.Channel as SocketGuildChannel).Guild.Id);
