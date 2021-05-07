@@ -1103,7 +1103,7 @@ namespace donniebot.services
                 };
  
                 var postdata = post["children"].Shuffle();
-                if (GetImage(postdata, gId, nsfw, out img)) break;
+                if (GetImage(postdata, gId, nsfw, out img, false)) break;
 
                 if (postdata.Count() < count) return img; //no more pages
                 else
@@ -1114,7 +1114,7 @@ namespace donniebot.services
             return img;
         }
 
-        private bool GetImage(IEnumerable<JToken> postdata, ulong gId, bool nsfw, out GuildImage image, bool video = false)
+        private bool GetImage(IEnumerable<JToken> postdata, ulong gId, bool nsfw, out GuildImage image, bool doRepeats, bool video = false)
         {
             for (int i = 0; i < postdata.Count(); i++)
             {
@@ -1134,20 +1134,23 @@ namespace donniebot.services
                         hint = "video";
                     }
 
+                    if (hint == "image" && url.Substring(url.Length - 4, 4) == ".gif")
+                        hint = "gif";
+
                     image = new GuildImage(url, gId, author: $"u/{post["author"].Value<string>()}", title: title, type: hint);
 
-                    if (!sentImages.ContainsObj(image))
-                    {
-                        if (nsfw)
+                        if (!sentImages.ContainsObj(image) || doRepeats)
                         {
-                            sentImages.Add(image);
-                            return true;
-                        }
-                        else if (!post["over_18"].Value<bool>())
-                        {
-                            sentImages.Add(image);
-                            return true;
-                        } 
+                            if (nsfw)
+                            {
+                                sentImages.Add(image);
+                                return true;
+                            }
+                            else if (!post["over_18"].Value<bool>())
+                            {
+                                sentImages.Add(image);
+                                return true;
+                            } 
                     }
                 }
             }
@@ -1162,7 +1165,17 @@ namespace donniebot.services
             try
             {
                 var post = JsonConvert.DeserializeObject<JArray>(await _net.DownloadAsStringAsync($"{postUrl}.json"))[0];
-                if (!GetImage(post["data"]["children"], channel.Guild.Id, nsfw, out var img, true) || img.Type != "video") return false;
+                if (!GetImage(post["data"]["children"], channel.Guild.Id, nsfw, out var img, true, true)) return false;
+                if (img.Type != "video" && img.Type != "gif") return false;
+
+                if (img.Type == "gif")
+                {
+                    var f = $"{_rand.GenerateId()}.gif";
+                    var data = await _net.DownloadFromUrlAsync(img.Url);
+                    await File.WriteAllBytesAsync(f, data);
+                    await SendToChannelAsync(f, channel as ISocketMessageChannel, msg);
+                    return true;
+                }
 
                 var reg = new Regex("DASH_[0-9]{1,4}");
                 var videoUrl = img.Url;

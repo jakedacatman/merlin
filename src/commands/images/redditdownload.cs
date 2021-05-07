@@ -47,7 +47,11 @@ namespace donniebot.commands
 
                 var msg = await ReplyAsync("Downloading your video...");
                 var c = Context.Channel as SocketGuildChannel;
-                await _img.DownloadRedditVideoAsync(post, c, (c as SocketTextChannel).IsNsfw, Context.Message.Reference);
+                var succ = await _img.DownloadRedditVideoAsync(post, c, (c as SocketTextChannel).IsNsfw, new MessageReference(Context.Message.Id));
+                if (!succ)
+                    await ReplyAsync("Video failed to download. Was it really a video or GIF?");
+
+                await msg.DeleteAsync();
             }
             catch (System.Net.Http.HttpRequestException e)
             {
