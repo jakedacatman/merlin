@@ -1,6 +1,6 @@
-Fri May 7 17:47:41 UTC 2021
-commit 4e1f0dd8e8ac328e23c6fed02f331b5dfe5e9182
+Fri May 7 22:37:36 UTC 2021
+commit d8b0badb9002a5462d345a3704da169b1921a098
 Author: jakedacatman <helloihaxxedu@gmail.com>
-Date:   2021-05-07 13:47:23 -0400
+Date:   2021-05-07 18:37:17 -0400
 
-    clean up help/cmds
+    switch most error handling to Program.cs
