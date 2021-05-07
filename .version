@@ -1,6 +1,6 @@
-Fri May 7 02:02:48 UTC 2021
-commit 1dec484421f7e4dabbb2abbbb5336d39994fc5cf
+Fri May 7 03:06:40 UTC 2021
+commit eb564f28edad87f4b2dd78132e39e2e558924eff
 Author: jakedacatman <helloihaxxedu@gmail.com>
-Date:   2021-05-06 22:02:33 -0400
+Date:   2021-05-06 23:06:17 -0400
 
-    Merge branch 'master' of https://github.com/jakedacatman/donniebot
+    made rdd download gifs + fix message replying
