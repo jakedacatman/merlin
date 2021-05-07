@@ -9,6 +9,7 @@ using System.Net.Http.Headers;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using donniebot.classes;
+using System.Net;
 
 namespace donniebot.services
 {
@@ -101,6 +102,16 @@ namespace donniebot.services
             var res = await _hc.SendAsync(new HttpRequestMessage(HttpMethod.Head, uri));
 
             if (res.IsSuccessStatusCode) return true;
+            
+            switch (res.StatusCode)
+            {
+                case HttpStatusCode.Redirect:
+                    return true;
+                case HttpStatusCode.RedirectKeepVerb:
+                    return true;
+                case HttpStatusCode.RedirectMethod:
+                    return true;
+            }
 
             return false;
         }

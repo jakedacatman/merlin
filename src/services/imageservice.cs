@@ -1200,6 +1200,31 @@ namespace donniebot.services
                     return _client.GetUser(uId).GetAvatarUrl(size: 512);
                 else if (Discord.Emote.TryParse(url, out var e) && await _net.IsSuccessAsync(e.Url))
                     return e.Url;
+                else if (url.Substring(0, 7) == "roblox:")
+                {
+                    var usernameOrId = url.Substring(7);
+
+                    var robloxUrl = "https://www.roblox.com/Thumbs/Avatar.ashx?x=512&y=512&Format=Png&username=";
+                    if (ulong.TryParse(usernameOrId, out var id))
+                    {
+                        var res = JsonConvert.DeserializeObject<JObject>(await _net.DownloadAsStringAsync($"https://users.roblox.com/v1/users/{id}"));
+                        if (res["errors"] is not null)
+                            throw new ImageException($"Invalid Roblox user ID. ({res["errors"][0]["message"].Value<string>()})");
+                        else
+                            robloxUrl += res["name"].Value<string>();
+                    }
+                    else
+                    {
+                        var res = JsonConvert.DeserializeObject<JObject>(await _net.DownloadAsStringAsync($"https://users.roblox.com/v1/users/search?keyword={usernameOrId}&limit=10"));
+
+                        if (!res["data"].Any() || !res["data"].Any(x => x["name"].Value<string>() == usernameOrId))
+                            throw new ImageException("Invalid Roblox username.");
+                        else
+                            robloxUrl += usernameOrId;
+                    }
+
+                    return robloxUrl;
+                }
                 else
                 {
                     var points = url.Utf8ToCodePoints()
