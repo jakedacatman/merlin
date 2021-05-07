@@ -33,10 +33,6 @@ namespace donniebot.commands
         {
             Dictionary<string, List<string>> modules = new Dictionary<string, List<string>>();
 
-            var msg = await ReplyAsync("fart");
-            await msg.DeleteAsync();
-            await msg.DeleteAsync();
-
             foreach (ModuleInfo module in _commands.Modules)
             {
                 if (module.Name == "") continue;
