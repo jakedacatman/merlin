@@ -860,6 +860,8 @@ namespace donniebot.services
             {
                 if (string.IsNullOrEmpty(text) && string.IsNullOrEmpty(bottomText))
                     throw new ImageException("Text cannot be blank.");
+
+                var maxArea = new SizeF(0.1f * source.Width, 0.3f * source.Height);
             
                 var size = Math.Min(source.Height / 10f, source.Width / 10f);
                 Font f = SystemFonts.CreateFont("Impact", size);
@@ -1245,8 +1247,25 @@ namespace donniebot.services
                 else if (url.Length > 7 && url.Substring(0, 7) == "roblox:")
                 {
                     var usernameOrId = url.Substring(7);
+                    var size = 512;
 
-                    var robloxUrl = "https://www.roblox.com/Thumbs/Avatar.ashx?x=512&y=512&Format=Png&username=";
+                    if (usernameOrId.Contains("@"))
+                    {
+                        var userAndSize = usernameOrId.Split('@');
+
+                        if (!int.TryParse(userAndSize[1], out size))
+                            throw new ImageException($"{userAndSize[1]} is not a valid size.");
+
+                        if (size < 100)
+                            throw new ImageException($"{size} is not a valid size. (must be 100 or greater)");
+
+                        if (size > 512)
+                            throw new ImageException($"{size} is not a valid size. (must be 512 or lower)");
+
+                        usernameOrId = userAndSize[0];
+                    }
+
+                    var robloxUrl = $"https://www.roblox.com/Thumbs/Avatar.ashx?x={size}&y={size}&Format=Png&username=";
                     if (ulong.TryParse(usernameOrId, out var id))
                     {
                         var res = JsonConvert.DeserializeObject<JObject>(await _net.DownloadAsStringAsync($"https://users.roblox.com/v1/users/{id}"));
