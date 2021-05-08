@@ -22,6 +22,7 @@ using Newtonsoft.Json.Linq;
 using UkooLabs.SVGSharpie.ImageSharp;
 using ISImage = SixLabors.ImageSharp.Image;
 using Discord;
+using SixLabors.ImageSharp.Formats.Png;
 
 namespace donniebot.services
 {
@@ -283,7 +284,7 @@ namespace donniebot.services
                 {
                     var ow = overlay.Width;
                     var oh = overlay.Height;
-                    overlay.Mutate(x => x.Rotate(rot));
+                    overlay.Mutate(x => x.Rotate(rot, KnownResamplers.MitchellNetravali));
                     var nw = overlay.Width;
                     var nh = overlay.Height;
             
@@ -1346,7 +1347,11 @@ namespace donniebot.services
                 {
                     path = $"{id}.png";
                     using (var file = File.Open(path, FileMode.OpenOrCreate))
-                        source.SaveAsPng(file);
+                        source.SaveAsPng(file, new PngEncoder
+                        {
+                            ColorType = PngColorType.RgbWithAlpha,
+                            TransparentColorMode = PngTransparentColorMode.Preserve
+                        });
                 }
             }
 
