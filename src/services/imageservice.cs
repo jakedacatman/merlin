@@ -216,7 +216,7 @@ namespace donniebot.services
                 TextOptions = to
             };
 
-            PointF location = new PointF(source.Width / 2f, height * .5f);
+            PointF location = new PointF(padding, height * .5f);
 
             img.Mutate(x => x.DrawText(options, text, font, SixLabors.ImageSharp.Color.Black, location));
 
@@ -886,7 +886,7 @@ namespace donniebot.services
                     TextOptions = to
                 };
 
-                PointF location = new PointF(source.Width / 2f, .95f * source.Height);
+                PointF location = new PointF(padding, .95f * source.Height);
 
                 float pSize = Math.Max(size / 10f, 1f);
 
