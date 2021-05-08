@@ -196,20 +196,26 @@ namespace donniebot.services
             
             img.Mutate(x => x.Resize(source.Width, height + source.Height));
 
-            SystemFonts.TryFind("Twemoji Mozilla", out var tcef);
-            SystemFonts.TryFind("HanaMinA", out var hmf);
+            if (!SystemFonts.TryFind("Twemoji Mozilla", out var tcef) && !SystemFonts.TryFind("Twemoji", out tcef))
+                throw new ImageException("Failed to find the Twemoji font. Make sure that it is installed in the right place!");
+                
+            if (!SystemFonts.TryFind("HanaMinA", out var hmf) && !SystemFonts.TryFind("Yu Gothic", out hmf))
+                throw new ImageException("Failed to find the HanaMinA or Yu Gothic fonts. Make sure that either of them is installed in the right place!");
 
             var to = new TextOptions
             {
                 HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center,
                 WrapTextWidth = wrap,
-                FallbackFonts = { tcef ?? SystemFonts.Find("Twemoji"), hmf ?? SystemFonts.Find("Yu Gothic") }
+                FallbackFonts = { tcef, hmf }
             };
 
-            var options = new TextGraphicsOptions(new GraphicsOptions(), to);
+            var options = new TextGraphicsOptions()
+            {
+                TextOptions = to
+            };
 
-            PointF location = new PointF(padding, height * .5f);
+            PointF location = new PointF(source.Width / 2f, height * .5f);
 
             img.Mutate(x => x.DrawText(options, text, font, SixLabors.ImageSharp.Color.Black, location));
 
@@ -428,7 +434,12 @@ namespace donniebot.services
                 WrapTextWidth = wrap,
                 FallbackFonts = { tcef ?? SystemFonts.Find("Twemoji"), hmf ?? SystemFonts.Find("Yu Gothic") }
             };
-            var options = new TextGraphicsOptions(new GraphicsOptions(), to);
+
+            var options = new TextGraphicsOptions()
+            {
+                TextOptions = to
+            };
+
             bg.Mutate(x => x.DrawText(options, title, tFont, SixLabors.ImageSharp.Color.White, location));
 
             var nextY = tBounds.Height;// + bh;
@@ -506,7 +517,11 @@ namespace donniebot.services
                 WrapTextWidth = wrap,
                 FallbackFonts = { tcef ?? SystemFonts.Find("Twemoji"), hmf ?? SystemFonts.Find("Yu Gothic") }
             };
-            var options = new TextGraphicsOptions(new GraphicsOptions(), to);
+
+            var options = new TextGraphicsOptions()
+            {
+                TextOptions = to
+            };
 
             redpillImg.Mutate(x => x.DrawText(options, choice1, rF, Pens.Solid(SixLabors.ImageSharp.Color.Black, 3), location));
             redpillImg.Mutate(x => x.DrawText(options, choice1, rF, SixLabors.ImageSharp.Color.White, location));
@@ -851,20 +866,26 @@ namespace donniebot.services
                 float padding = 0.05f * source.Width;
                 float width = source.Width - (2 * padding);
 
-                SystemFonts.TryFind("Twemoji Mozilla", out var tcef);
-                SystemFonts.TryFind("HanaMinA", out var hmf);
+                if (!SystemFonts.TryFind("Twemoji Mozilla", out var tcef) && !SystemFonts.TryFind("Twemoji", out tcef))
+                    throw new ImageException("Failed to find the Twemoji font. Make sure that it is installed in the right place!");
+                
+                if (!SystemFonts.TryFind("HanaMinA", out var hmf) && !SystemFonts.TryFind("Yu Gothic", out hmf))
+                    throw new ImageException("Failed to find the HanaMinA or Yu Gothic fonts. Make sure that either of them is installed in the right place!");
 
                 var to = new TextOptions
                 {
                     HorizontalAlignment = HorizontalAlignment.Center,
                     VerticalAlignment = VerticalAlignment.Bottom,
                     WrapTextWidth = width,
-                    FallbackFonts = { tcef ?? SystemFonts.Find("Twemoji"), hmf ?? SystemFonts.Find("Yu Gothic") }
+                    FallbackFonts = { tcef, hmf }
                 };
 
-                var options = new TextGraphicsOptions(new GraphicsOptions(), to);
+                var options = new TextGraphicsOptions()
+                {
+                    TextOptions = to
+                };
 
-                PointF location = new PointF(padding, .95f * source.Height);
+                PointF location = new PointF(source.Width / 2f, .95f * source.Height);
 
                 float pSize = Math.Max(size / 10f, 1f);
 
@@ -877,11 +898,14 @@ namespace donniebot.services
                 {
                     source.Mutate(x => x.DrawText(options, bottomText, f, Pens.Solid(SixLabors.ImageSharp.Color.Black, pSize), location));
                     source.Mutate(x => x.DrawText(options, bottomText, f, SixLabors.ImageSharp.Color.White, location));
+
                     options.TextOptions.VerticalAlignment = VerticalAlignment.Top;
-                    location = new PointF(padding, .05f * source.Height);
+                    location.Y = .05f * source.Height;
+
                     source.Mutate(x => x.DrawText(options, text, f, Pens.Solid(SixLabors.ImageSharp.Color.Black, pSize), location));
                     source.Mutate(x => x.DrawText(options, text, f, SixLabors.ImageSharp.Color.White, location));
                 }
+
                 return source;
             }
         }
@@ -889,7 +913,7 @@ namespace donniebot.services
         public async Task<ISImage> ResizeAsync(string url, int x, int y) => Resize(await DownloadFromUrlAsync(url, x, y), x, y);
         public ISImage Resize(ISImage source, int x, int y)
         {
-            if (x > 2000 || y > 2000 || x < 0 || y < 0) throw new ImageException("The dimensions were either too small or too large.");
+            if (x > 2000 || y > 2000 || x < 1 || y < 1) throw new ImageException("The dimensions were either too small or too large. The maximum is 2000 x 2000 pixels and the minimum is 1 x 1 pixels.");
 
             if (source.Frames.Count > 1)
                 source = ResizeGif(source, x, y);
