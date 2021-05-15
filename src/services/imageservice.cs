@@ -194,7 +194,7 @@ namespace donniebot.services
                 FallbackFonts = { tcef, hmf }
             };
 
-            var options = new TextGraphicsOptions()
+            var options = new DrawingOptions()
             {
                 TextOptions = to
             };
@@ -243,7 +243,7 @@ namespace donniebot.services
 
             return Overlay(source, overlay, location, size, rot);  
         }
-        public ISImage Overlay(ISImage source, ISImage overlay, Point location, Size size, float rot = 0f)
+        public ISImage Overlay(ISImage source, ISImage overlay, PointF location, SizeF size, float rot = 0f)
         {
             if (overlay.Frames.Count > 1)
             {
@@ -263,7 +263,7 @@ namespace donniebot.services
                     overlay.Mutate(h => h.Resize(new ResizeOptions
                     {
                         Mode = ResizeMode.Stretch,
-                        Size = size,
+                        Size = (Size)size,
                         Sampler = KnownResamplers.MitchellNetravali
                     }));
 
@@ -275,10 +275,10 @@ namespace donniebot.services
                     var nw = overlay.Width;
                     var nh = overlay.Height;
             
-                    location = new Point(location.X - ((nw - ow) / 2), location.Y - ((nh - oh) / 2));
+                    location = new PointF(location.X - ((nw - ow) / 2), location.Y - ((nh - oh) / 2));
                 }
 
-                source.Mutate(x => x.DrawImage(overlay, location, 1f));
+                source.Mutate(x => x.DrawImage(overlay, (Point)location, 1f));
             }
 
             return source;
@@ -396,7 +396,7 @@ namespace donniebot.services
                 FallbackFonts = { tcef ?? SystemFonts.Find("Twemoji"), hmf ?? SystemFonts.Find("Yu Gothic") }
             };
 
-            var options = new TextGraphicsOptions()
+            var options = new DrawingOptions()
             {
                 TextOptions = to
             };
@@ -479,7 +479,7 @@ namespace donniebot.services
                 FallbackFonts = { tcef ?? SystemFonts.Find("Twemoji"), hmf ?? SystemFonts.Find("Yu Gothic") }
             };
 
-            var options = new TextGraphicsOptions()
+            var options = new DrawingOptions()
             {
                 TextOptions = to
             };
@@ -669,7 +669,7 @@ namespace donniebot.services
 
             return source;
         }
-        public ISImage GifFilter(ISImage source, ISImage x, Point y, Size z, float w, Func<ISImage, ISImage, Point, Size, float, ISImage> func)
+        public ISImage GifFilter(ISImage source, ISImage x, PointF y, SizeF z, float w, Func<ISImage, ISImage, PointF, SizeF, float, ISImage> func)
         {
             if (x.Frames.Count <= 1 && source.Frames.Count <= 1) throw new InvalidOperationException("can't use a gif filter on a stationary image");
                 
@@ -785,14 +785,16 @@ namespace donniebot.services
                     throw new ImageException("Text cannot be blank.");
 
                 float padding = 0.05f * source.Width;
-                float width = source.Width - (2 * padding);
+                float width = source.Width -  (2 * padding);
 
-                var maxArea = new SizeF(0.9f * source.Width, 0.4f * source.Height);
+                var maxArea = new SizeF(width, 0.4f * source.Height);
             
                 var tSize = Math.Min(source.Height / 10f, source.Width / 10f);
                 Font tF = SystemFonts.CreateFont("Impact", tSize);
 
-                var tOptions = new RendererOptions(tF)
+                var meta = source.Metadata;
+
+                var tOptions = new RendererOptions(tF, (float)meta.HorizontalResolution, (float)meta.VerticalResolution, new System.Numerics.Vector2(padding, 0))
                 {
                     VerticalAlignment = VerticalAlignment.Top,
                     HorizontalAlignment = HorizontalAlignment.Center,
@@ -810,12 +812,9 @@ namespace donniebot.services
                 var bSize = Math.Min(source.Height / 10f, source.Width / 10f);
                 Font bF = SystemFonts.CreateFont("Impact", bSize);
 
-                var meta = source.Metadata;
 
-                var bOptions = new RendererOptions(bF)
+                var bOptions = new RendererOptions(bF, (float)meta.HorizontalResolution, (float)meta.VerticalResolution, new System.Numerics.Vector2(padding, 0))
                 {
-                    DpiX = (float)meta.HorizontalResolution,
-                    DpiY = (float)meta.VerticalResolution,
                     VerticalAlignment = VerticalAlignment.Bottom,
                     HorizontalAlignment = HorizontalAlignment.Center,
                     WrappingWidth = width
@@ -845,7 +844,7 @@ namespace donniebot.services
                     FallbackFonts = { tcef, hmf }
                 };
 
-                var options = new TextGraphicsOptions()
+                var options = new DrawingOptions()
                 {
                     TextOptions = to
                 };
@@ -926,7 +925,7 @@ namespace donniebot.services
             return source;
         }
 
-        public async Task<ISImage> SpeedUpAsync(string url, double speed) => SpeedUp(await DownloadFromUrlAsync(url), 2);
+        public async Task<ISImage> SpeedUpAsync(string url, double speed) => SpeedUp(await DownloadFromUrlAsync(url), speed);
         public ISImage SpeedUp(ISImage source, double speed)
         {
             if (speed > 1000d || speed <= 0d) speed = 2d;
@@ -1378,7 +1377,7 @@ namespace donniebot.services
             File.Delete(path);
         }
 
-        public async Task<ISImage> DownloadFromUrlAsync(string url, int sizeX = 500, int sizeY = 500)
+        public async Task<ISImage> DownloadFromUrlAsync(string url, int sizeX = 512, int sizeY = 512)
         {
             if (!url.Contains("svg") && (await _net.GetContentTypeAsync(url))?.ToLower() != "image/svg+xml")
                 return ISImage.Load(await _net.DownloadFromUrlAsync(url), out _format);

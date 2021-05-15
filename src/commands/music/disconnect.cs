@@ -34,7 +34,7 @@ namespace donniebot.commands
             }
 
             if ((Context.User as SocketGuildUser).VoiceChannel == vc || !_audio.GetListeningUsers(Context.Guild.Id).Any())
-                await _audio.DisconnectAsync(vc);
+                await _audio.DisconnectAsync(vc, Context.Channel);
             else
                 await ReplyAsync("You are not in my voice channel, or there are people still listening.");
         }

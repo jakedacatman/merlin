@@ -64,7 +64,7 @@ namespace donniebot.services
             return np;
         }
 
-        public async Task DisconnectAsync(SocketVoiceChannel channel)
+        public async Task DisconnectAsync(SocketVoiceChannel channel, ISocketMessageChannel tc = null)
         {
             var id = channel.Guild.Id;
 
@@ -73,7 +73,7 @@ namespace donniebot.services
             if (GetConnection(id, out var connection))
             {
                 connection.IsPlaying = false;
-                await connection.LeaveAsync();
+                await connection.LeaveAsync(tc);
 
                 _connections.Remove(connection);
                 connection.Dispose();

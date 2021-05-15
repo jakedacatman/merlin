@@ -62,12 +62,17 @@ namespace donniebot.classes
                 Queue.InsertRange(position.Value, s);
         }
 
-        public async Task LeaveAsync()
+        public async Task LeaveAsync(ISocketMessageChannel tc = null)
         {
             _skips = 0;
             Queue.RemoveAll(x => x.GuildId >= 0);
             SongSkipped?.Invoke(this, this.Current);
-            await TextChannel.SendMessageAsync("👋");
+
+            if (tc != null)
+                await tc.SendMessageAsync("👋");
+            else 
+                await TextChannel.SendMessageAsync("👋");
+
             HasDisconnected = true;
         }
 
