@@ -1188,7 +1188,7 @@ namespace donniebot.services
                     await File.WriteAllBytesAsync(fn, data);
                 }
 
-                await SendToChannelAsync(fn, channel as ISocketMessageChannel, msg);
+                await SendToChannelAsync(fn, channel as ISocketMessageChannel, msg, true);
                 return true;
             }
             finally
@@ -1365,13 +1365,16 @@ namespace donniebot.services
             }
         }
 
-        public async Task SendToChannelAsync(ISImage img, ISocketMessageChannel ch, Discord.MessageReference msg = null) => await SendToChannelAsync(Save(img), ch, msg);
-        public async Task SendToChannelAsync(string path, ISocketMessageChannel ch, Discord.MessageReference msg = null)
+        public async Task SendToChannelAsync(ISImage img, ISocketMessageChannel ch, Discord.MessageReference msg = null, bool ping = false) => await SendToChannelAsync(Save(img), ch, msg, ping);
+        public async Task SendToChannelAsync(string path, ISocketMessageChannel ch, Discord.MessageReference msg = null, bool ping = false)
         {
             var ext = path.Split('.')[1];
             var len = new FileInfo(path).Length;
+
+            var doPing = ping ? Discord.AllowedMentions.All : Discord.AllowedMentions.None;
+
             if (len > 8388119) //allegedly discord's limit
-                await ch.SendMessageAsync(await _net.UploadAsync(path, ext), messageReference: msg, allowedMentions: Discord.AllowedMentions.None);
+                await ch.SendMessageAsync(await _net.UploadAsync(path, ext), messageReference: msg, allowedMentions: doPing);
             else
                 await ch.SendFileAsync(path, messageReference: msg, allowedMentions: Discord.AllowedMentions.None);
             File.Delete(path);
