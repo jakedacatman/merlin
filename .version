@@ -1,6 +1,6 @@
-Sat May 15 19:46:16 UTC 2021
-commit f8df747b3286974cf8c122a165acbb85c07f73e0
+Sat May 15 20:33:51 UTC 2021
+commit 0ee3135ed893a7925bac9288ac68036aaf49cd23
 Author: jakedacatman <helloihaxxedu@gmail.com>
-Date:   2021-05-15 15:45:54 -0400
+Date:   2021-05-15 16:33:32 -0400
 
-    allow rdd command to ping user
+    new command
