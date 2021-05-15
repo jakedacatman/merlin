@@ -481,7 +481,7 @@ namespace donniebot.services
         {
             SongInfo info;
 
-            if (!Uri.IsWellFormedUriString(queryOrUrl, UriKind.Absolute) || !new Uri(queryOrUrl).Host.Contains("youtube"))
+            if (!Uri.IsWellFormedUriString(queryOrUrl, UriKind.Absolute) || !new Uri(queryOrUrl).Host.Contains("youtube") || !new Uri(queryOrUrl).Host.Contains("youtu.be"))
             {
                 var video = await GetVideoAsync(queryOrUrl);
                 if (video is null) return null;

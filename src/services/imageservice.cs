@@ -163,24 +163,6 @@ namespace donniebot.services
         public async Task<ISImage> CaptionAsync(string url, string text) => Caption(await DownloadFromUrlAsync(url), text);
         public ISImage Caption(ISImage source, string text)
         {
-            var img = ISImage.Load(new byte[]
-            {
-                137, 80, 78, 71, 13, 
-                10, 26, 10, 0, 0, 
-                0, 13, 73, 72, 68, 
-                82, 0, 0, 0, 1, 
-                0, 0, 0, 1, 8, 
-                6, 0, 0, 0, 31, 
-                21, 196, 137, 0, 0, 
-                0, 11, 73, 68, 65, 
-                84, 8, 215, 99, 248, 
-                15, 4, 0, 9, 251, 
-                3, 253, 99, 38, 197, 
-                143, 0, 0, 0, 0, 
-                73, 69, 78, 68, 174, 
-                66, 96, 130
-            });
-
             var font = SystemFonts.Collection.CreateFont("LimerickCdSerial-Xbold", source.Width / 12f, FontStyle.Bold);
             //var font = SystemFonts.Collection.CreateFont("Twemoji", source.Width / 12f, FontStyle.Regular);
             float padding = 0.05f * source.Width;
@@ -194,8 +176,9 @@ namespace donniebot.services
             });
 
             var height = Math.Max((int)(bounds.Height * 1.25), (int)(source.Height / 4.5f));
+
+            var img = new Image<Rgba32>(source.Width, source.Height + height);
             
-            img.Mutate(x => x.Resize(source.Width, height + source.Height));
 
             if (!SystemFonts.TryFind("Twemoji Mozilla", out var tcef) && !SystemFonts.TryFind("Twemoji", out tcef))
                 throw new ImageException("Failed to find the Twemoji font. Make sure that it is installed in the right place!");
@@ -218,7 +201,11 @@ namespace donniebot.services
 
             PointF location = new PointF(padding, height * .5f);
 
-            img.Mutate(x => x.DrawText(options, text, font, SixLabors.ImageSharp.Color.Black, location));
+            img.Mutate(x =>
+            {
+                x.Fill(SixLabors.ImageSharp.Color.White);
+                x.DrawText(options, text, font, SixLabors.ImageSharp.Color.Black, location);
+            });
 
             if (source.Frames.Count() > 1)
             {
@@ -346,28 +333,6 @@ namespace donniebot.services
         public async Task<ISImage> DemotivationalAsync(string url, string title, string text) => Demotivational(await DownloadFromUrlAsync(url), title, text);
         public ISImage Demotivational(ISImage source, string title, string text)
         {
-            ISImage bg = ISImage.Load(new byte[]
-            {
-                137, 80, 78, 71, 13, 
-                10, 26, 10, 0, 0, 
-                0, 13, 73, 72, 68, 
-                82, 0, 0, 0, 1, 
-                0, 0, 0, 1, 8, 
-                6, 0, 0, 0, 31, 
-                21, 196, 137, 0, 0, 
-                0, 6, 98, 75, 71, 
-                68, 0, 104, 0, 137, 
-                0, 128, 83, 93, 36, 
-                220, 0, 0, 0, 13, 
-                73, 68, 65, 84, 8, 
-                215, 99, 96, 100, 96, 
-                252, 15, 0, 1, 10, 
-                1, 2, 233, 211, 149, 
-                8, 0, 0, 0, 0, 
-                73, 69, 78, 68, 174, 
-                66, 96, 130
-            });
-
             var w = source.Width;
             var h = source.Height;
 
@@ -409,12 +374,7 @@ namespace donniebot.services
 
             var height = tBounds.Height + bh;
 
-            bg.Mutate(x => x.Resize(new ResizeOptions
-            {
-                Mode = ResizeMode.Stretch,
-                Size = new Size((int)Math.Round((5d / 4d) * w), (int)Math.Round((1.25f * h) + height + bounds.Height)),
-                Sampler = KnownResamplers.NearestNeighbor
-            }));
+            ISImage bg = new Image<Rgba32>((int)Math.Round((5d / 4d) * w), (int)Math.Round((1.25f * h) + height + bounds.Height));
 
             var rWidth = Math.Max(0.05f * bw, 3f);
             var offset = rWidth + 2;
@@ -524,12 +484,18 @@ namespace donniebot.services
                 TextOptions = to
             };
 
-            redpillImg.Mutate(x => x.DrawText(options, choice1, rF, Pens.Solid(SixLabors.ImageSharp.Color.Black, 3), location));
-            redpillImg.Mutate(x => x.DrawText(options, choice1, rF, SixLabors.ImageSharp.Color.White, location));
+            redpillImg.Mutate(x => 
+            {
+                x.DrawText(options, choice1, rF, Pens.Solid(SixLabors.ImageSharp.Color.Black, 3), location);
+                x.DrawText(options, choice1, rF, SixLabors.ImageSharp.Color.White, location);
+            });
 
             location = new PointF(521 - (.5f * blueBounds.Width), 270);
-            redpillImg.Mutate(x => x.DrawText(options, choice2, bF, Pens.Solid(SixLabors.ImageSharp.Color.Black, 3), location));
-            redpillImg.Mutate(x => x.DrawText(options, choice2, bF, SixLabors.ImageSharp.Color.White, location));
+            redpillImg.Mutate(x => 
+            {
+                x.DrawText(options, choice2, bF, Pens.Solid(SixLabors.ImageSharp.Color.Black, 3), location);
+                x.DrawText(options, choice2, bF, SixLabors.ImageSharp.Color.White, location);
+            });
 
             return redpillImg;
         }
@@ -753,34 +719,7 @@ namespace donniebot.services
         {
             if (source.Frames.Count <= 1) throw new InvalidOperationException("can't use a gif filter on a stationary image");
 
-            var newImg = ISImage.Load(new byte[] 
-            { 
-                137, 80, 78, 71, 13, 
-                10, 26, 10, 0, 0, 
-                0, 13, 73, 72, 68, 
-                82, 0, 0, 0, 1, 
-                0, 0, 0, 1, 8, 
-                2, 0, 0, 0, 144, 
-                119, 83, 222, 0, 
-                0, 0, 9, 112, 72, 
-                89, 115, 0, 0, 14, 
-                196, 0, 0, 14, 196, 
-                1, 149, 43, 14, 27, 
-                0, 0, 0, 12, 73, 68, 
-                65, 84, 120, 156, 99, 
-                49, 52, 179, 6, 0, 1, 
-                78, 0, 167, 244, 36, 
-                3, 55, 0, 0, 0, 
-                0, 73, 69, 78, 68, 
-                174, 66, 96, 130
-            }); //1 pixel image
-
-            newImg.Mutate(h => h.Resize(new ResizeOptions
-            {
-                Mode = ResizeMode.Stretch,
-                Size = new SixLabors.ImageSharp.Size(x, y),
-                Sampler = KnownResamplers.MitchellNetravali
-            }));
+            var newImg = new Image<Rgba32>(x, y);
 
             var delay = source.Frames.RootFrame.Metadata.GetFormatMetadata(GifFormat.Instance).FrameDelay;
             for (int i = 0; i < source.Frames.Count; i++)
@@ -822,31 +761,15 @@ namespace donniebot.services
         public async Task<ISImage> PlaceBelowAsync(string url, string belowUrl, bool resize = true) => PlaceBelow(await DownloadFromUrlAsync(url), await DownloadFromUrlAsync(belowUrl), resize);
         public ISImage PlaceBelow(ISImage source, ISImage below, bool resize = true)
         {
-            var src = (ISImage)ISImage.Load(new byte[]
-            {
-                137, 80, 78, 71, 13, 
-                10, 26, 10, 0, 0, 
-                0, 13, 73, 72, 68, 
-                82, 0, 0, 0, 1, 
-                0, 0, 0, 1, 8, 
-                6, 0, 0, 0, 31, 
-                21, 196, 137, 0, 0, 
-                0, 11, 73, 68, 65, 
-                84, 8, 215, 99, 248, 
-                15, 4, 0, 9, 251, 
-                3, 253, 99, 38, 197, 
-                143, 0, 0, 0, 0, 
-                73, 69, 78, 68, 174, 
-                66, 96, 130
-            }); //1px image
+            var src = new Image<Rgba32>(source.Width, source.Height + below.Height);
 
             if (resize)
                 below.Mutate(x => x.Resize(source.Width, source.Width));
 
             src.Mutate(x => x.Resize(source.Width, source.Height + below.Height));
 
-            src = Overlay(src, source, new Point(0, 0), source.Size());
-            src = Overlay(src, below, new Point(0, source.Height), below.Size());
+            src = (Image<Rgba32>)Overlay((ISImage)src, source, new Point(0, 0), source.Size());
+            src = (Image<Rgba32>)Overlay((ISImage)src, below, new Point(0, source.Height), below.Size());
 
             return src;
         }
@@ -861,13 +784,50 @@ namespace donniebot.services
                 if (string.IsNullOrEmpty(text) && string.IsNullOrEmpty(bottomText))
                     throw new ImageException("Text cannot be blank.");
 
-                var maxArea = new SizeF(0.1f * source.Width, 0.3f * source.Height);
-            
-                var size = Math.Min(source.Height / 10f, source.Width / 10f);
-                Font f = SystemFonts.CreateFont("Impact", size);
-
                 float padding = 0.05f * source.Width;
                 float width = source.Width - (2 * padding);
+
+                var maxArea = new SizeF(0.9f * source.Width, 0.4f * source.Height);
+            
+                var tSize = Math.Min(source.Height / 10f, source.Width / 10f);
+                Font tF = SystemFonts.CreateFont("Impact", tSize);
+
+                var tOptions = new RendererOptions(tF)
+                {
+                    VerticalAlignment = VerticalAlignment.Top,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    WrappingWidth = width
+                };
+
+                var tBounds = TextMeasurer.Measure(text, tOptions);
+
+                if (tBounds.Height > maxArea.Height || tBounds.Width > maxArea.Width)
+                {
+                    tSize = Math.Min(maxArea.Height / tBounds.Height * tSize, maxArea.Width / tBounds.Width * tSize);
+                    tF = SystemFonts.CreateFont("Impact", tSize);
+                }
+            
+                var bSize = Math.Min(source.Height / 10f, source.Width / 10f);
+                Font bF = SystemFonts.CreateFont("Impact", bSize);
+
+                var meta = source.Metadata;
+
+                var bOptions = new RendererOptions(bF)
+                {
+                    DpiX = (float)meta.HorizontalResolution,
+                    DpiY = (float)meta.VerticalResolution,
+                    VerticalAlignment = VerticalAlignment.Bottom,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    WrappingWidth = width
+                };
+
+                var bBounds = TextMeasurer.Measure(bottomText, bOptions);
+
+                if (bBounds.Height > maxArea.Height || bBounds.Width > maxArea.Width)
+                {
+                    bSize = Math.Min(maxArea.Height / bBounds.Height * bSize, maxArea.Width / bBounds.Width * bSize);
+                    bF = SystemFonts.CreateFont("Impact", bSize);
+                }
 
                 if (!SystemFonts.TryFind("Twemoji Mozilla", out var tcef) && !SystemFonts.TryFind("Twemoji", out tcef))
                     throw new ImageException("Failed to find the Twemoji font. Make sure that it is installed in the right place!");
@@ -877,6 +837,8 @@ namespace donniebot.services
 
                 var to = new TextOptions
                 {
+                    DpiX = (float)meta.HorizontalResolution,
+                    DpiY = (float)meta.VerticalResolution,
                     HorizontalAlignment = HorizontalAlignment.Center,
                     VerticalAlignment = VerticalAlignment.Bottom,
                     WrapTextWidth = width,
@@ -890,23 +852,33 @@ namespace donniebot.services
 
                 PointF location = new PointF(padding, .95f * source.Height);
 
-                float pSize = Math.Max(size / 10f, 1f);
+                float tPSize = Math.Max(tSize / 10f, 1f);
+                float bPSize = Math.Max(bSize / 10f, 1f);
 
                 if (bottomText == null)
                 {
-                    source.Mutate(x => x.DrawText(options, text, f, Pens.Solid(SixLabors.ImageSharp.Color.Black, pSize), location));
-                    source.Mutate(x => x.DrawText(options, text, f, SixLabors.ImageSharp.Color.White, location));
+                    source.Mutate(x =>
+                    {
+                        x.DrawText(options, text, bF, Pens.Solid(SixLabors.ImageSharp.Color.Black, bPSize), location);
+                        x.DrawText(options, text, bF, SixLabors.ImageSharp.Color.White, location);
+                    });
                 }
                 else
                 {
-                    source.Mutate(x => x.DrawText(options, bottomText, f, Pens.Solid(SixLabors.ImageSharp.Color.Black, pSize), location));
-                    source.Mutate(x => x.DrawText(options, bottomText, f, SixLabors.ImageSharp.Color.White, location));
+                    source.Mutate(x => 
+                    {
+                        x.DrawText(options, bottomText, bF, Pens.Solid(SixLabors.ImageSharp.Color.Black, bPSize), location);
+                        x.DrawText(options, bottomText, bF, SixLabors.ImageSharp.Color.White, location);
+                    });
 
                     options.TextOptions.VerticalAlignment = VerticalAlignment.Top;
                     location.Y = .05f * source.Height;
 
-                    source.Mutate(x => x.DrawText(options, text, f, Pens.Solid(SixLabors.ImageSharp.Color.Black, pSize), location));
-                    source.Mutate(x => x.DrawText(options, text, f, SixLabors.ImageSharp.Color.White, location));
+                    source.Mutate(x => 
+                    {
+                        x.DrawText(options, text, tF, Pens.Solid(SixLabors.ImageSharp.Color.Black, tPSize), location);
+                        x.DrawText(options, text, tF, SixLabors.ImageSharp.Color.White, location);
+                    });
                 }
 
                 return source;
