@@ -1,6 +1,6 @@
-Sat May 15 20:33:51 UTC 2021
-commit 0ee3135ed893a7925bac9288ac68036aaf49cd23
+Sat May 22 15:15:33 UTC 2021
+commit 992d436469fc6aa2eeede028a61756ebb63c70b9
 Author: jakedacatman <helloihaxxedu@gmail.com>
-Date:   2021-05-15 16:33:32 -0400
+Date:   2021-05-22 11:15:16 -0400
 
-    new command
+    fix command method name lol
