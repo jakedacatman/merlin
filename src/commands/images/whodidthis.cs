@@ -26,7 +26,7 @@ namespace donniebot.commands
         [Command("whodidthis")]
         [Alias("wdd")]
         [Summary("WHO DID THIS 😂")]
-        public async Task TrollAsync([Summary("The image in the middle.")] string url = null)
+        public async Task WDDAsync([Summary("The image in the middle.")] string url = null)
         {
             url = await _img.ParseUrlAsync(url, Context.Message);
             var img = await _img.DownloadFromUrlAsync(url);
