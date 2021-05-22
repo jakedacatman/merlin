@@ -1276,8 +1276,8 @@ namespace donniebot.services
                 }
                 else
                 {
-                    var points = url.Utf8ToCodePoints()
-                        .Select(x => x.ToString("x4"))
+                    var points = url.EnumerateRunes()
+                        .Select(x => x.Value.ToString("x4"))
                         .ToList();
                     var svgUrl = $"https://raw.githubusercontent.com/twitter/twemoji/master/assets/svg/{string.Join("-", points)}.svg";
                     if (await _net.IsSuccessAsync(svgUrl))

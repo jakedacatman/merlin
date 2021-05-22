@@ -23,7 +23,7 @@ namespace donniebot.commands
         }
 
         [Command("overlay")]
-        [Alias("o")]
+        [Alias("o", "ov", "ol")]
         [Summary("Overlays an image on another image.")]
         public async Task OverlayAsync([Summary("The image to overlay.")] string overlayUrl, 
             [Summary("The x-position to overlay to. Defaults to the center of the background image.")] int x = -1, 
