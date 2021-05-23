@@ -45,7 +45,7 @@ namespace donniebot.services
                 }
 
                 if (role.Position < user.Roles.OrderBy(x => x.Position).Last().Position)
-                    return MuteResult.FromError("The `Muted` role is below the user's highest role.", user.Id);
+                    return MuteResult.FromError("The \"Muted\" role is below the user's highest role.", user.Id);
 
                 if (user.Roles.Contains(role)) return MuteResult.FromError("The user is already muted.", user.Id);
 
@@ -68,10 +68,10 @@ namespace donniebot.services
 
                 if (guild.Roles.Any(x => x.Name == "Muted"))
                     role = guild.Roles.FirstOrDefault(x => x.Name == "Muted");
-                else return MuteResult.FromError("There is not a `Muted` role in the server.", user.Id);
+                else return MuteResult.FromError("There is not a \"Muted\" role in the server.", user.Id);
 
                 if (role.Position < user.Roles.OrderBy(x => x.Position).Last().Position)
-                    return MuteResult.FromError("The `Muted` role is below the user's highest role.", user.Id);
+                    return MuteResult.FromError("The \"Muted\" role is below the user's highest role.", user.Id);
 
                 if (!user.Roles.Contains(role)) return MuteResult.FromError("The user is already unmuted.", user.Id);
 
