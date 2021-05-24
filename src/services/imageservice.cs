@@ -1295,7 +1295,7 @@ namespace donniebot.services
 
                     if (!string.IsNullOrWhiteSpace(url) && reg.Match(url).Success && Uri.IsWellFormedUriString(url, UriKind.Absolute))
                         return url;
-                    else if (msg.Attachments.Any())
+                    else if (msg is not null && msg.Attachments.Any())
                         return msg?.Attachments.First().Url;
                     else if (isNext)
                         throw new ImageException("Try the command with a url, or attach an image.");
@@ -1311,12 +1311,10 @@ namespace donniebot.services
                 if (msg.Attachments.Any())
                     return msg?.Attachments.First().Url;
 
-                var refMsg = msg.ReferencedMessage;
+                var refMsg = msg?.ReferencedMessage;
 
                 if (refMsg is not null)
-                {
                     return await ParseUrlAsync(refMsg.Content, (SocketUserMessage)refMsg, true);
-                }
 
                 var previousmsg = await _misc.GetPreviousMessageAsync(msg.Channel as SocketTextChannel);
                 return await ParseUrlAsync(previousmsg.Content, previousmsg as SocketUserMessage, true); //we don't want it iterating through every message
