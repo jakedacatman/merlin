@@ -1327,11 +1327,15 @@ namespace donniebot.services
 
                 if ((_format?.DefaultMimeType == "image/gif") || source.Frames.Count > 1) 
                 {
-                    source.Metadata.GetFormatMetadata(GifFormat.Instance).ColorTableMode = GifColorTableMode.Local;
                     source.Metadata.GetFormatMetadata(GifFormat.Instance).RepeatCount = 0;
+                    var e = new GifEncoder()
+                    {
+                        ColorTableMode = GifColorTableMode.Local
+                    };
+
                     path = $"{id}.gif";
                     using (var file = File.Open(path, FileMode.OpenOrCreate))
-                        source.SaveAsGif(file);
+                        source.SaveAsGif(file, e);
                 }
                 else
                 {
@@ -1359,6 +1363,7 @@ namespace donniebot.services
             using (var file = File.Open(path, FileMode.OpenOrCreate))
             {
                 JpegEncoder s = new JpegEncoder { Quality = quality };
+                
                 source.SaveAsJpeg(file, s);
                 source.Dispose();
                 return path;

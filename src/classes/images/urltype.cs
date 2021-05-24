@@ -2,12 +2,14 @@ namespace donniebot.classes
 {
     public enum UrlType
     {
-        UserMention,
+        Mention,
+        RedditImage,
         TenorUrl,
         GiphyUrl,
         Emote,
         Emoji,
         Attachment,
-        Direct
+        DirectLink,
+        RobloxAvatar
     }
 }
