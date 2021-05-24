@@ -1311,6 +1311,13 @@ namespace donniebot.services
                 if (msg.Attachments.Any())
                     return msg?.Attachments.First().Url;
 
+                var refMsg = msg.ReferencedMessage;
+
+                if (refMsg is not null)
+                {
+                    return await ParseUrlAsync(refMsg.Content, (SocketUserMessage)refMsg, true);
+                }
+
                 var previousmsg = await _misc.GetPreviousMessageAsync(msg.Channel as SocketTextChannel);
                 return await ParseUrlAsync(previousmsg.Content, previousmsg as SocketUserMessage, true); //we don't want it iterating through every message
             }
