@@ -32,16 +32,8 @@ namespace donniebot
 
         public async Task StartAsync()
         {
-            _client = new DiscordShardedClient(new DiscordSocketConfig
-            {
-                LogLevel = LogSeverity.Verbose,
-                AlwaysDownloadUsers = false,
-                ConnectionTimeout = int.MaxValue,
-                TotalShards = 2,
-                DefaultRetryMode = RetryMode.AlwaysRetry,
-                MessageCacheSize = 1024,
-                ExclusiveBulkDelete = true
-            });
+            _client = new DiscordShardedClient();
+
             _commands = new CommandService(new CommandServiceConfig
             {
                 ThrowOnError = true,
@@ -87,31 +79,37 @@ namespace donniebot
             await _client.LoginAsync(TokenType.Bot, apiKey);
             await _client.StartAsync();
 
+            var cfg = new DiscordSocketConfig
+            {
+                LogLevel = LogSeverity.Verbose,
+                AlwaysDownloadUsers = false,
+                ConnectionTimeout = int.MaxValue,
+                TotalShards = await _client.GetRecommendedShardCountAsync(),
+                DefaultRetryMode = RetryMode.AlwaysRetry,
+                MessageCacheSize = 1024,
+                ExclusiveBulkDelete = true
+            };
+
+            _client = new DiscordShardedClient(cfg);
+
+            await _client.LoginAsync(TokenType.Bot, apiKey);
+            await _client.StartAsync();
+
             await _client.SetActivityAsync(new Game($"myself start up {_client.Shards.Count} shards", ActivityType.Watching));
 
             _client.Log += LogAsync;
             _client.MessageReceived += MsgReceivedAsync;
 
-            int counter = 1;
-
             _client.ShardConnected += async (DiscordSocketClient client) =>
             {
-                if (counter >= _client.Shards.Count)
+                try
                 {
-                    try
-                    {
-                        await UpdateStatusAsync(counter);
-                    }
-                    catch (Exception e)
-                    {
-                        Console.WriteLine(e);
-                        await UpdateStatusAsync(counter);
-                    }
+                    await UpdateStatusAsync(client);
                 }
-                else
-                {   
-                    counter++;
-                    return;
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                    await UpdateStatusAsync(client);
                 }
             };
 
@@ -238,6 +236,6 @@ namespace donniebot
             }
         }
 
-        private async Task UpdateStatusAsync(int counter) => await _client.SetActivityAsync(new Game($"over {counter} out of {_client.Shards.Count} shard{(_client.Shards.Count > 1 ? "s" : "")}", ActivityType.Watching));
+        private async Task UpdateStatusAsync(DiscordSocketClient client) => await client.SetActivityAsync(new Game($"over shard {client.ShardId + 1}/{_client.Shards.Count}", ActivityType.Watching));
     }
 }
