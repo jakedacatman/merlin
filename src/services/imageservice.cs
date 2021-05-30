@@ -794,7 +794,7 @@ namespace donniebot.services
 
                 var meta = source.Metadata;
 
-                var tOptions = new RendererOptions(tF, (float)meta.HorizontalResolution, (float)meta.VerticalResolution, new System.Numerics.Vector2(padding, 0))
+                var tOptions = new RendererOptions(tF, 72f, 72f, new System.Numerics.Vector2(padding, 0))
                 {
                     VerticalAlignment = VerticalAlignment.Top,
                     HorizontalAlignment = HorizontalAlignment.Center,
@@ -813,7 +813,7 @@ namespace donniebot.services
                 Font bF = SystemFonts.CreateFont("Impact", bSize);
 
 
-                var bOptions = new RendererOptions(bF, (float)meta.HorizontalResolution, (float)meta.VerticalResolution, new System.Numerics.Vector2(padding, 0))
+                var bOptions = new RendererOptions(bF, 72f, 72f, new System.Numerics.Vector2(padding, 0))
                 {
                     VerticalAlignment = VerticalAlignment.Bottom,
                     HorizontalAlignment = HorizontalAlignment.Center,
@@ -836,8 +836,8 @@ namespace donniebot.services
 
                 var to = new TextOptions
                 {
-                    DpiX = (float)meta.HorizontalResolution,
-                    DpiY = (float)meta.VerticalResolution,
+                    DpiX = 72f,
+                    DpiY = 72f,
                     HorizontalAlignment = HorizontalAlignment.Center,
                     VerticalAlignment = VerticalAlignment.Bottom,
                     WrapTextWidth = width,
