@@ -1,6 +1,6 @@
-Sun May 30 16:16:59 UTC 2021
-commit a56bdb2a3c3c7d95ff67640ed107f268e9b729ad
+Sun May 30 16:22:54 UTC 2021
+commit 2a1720a342fa48ea71161d6c233113ddddc5f69a
 Author: jakedacatman <helloihaxxedu@gmail.com>
-Date:   2021-05-30 12:16:40 -0400
+Date:   2021-05-30 12:22:36 -0400
 
-    fix prefix nullref if not found
+    change resolution of drawn text
