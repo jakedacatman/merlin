@@ -32,12 +32,12 @@ namespace donniebot.commands
                 return;
             }
             
-            var split = new List<string>(lastMsg.Split(' '));
-            var ct = lastMsg.Count(x => !char.IsWhiteSpace(x));
-            var sentenceCount = lastMsg.Count(x => x == '.' || x == '?' || x == '!');
-            if (sentenceCount < 1) sentenceCount = 1;
-            
             string msg = lastMsg.Any() ? lastMsg : "ez";
+            
+            var split = new List<string>(msg.Split(' '));
+            var ct = msg.Count(x => !char.IsWhiteSpace(x));
+            var sentenceCount = msg.Count(x => x == '.' || x == '?' || x == '!');
+            if (sentenceCount < 1) sentenceCount = 1;
 
             await ReplyAsync($"\"{msg}\" He had done it, through the typing of just {split.Count}" +
                 $" word{(split.Count > 1 ? "s" : "")}, {ct} glyph{(ct > 1 ? "s" : "")}, "+
