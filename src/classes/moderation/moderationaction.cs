@@ -10,21 +10,33 @@ namespace donniebot.classes
         public ulong ModeratorId { get; set; }
         public ulong GuildId { get; set; }
         public ActionType Type { get; set; }
-        public DateTime Timestamp { get; set; } = DateTime.Now;
-        public TimeSpan ActivePeriod { get; set; }
+        public DateTime Timestamp { get; set; } = DateTime.UtcNow;
+        public DateTime? Expiry { get; set; }
         [BsonId]
         public int Id { get; set; }
 
         public ModerationAction() { }
 
-        public ModerationAction(string reason, ulong uId, ulong mId, ulong gId, ActionType type, TimeSpan period)
+        public ModerationAction(ulong uId, ulong mId, ulong gId, ActionType type, TimeSpan? period = null, string reason = null)
         {
             Reason = reason;
             UserId = uId;
             ModeratorId = mId;
             GuildId = gId;
             Type = type;
-            ActivePeriod = period;
+            Expiry = period == null ? null : DateTime.UtcNow + period;
+        }
+
+        public ModerationAction(ulong uId, ulong mId, ulong gId, ActionType type, DateTime? expiry = null, string reason = null)
+        {
+            Reason = reason;
+            UserId = uId;
+            ModeratorId = mId;
+            GuildId = gId;
+            Type = type;
+
+            if (type != ActionType.Kick)
+                Expiry = expiry;
         }
     }
 
@@ -32,6 +44,6 @@ namespace donniebot.classes
     {
         Mute = 1,
         Kick = 2,
-        Ban = 4
+        Ban = 3
     }
 }

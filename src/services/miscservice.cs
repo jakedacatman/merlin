@@ -69,6 +69,7 @@ namespace donniebot.services
             { typeof(SocketGuildUser), "user" },
             { typeof(TimeSpan), "timespan" },
             { typeof(SocketRole), "role" },
+            { typeof(TimeSpan?), "timespan" },
         };
 
         private readonly Dictionary<Type, string> preconditionAliases = new Dictionary<Type, string>()
