@@ -1,6 +1,6 @@
-Tue Jun 8 22:00:36 UTC 2021
-commit cee90929dfe44ae606673fb9bd3b244c1a26b284
+Tue Jun 8 22:15:56 UTC 2021
+commit 697815955625808953dc4d783cb7ca016e51ca48
 Author: jakedacatman <helloihaxxedu@gmail.com>
-Date:   2021-06-08 18:00:16 -0400
+Date:   2021-06-08 18:14:40 -0400
 
-    let mutes auto-expire
+    give unmuted text
