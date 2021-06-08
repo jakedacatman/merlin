@@ -31,7 +31,12 @@ namespace donniebot.commands
             var res = await _mod.TryMuteUserAsync(Context.Guild, (Context.User as SocketGuildUser), user, reason, period);
             
             if (res.IsSuccess)
-                await ReplyAsync($"Consider it done, {Context.User.Mention}.");
+            {
+                var msg = $"Consider it done, {Context.User.Mention}.";
+                if (period is not null) msg += $" They will be unmuted at {res.Action.Expiry:r}.";
+
+                await ReplyAsync(msg);
+            }
             else
                 await ReplyAsync($"Failed to mute the user. (`{res.Message}`)");
         }
