@@ -189,28 +189,30 @@ namespace donniebot.services
                 .AddReferences(assemblies)
                 .WithAllowUnsafe(true)
                 .WithLanguageVersion(LanguageVersion.Preview);
+
+            var imports = assemblies
+                .Select(x => x.GetTypes()
+                .Select(y => y.Namespace))
+                .SelectMany(x => x)
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Distinct();
             
             try
             {
-                options = options
-                    .AddImports(assemblies
-                        .Select(x => x.GetTypes()
-                        .Select(y => y.Namespace))
-                    .SelectMany(x => x)
-                    .Where(x => !string.IsNullOrWhiteSpace(x))
-                );
+                options = options.AddImports(imports);
             }
             catch (ReflectionTypeLoadException e)
             {
                 options = options
                     .AddImports(e.Types
                         .Where(x => x is not null)
-                        .Where(x => x != typeof(UkooLabs.SVGSharpie.ImageSharp.Shapes.ArcLineSegemnt))
                         .Select(y => y.Namespace)
-                        .Where(x => !string.IsNullOrWhiteSpace(x)
-                    )
+                        .Where(x => !string.IsNullOrWhiteSpace(x))
+                        .Distinct()
                 );
             }
+
+            globals.Imports = options.Imports.ToArray();
 
             Stopwatch s = Stopwatch.StartNew();
             var script = CSharpScript.Create(code, options, typeof(Globals));
@@ -246,9 +248,9 @@ namespace donniebot.services
 
             string description;
             if (code.Length < 1000)
-                 description = $"in: ```cs\n{code}```\nout: \n";
+                 description = $"in: ```cs\n{code}```\n";
             else
-                description = $"in: **[input]({await _net.UploadToPastebinAsync(code)})**\nout: \n";
+                description = $"in: **[input]({await _net.UploadToPastebinAsync(code)})**\n";
             string tostringed = result == null ? " " : result.ToString();
 
             if (result is ICollection r)
@@ -262,13 +264,13 @@ namespace donniebot.services
             else
                 tostringed = result.MakeString();
 
-            if (tostringed == "" || string.IsNullOrEmpty(tostringed) || tostringed.Length == 0)
+            if (string.IsNullOrWhiteSpace(tostringed) || tostringed.Length == 0)
                 tostringed = " ";
             
             if (tostringed.Length > 1000)
                 description += $"Here is a **[link]({await _net.UploadToPastebinAsync(tostringed)})** to the result.";
             else
-                description += $"```{tostringed}```";
+                description += $"out: \n```{tostringed}```";
 
             if (sb.ToString().Length > 0)
                 description += $"\nConsole: \n```\n{sb}\n```";
