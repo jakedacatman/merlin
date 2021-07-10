@@ -35,7 +35,7 @@ namespace donniebot.services
         private readonly Random _random;
         private readonly RandomService _rand;
 
-        private readonly Dictionary<Type, string> _aliases = new Dictionary<Type, string>()
+        private readonly Dictionary<Type, string> luaTypeAliases = new Dictionary<Type, string>()
         {
             { typeof(double), "number" },
             { typeof(string), "string" },
@@ -162,7 +162,7 @@ namespace donniebot.services
 
             IEnumerable<Assembly> assemblies = GetAssemblies();
 
-            var sb = new StringBuilder();
+            var console = new StringBuilder();
 
             var globals = new Globals
             {
@@ -173,7 +173,7 @@ namespace donniebot.services
                 _user = context.User as SocketGuildUser,
                 _services = _services,
                 _message = context.Message,
-                Console = new FakeConsole(sb),
+                Console = new FakeConsole(console),
                 _db = _services.GetService<DbService>(),
                 _misc = this,
                 Random = _random,
@@ -251,18 +251,8 @@ namespace donniebot.services
                  description = $"in: ```cs\n{code}```\n";
             else
                 description = $"in: **[input]({await _net.UploadToPastebinAsync(code)})**\n";
-            string tostringed = result == null ? " " : result.ToString();
 
-            if (result is ICollection r)
-                tostringed = r.MakeString();
-            else if (result is IReadOnlyCollection<object> x)
-                tostringed = x.MakeString();
-            else if (result is Dictionary<object, object> d)
-                tostringed = d.MakeString();
-            else if (result is string str)
-                tostringed = str;
-            else
-                tostringed = result.MakeString();
+            string tostringed = result == null ? "null" : PrettyPrint(result);
 
             if (string.IsNullOrWhiteSpace(tostringed) || tostringed.Length == 0)
                 tostringed = " ";
@@ -272,14 +262,12 @@ namespace donniebot.services
             else
                 description += $"out: \n```{tostringed}```";
 
-            if (sb.ToString().Length > 0)
-                description += $"\nConsole: \n```\n{sb}\n```";
+            if (console.ToString().Length > 0)
+                description += $"\nConsole: \n```\n{console}\n```";
 
             string footer = "";
-            if (result is ICollection coll)
-                footer += $"Collection has {coll.Count} members • ";
-            else if (result is IReadOnlyCollection<object> colle)
-                footer += $"Collection has {colle.Count} members • ";
+            if (result is IEnumerable<object> x)
+                footer += $"Collection has {x.Count()} members • ";
 
             footer += $"Return type: {(result == null ? "null" : result.GetType().ToString())} • took {s.ElapsedTicks / 1000000d} ms to compile and {c.ElapsedTicks / 1000000d} ms to execute";
 
@@ -300,10 +288,10 @@ namespace donniebot.services
             code = code.Replace("“", "\"").Replace("‘", "\'").Replace("”", "\"").Replace("’", "\'").Trim('`');
             if (code.Length > 3 && code.Substring(0, 3) == "lua") code = code.Substring(3);
             
-            var sb = new StringBuilder();
+            var console = new StringBuilder();
             var script = new MoonSharp.Interpreter.Script(CoreModules.Preset_SoftSandbox);
             script.Options
-                .DebugPrint = s => sb.Append(s + "\n");
+                .DebugPrint = s => console.Append(s + "\n");
 
             #pragma warning disable VSTHRD101 //Avoid using async lambda for a void returning delegate type, because any exceptions not handled by the delegate will crash the process. (i handle it lol)
             script.Globals["XD"] = (Action)(async () => 
@@ -311,7 +299,6 @@ namespace donniebot.services
                 try
                 {
                     await channel.SendMessageAsync("XD");
-                    return;
                 }
                 catch (Exception e)
                 {
@@ -326,7 +313,6 @@ namespace donniebot.services
                         text = $"Message too long; here is a link to it: {await _net.UploadToPastebinAsync(text)}";
 
                     await channel.SendMessageAsync(text);
-                    return;
                 }
                 catch (Exception e)
                 {
@@ -349,81 +335,46 @@ namespace donniebot.services
             c.Stop();
 
             object result = null;
-            switch(eval.Type)
+            
+            if (eval.Type == DataType.Table)
             {
-                case DataType.Number:
-                    result = eval.Number;
-                    break;
-                case DataType.String:
-                    result = eval.String;
-                    break;
-                case DataType.Table:
-                    var tab = eval.Table;
-                    var dict = new Dictionary<DynValue, DynValue>();
-                    for (int i = 0; i < tab.Values.Count(); i++)
-                        dict.Add(tab.Keys.ElementAt(i), tab.Values.ElementAt(i));
-                    result = dict;
-                    break;
-                case DataType.Function:
-                    result = eval.Function;
-                    break;
-                case DataType.Thread:
-                    result = eval.Coroutine;
-                    break;
-                case DataType.Tuple:
-                    result = eval.Tuple;
-                    break;
-                case DataType.Boolean:
-                    result = eval.Boolean;
-                    break;
-                case DataType.UserData:
-                    result = eval.UserData;
-                    break;
+                var tab = eval.Table;
+                var dict = new Dictionary<object, object>();
+                for (int i = 0; i < tab.Values.Count(); i++)
+                    dict.Add(tab.Keys.ElementAt(i), tab.Values.ElementAt(i));
+                result = dict;
             }
+            else result = eval.ToObject();
 
             string description;
             if (code.Length < 1000)
                  description = $"in: ```lua\n{code}```\nout: \n";
             else
                 description = $"in: **[input]({await _net.UploadToPastebinAsync(code)})**\nout: \n";
-            string tostringed = (result == null) ? "nil" : result.ToString();
 
-            if (result is ICollection r)
-                tostringed = r.MakeString();
-            else if (result is IReadOnlyCollection<object> x)
-                tostringed = x.MakeString();
-            else if (result is string str)
-                tostringed = str;
-            else
-                tostringed = result.MakeString();
+            string tostringed = (result == null) ? "nil" : PrettyPrint(result);
 
-            if (tostringed == "" || string.IsNullOrEmpty(tostringed))
-                tostringed = " ";
+            if (string.IsNullOrEmpty(tostringed))
+                tostringed = "\"\"";
 
             if (tostringed.Length > 1000)
                 description += $"Here is a **[link]({await _net.UploadToPastebinAsync(tostringed)})** to the result.";
             else
                 description += $"```{tostringed}```";
 
-            
-
             string footer = "";
-            if (result is ICollection coll)
-                footer += $"Collection has {coll.Count} members • ";
-            else if (result is IReadOnlyCollection<object> colle)
-                footer += $"Collection has {colle.Count} members • ";
+            if (result is IEnumerable<object> x)
+                footer += $"Collection has {x.Count()} members • ";
 
-
-            if (sb.ToString().Length > 0)
+            if (console.ToString().Length > 0)
             {
-                if (sb.Length < 1000)
-                    description += $"\nConsole: \n```\n{sb}\n```";
+                if (console.Length < 1000)
+                    description += $"\nConsole: \n```\n{console}\n```";
                 else
-                    description += $"\nConsole: \n[here]({await _net.UploadToPastebinAsync(sb.ToString())})";
+                    description += $"\nConsole: \n[here]({await _net.UploadToPastebinAsync(console.ToString())})";
             }
 
-            footer += $"Return type: {(result == null ? "nil" : _aliases[result.GetType()])} • took {c.ElapsedTicks / 1000000d} ms to execute";
-
+            footer += $"Return type: {(result == null ? "nil" : luaTypeAliases[result.GetType()])} • took {c.ElapsedTicks / 1000000d} ms to execute";
 
             var em = new EmbedBuilder()
                     .WithFooter(footer)
@@ -526,7 +477,174 @@ namespace donniebot.services
                 yield return il;
         }
 
-        public  IEnumerable<string> GetCommands(IEnumerable<CommandInfo> commands)
+        public string PrettyPrintDV(DynValue d, int level = 0)
+        {
+            object result = null;
+
+            if (d.Type == DataType.Table)
+            {
+                var tab = d.Table;
+                var dict = new Dictionary<object, object>();
+                for (int i = 0; i < tab.Values.Count(); i++)
+                    dict.Add(tab.Keys.ElementAt(i), tab.Values.ElementAt(i));
+                result = dict;
+            }
+            else result = d.ToObject();
+
+            return PrettyPrint(result, level);
+        }
+        public string PrettyPrintDict<T, U>(Dictionary<T, U> dict, int level = 0)
+        {
+            if (dict == null)
+                return "null";
+
+            StringBuilder sb = new StringBuilder();
+            
+            int nextLevel = level + 1;
+            
+            for (int i = 0; i < dict.Keys.Count; i++)
+            {
+                var key = dict.Keys.ElementAt(i);
+                var value = dict.Values.ElementAt(i);
+                    
+                sb.Append($"{"  ".RepeatString(nextLevel)}[{(key is string ? $"\"{key}\"" : key.ToString())}, {PrettyPrint(value, nextLevel)}\n{"  ".RepeatString(nextLevel)}],\n");
+            }
+            
+            if (!dict.Cast<object>().Any())
+            {
+                if (level > 0)
+                    return $"[\n{"  ".RepeatString(nextLevel)}]";
+                else
+                    return $"[\n{"  ".RepeatString(level)}]";
+            }
+            
+            var str = sb.ToString();
+            return $"[\n{str.Substring(0, str.Length - 2)}\n{"  ".RepeatString(level)}]";
+        }
+        public string PrettyPrintEnumerable(IEnumerable t, int level = 0)
+        {
+            if (t == null)
+                return "null";
+            
+            if (!t.Cast<object>().Any())
+                return $"[\n{"  ".RepeatString(level)}]";
+
+            StringBuilder sb = new StringBuilder();
+
+            foreach (var thing in t)
+            {
+                var val = thing is null ? "null" : PrettyPrint(thing, level + 1);
+                sb.Append($"{"  ".RepeatString(level + 1)}{val},\n");
+            }
+
+            var str = sb.ToString();
+            return $"[\n{str.Substring(0, str.Length - 2)}\n{"  ".RepeatString(level)}]";
+        }
+        private string PrettyPrint(object t, int level = 0)
+        {
+            string str = " ";
+            try
+            {
+                if (t == null)
+                    return "null";
+                if (t is string x)
+                {
+                    if (string.IsNullOrEmpty(x))
+                        return "\"\"";
+                    else
+                        return $"\"{x}\"";
+                }
+ 
+                if (t.GetType().IsValueType) return t.ToString();
+
+                if (t is IDictionary di)
+                    return PrettyPrintDict(
+                        CastDict(di)
+                            .ToDictionary(
+                                x => (object)x.Key, 
+                                x => (object)x.Value
+                            ), 
+                        level);
+                else if (t is IEnumerable h)
+                    return PrettyPrintEnumerable(h, level);
+                else if (t is DynValue d)
+                    return PrettyPrintDV(d, level);
+
+                StringBuilder sb = new StringBuilder();
+                
+                var properties = t.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.Static | BindingFlags.NonPublic).Where(x => !x.GetIndexParameters().Any());
+                foreach (var thing in properties)
+                {
+                    var toAppend = "  ".RepeatString(level + 1);
+                    if (thing == null)
+                    {
+                        sb.Append($"{thing.Name}: null");
+                    }
+                    else
+                    {
+                        object value;
+                        if ((thing.Name.Contains("Exit") || thing.Name.Contains("Start") || thing.Name.Contains("Standard")) && t is System.Diagnostics.Process)
+                            value = "(none)";
+                        else
+                            value = thing.GetValue(t);
+                        
+                        toAppend += $"{thing.Name}: ";
+
+                        if (t is Closure && thing.Name == "ClosureContext") //the type is internal and i can't help that plus it is the lua _ENV table (which contains itself)
+                            toAppend += "_ENV";
+                        else if (value is IDictionary dict)
+                            toAppend += PrettyPrintDict(
+                                CastDict(dict)
+                                    .ToDictionary(
+                                        x => (object)x.Key, 
+                                        x => (object)x.Value
+                                    ), 
+                                level + 1
+                            );
+                        else if (value is IEnumerable h)
+                            toAppend += $"\n{PrettyPrintEnumerable(h, level + 1)}";
+                        else if (value is DynValue d)
+                            toAppend += PrettyPrintDV(d, level + 1);
+                        else
+                        {
+                            string valueAsString = null;
+                            if (value != null)
+                            {
+                                if (value is string s)
+                                {
+                                    if (string.IsNullOrEmpty(s))
+                                        valueAsString = "\"\"";
+                                    else
+                                        valueAsString = $"\"{s}\"";
+                                }
+                                else valueAsString = value.ToString();
+                            }
+
+                            toAppend += valueAsString ?? "null";
+                        }
+
+                        toAppend += ",\n";
+                        sb.Append(toAppend);
+                    }
+                }
+
+                str = sb.ToString();
+                if (str.Length == 0) return $"{t} - no properties (methods only)";
+                return $"[\n{str.Substring(0, str.Length - 2)}\n{"  ".RepeatString(level)}]";               
+            }
+            catch
+            {
+                return t.ToString();
+            }
+        }
+
+        private IEnumerable<DictionaryEntry> CastDict(IDictionary d)
+        {
+            foreach (DictionaryEntry e in d)
+                yield return e;
+        }
+
+        public IEnumerable<string> GetCommands(IEnumerable<CommandInfo> commands)
         {
             foreach (var cmd in commands)
                 yield return ((string.IsNullOrEmpty(cmd.Module.Group) ? "" : $"{cmd.Module.Group} ") + cmd.Name).TrimEnd(' ');

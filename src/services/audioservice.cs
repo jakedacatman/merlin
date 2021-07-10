@@ -278,17 +278,16 @@ namespace donniebot.services
 
                 if (GetConnection(oldVc.Guild.Id, out var connection))
                     if (newVc == null)
-                    {
-                        var queue = connection.Queue;
-                        queue.RemoveRange(0, queue.Count);
                         await DisconnectAsync(connection.VoiceChannel);
-                    }
                     else
+                    {
+                        await connection.PauseAsync();
                         await connection.UpdateAsync(newVc);
+                    }
             }
             catch (Discord.Net.WebSocketClosedException e)
             {
-                Console.WriteLine(e + "\n" + e.StackTrace);
+                Console.WriteLine($"{e}\n{e.StackTrace}");
             }
         }
 
@@ -320,7 +319,7 @@ namespace donniebot.services
 
                 var info = song.Info ?? await GetAudioInfoAsync(song.Url);
 
-                song.Size = info.Size.TotalBytes;
+                song.Size = info.Size.Bytes;
 
                 using (var str = await GetAudioAsync(info))
                 using (var downloadStream = new SimplexStream())
@@ -471,8 +470,14 @@ namespace donniebot.services
 
         private async Task<AudioOnlyStreamInfo> GetAudioInfoAsync(string ytUrl)
         {
-            var info = await yt.Videos.Streams.GetManifestAsync(new VideoId(ytUrl));
-            return info.GetAudioOnly().OrderByDescending(x => x.Bitrate).First();
+            var id = VideoId.TryParse(ytUrl);
+            if (id is null) throw new VideoException("Failed to parse the URL.");
+
+            var info = await yt.Videos.Streams.GetManifestAsync(VideoId.Parse(ytUrl));
+            return info
+                .GetAudioOnlyStreams()
+                .OrderByDescending(x => x.Bitrate)
+                .First();
         }
 
         private async Task<Stream> GetAudioAsync(AudioOnlyStreamInfo info) => await yt.Videos.Streams.GetAsync(info);
@@ -486,14 +491,35 @@ namespace donniebot.services
                 var video = await GetVideoAsync(queryOrUrl);
                 if (video is null) return null;
 
-                info = new SongInfo(video.Title, video.Url, video.Thumbnails.MediumResUrl, video.Author, video.Duration);
+                info = new SongInfo(
+                    video.Title, 
+                    video.Url, 
+                    video.Thumbnails
+                        .OrderByDescending(x => x.Resolution)
+                        .First()
+                        .Url, 
+                    video.Author.Title, 
+                    video.Duration ?? new TimeSpan(0)
+                );
             }
             else
             {
-                var video = await yt.Videos.GetAsync(new VideoId(queryOrUrl));
-                if (video is null) return null;
+                var id = VideoId.TryParse(queryOrUrl);
+                if (id is null) throw new VideoException("Invalid video.");
 
-                info = new SongInfo(video.Title, video.Url, video.Thumbnails.MediumResUrl, video.Author, video.Duration);
+                var video = await yt.Videos.GetAsync(id.Value);
+                if (video is null) throw new VideoException("Invalid video.");
+
+                info = new SongInfo(
+                    video.Title, 
+                    video.Url, 
+                    video.Thumbnails
+                        .OrderByDescending(x => x.Resolution)
+                        .First()
+                        .Url,
+                    video.Author.Title,
+                    video.Duration ?? new TimeSpan(0)
+                );
             }
 
             return new Song(info, userId, guildId);
@@ -502,22 +528,38 @@ namespace donniebot.services
         public async Task<classes.Playlist> GetPlaylistAsync(string playlistId, ulong guildId, ulong userId)
         {
             var songs = new List<Song>();
-            var id = new PlaylistId(playlistId);
 
-            var data = await yt.Playlists.GetAsync(id);
-            var videos = await yt.Playlists.GetVideosAsync(id);
+            var id = PlaylistId.TryParse(playlistId);
+            if (id is null) throw new VideoException("Invalid playlist.");
 
-            foreach (var video in videos)
+            var data = await yt.Playlists.GetAsync(id.Value);
+            var videos = yt.Playlists.GetVideosAsync(id.Value);
+
+            await foreach (var video in videos)
                 songs.Add(new Song(
                     new SongInfo(video.Title,
                         video.Url,
-                        video.Thumbnails.MediumResUrl,
-                        video.Author,
-                        video.Duration),
+                        video.Thumbnails
+                            .OrderByDescending(x => x.Resolution)
+                            .First()
+                            .Url,
+                        video.Author.Title,
+                        video.Duration ?? new TimeSpan(0)),
                     userId,
                     guildId));
 
-            return new classes.Playlist(songs, data.Title, data.Author, data.Url, data.Thumbnails.MediumResUrl, userId, guildId);
+            return new classes.Playlist(
+                songs, 
+                data.Title, 
+                data.Author.Title, 
+                data.Url, 
+                data.Thumbnails
+                    .OrderByDescending(x => x.Resolution)
+                    .First()
+                    .Url,
+                userId, 
+                guildId
+            );
         }
 
         private Process CreateStream()
@@ -532,7 +574,7 @@ namespace donniebot.services
             });
         }
 
-        private async Task<PlaylistVideo> GetVideoAsync(string query) => await yt.Search.GetVideosAsync(query).FirstOrDefaultAsync();
+        private async Task<YoutubeExplode.Search.VideoSearchResult> GetVideoAsync(string query) => await yt.Search.GetVideosAsync(query).FirstOrDefaultAsync();
 
         public bool IsConnected(ulong id) => GetConnection(id, out var _);
 
@@ -559,7 +601,7 @@ namespace donniebot.services
 
                 if (connection.Current != null)
                 {
-                    items.Add($"__**1**: {connection.Current.Title} (queued by {GetMention(gId, connection.Current.QueuerId)})__");
+                    items.Add($"{(connection.IsPlaying ? "▶️" : "⏸️")} __**1**: {connection.Current.Title} (queued by {GetMention(gId, connection.Current.QueuerId)})__");
 
                     for (int i = 0; i < queue.Count; i++)
                         items.Add($"**{i + 2}**: {queue[i].Title} (queued by {GetMention(gId, queue[i].QueuerId)})");

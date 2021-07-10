@@ -24,7 +24,7 @@
     <ProjectReference Include="../deps/SVGSharpie/src/UkooLabs.SVGSharpie.ImageSharp/UkooLabs.SVGSharpie.ImageSharp.csproj" />
     <!--> <ProjectReference Include="../deps/YoutubeExplode/YoutubeExplode/YoutubeExplode.csproj" /> <!-->
     <PackageReference Include="Discord.InteractivityAddon" Version="2.2.0-rc8" />
-    <PackageReference Include="YoutubeExplode" Version="6.0.0-alpha" />
+    <PackageReference Include="YoutubeExplode" Version="6.0.3" />
     <PackageReference Include="Nerdbank.Streams" Version="2.6.81" />
     <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="1.0.0-beta11.8" />
     <PackageReference Include="Discord.Net" Version="2.4.0-20210508.2" />

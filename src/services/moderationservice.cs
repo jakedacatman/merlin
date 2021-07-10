@@ -26,40 +26,43 @@ namespace donniebot.services
 
             _client.ShardReady += (DiscordSocketClient client) => 
             {
-                if (client.ShardId >= _client.Shards.Count - 1) Task.Run(async () => 
+                if (client.ShardId >= _client.Shards.Count - 1)
                 {
-                    while (true)
+                    var complete = Task.Run(async () => 
                     {
-                        //var counter = 0;
+                        while (true)
+                        {
+                            //var counter = 0;
 
-                        foreach (var action in _actions.ToList())
-                            if (action.Expiry.HasValue && action.Expiry <= DateTime.UtcNow)
-                            {
-                                var guild = _client.Guilds.First(x => x.Id == action.GuildId);
-                                var user = guild.Users.First(x => x.Id == action.UserId);
-                            
-                                switch (action.Type)
+                            foreach (var action in _actions.ToList())
+                                if (action.Expiry.HasValue && action.Expiry <= DateTime.UtcNow)
                                 {
-                                    case classes.ActionType.Mute:
+                                    var guild = _client.Guilds.First(x => x.Id == action.GuildId);
+                                    var user = guild.Users.First(x => x.Id == action.UserId);
+                            
+                                    switch (action.Type)
                                     {
-                                        await TryUnmuteUserAsync(guild, guild.Users.First(x => x.Id == action.UserId));
-                                        break;
+                                        case classes.ActionType.Mute:
+                                        {
+                                            await TryUnmuteUserAsync(guild, guild.Users.First(x => x.Id == action.UserId));
+                                            break;
+                                        }
+                                        case classes.ActionType.Ban:
+                                        {
+                                            await guild.RemoveBanAsync(user);
+                                            break;
+                                        }
                                     }
-                                    case classes.ActionType.Ban:
-                                    {
-                                        await guild.RemoveBanAsync(user);
-                                        break;
-                                    }
-                                }
 
-                                //counter++;
-                                RemoveAction(action);
+                                    //counter++;
+                                    RemoveAction(action);
                             }
 
-                        //Console.WriteLine($"Reversed {counter} actions.");
-                        await Task.Delay(1000);
-                    }
-                });
+                            //Console.WriteLine($"Reversed {counter} actions.");
+                            await Task.Delay(1000);
+                        }
+                    });
+                }
 
                 return Task.CompletedTask;
             };
