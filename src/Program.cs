@@ -46,7 +46,7 @@ namespace donniebot
             NekoEndpoints nekoEndpoints;
             using (var hc = new HttpClient())
                 nekoEndpoints = new NekoEndpoints(JsonConvert.DeserializeObject<JObject>(await hc.GetStringAsync("https://raw.githubusercontent.com/Nekos-life/nekos-dot-life/master/endpoints.json")));
-            
+
             _services = new ServiceCollection()
                 .AddSingleton(_client)
                 .AddSingleton(_commands)
@@ -67,6 +67,8 @@ namespace donniebot
             await _commands.AddModulesAsync(Assembly.GetEntryAssembly(), _services);
 
             _db = _services.GetService<DbService>();
+                        
+            Console.WriteLine($"Current directory: {Environment.CurrentDirectory}");
             var apiKey = _db.GetApiKey("discord");
             if (apiKey == null)
             {

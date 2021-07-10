@@ -10,7 +10,6 @@ namespace donniebot.services
     public class DbService
     {
         private readonly IServiceProvider _services;
-        private const string defaultPrefix = "don.";
 
         public DbService(IServiceProvider services)
         {
