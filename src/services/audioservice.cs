@@ -495,7 +495,7 @@ namespace donniebot.services
                     video.Title, 
                     video.Url, 
                     video.Thumbnails
-                        .OrderByDescending(x => x.Resolution)
+                        .OrderByDescending(x => x.Resolution.Area)
                         .First()
                         .Url, 
                     video.Author.Title, 
@@ -514,7 +514,7 @@ namespace donniebot.services
                     video.Title, 
                     video.Url, 
                     video.Thumbnails
-                        .OrderByDescending(x => x.Resolution)
+                        .OrderByDescending(x => x.Resolution.Area)
                         .First()
                         .Url,
                     video.Author.Title,
@@ -540,7 +540,7 @@ namespace donniebot.services
                     new SongInfo(video.Title,
                         video.Url,
                         video.Thumbnails
-                            .OrderByDescending(x => x.Resolution)
+                            .OrderByDescending(x => x.Resolution.Area)
                             .First()
                             .Url,
                         video.Author.Title,
@@ -554,7 +554,7 @@ namespace donniebot.services
                 data.Author.Title, 
                 data.Url, 
                 data.Thumbnails
-                    .OrderByDescending(x => x.Resolution)
+                    .OrderByDescending(x => x.Resolution.Area)
                     .First()
                     .Url,
                 userId, 
