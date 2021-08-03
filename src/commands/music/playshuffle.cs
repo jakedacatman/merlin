@@ -16,19 +16,8 @@ namespace donniebot.commands
     public class PlayShuffleCommand : ModuleBase<ShardedCommandContext>
     {
         private readonly AudioService _audio;
-        private readonly MiscService _misc;
-        private readonly ulong _roleId;
-        private readonly ulong[] _users;
 
-        public PlayShuffleCommand(AudioService audio, MiscService misc, DbService db)
-        {
-            _audio = audio;
-            _misc = misc;
-
-            var id = Context?.Guild.Id ?? 0;
-            _roleId = db.GetItem<DjRole>("djroles", Query.EQ("GuildId", id))?.RoleId ?? 0;
-            _users = _audio.GetListeningUsers(id).Select(x => x.Id).ToArray();
-        }
+        public PlayShuffleCommand(AudioService audio) => _audio = audio;
 
         [Command("playshuffle")]
         [Alias("ps", "playsh", "plsh")]

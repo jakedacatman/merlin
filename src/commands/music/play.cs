@@ -13,15 +13,8 @@ namespace donniebot.commands
     public class AddCommand : ModuleBase<ShardedCommandContext>
     {
         private readonly AudioService _audio;
-        private readonly MiscService _misc;
-        private readonly RandomService _rand;
 
-        public AddCommand(AudioService audio, MiscService misc, RandomService rand)
-        {
-            _audio = audio;
-            _misc = misc;
-            _rand = rand;
-        }
+        public AddCommand(AudioService audio) => _audio = audio;
 
         [Command("add")]
         [Alias("p", "play", "pl")]

@@ -14,13 +14,11 @@ namespace donniebot.commands
     [Name("Music")]
     public class DjRoleCommand : ModuleBase<ShardedCommandContext>
     {
-        private readonly MiscService _misc;
         private readonly DbService _db;
         private readonly InteractivityService _inter;
 
-        public DjRoleCommand(MiscService misc, DbService db, InteractivityService inter)
+        public DjRoleCommand(DbService db, InteractivityService inter)
         {
-            _misc = misc;
             _db = db;
             _inter = inter;
         }

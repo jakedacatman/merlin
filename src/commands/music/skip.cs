@@ -11,13 +11,8 @@ namespace donniebot.commands
     public class SkipCommand : ModuleBase<ShardedCommandContext>
     {
         private readonly AudioService _audio;
-        private readonly MiscService _misc;
 
-        public SkipCommand(AudioService audio, MiscService misc)
-        {
-            _audio = audio;
-            _misc = misc;
-        }
+        public SkipCommand(AudioService audio, MiscService misc) => _audio = audio;
 
         [Command("skip")]
         [Alias("sk")]

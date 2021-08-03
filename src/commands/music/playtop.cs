@@ -14,15 +14,8 @@ namespace donniebot.commands
     public class PlayTopCommand : ModuleBase<ShardedCommandContext>
     {
         private readonly AudioService _audio;
-        private readonly MiscService _misc;
-        private readonly RandomService _rand;
 
-        public PlayTopCommand(AudioService audio, MiscService misc, RandomService rand)
-        {
-            _audio = audio;
-            _misc = misc;
-            _rand = rand;
-        }
+        public PlayTopCommand(AudioService audio) => _audio = audio;
 
         [Command("playtop")]
         [Alias("pt", "tp")]

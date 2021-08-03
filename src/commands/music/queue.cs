@@ -16,33 +16,24 @@ namespace donniebot.commands
     public class QueueCommand : ModuleBase<ShardedCommandContext>
     {
         private readonly AudioService _audio;
-        private readonly MiscService _misc;
         private readonly RandomService _rand;
         private readonly InteractivityService _inter;
-        private readonly GuildPrefix _defPre;
 
-        public QueueCommand(AudioService audio, MiscService misc, RandomService rand, InteractivityService inter, GuildPrefix defPre)
+        public QueueCommand(AudioService audio, RandomService rand, InteractivityService inter)
         {
             _audio = audio;
-            _misc = misc;
             _rand = rand;
             _inter = inter;
-            _defPre = defPre;
         }
 
         [Command("queue")]
         [Alias("q")]
+        [RequireSongs]
         [Summary("Gets the song queue for the current guild.")]
         public async Task QueueAsync()
         {
             var guild = Context.Guild;
             var queue = _audio.GetQueue(guild.Id);
-
-            if (!queue.Any())
-            {
-                await ReplyAsync($"There are no songs in the queue. Try adding some with `{_defPre.Prefix}add`!");
-                return;
-            }
 
             var chunks = queue.ChunkBy(10);
 

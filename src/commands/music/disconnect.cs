@@ -12,13 +12,8 @@ namespace donniebot.commands
     public class DisconnectCommand : ModuleBase<ShardedCommandContext>
     {
         private readonly AudioService _audio;
-        private readonly MiscService _misc;
 
-        public DisconnectCommand(AudioService audio, MiscService misc)
-        {
-            _audio = audio;
-            _misc = misc;
-        }
+        public DisconnectCommand(AudioService audio) => _audio = audio;
 
         [Command("disconnect")]
         [Alias("di", "dis", "leave")]
@@ -33,10 +28,15 @@ namespace donniebot.commands
                 return;
             }
 
-            if ((Context.User as SocketGuildUser).VoiceChannel == vc || !_audio.GetListeningUsers(Context.Guild.Id).Any())
+            if ((Context.User as SocketGuildUser).VoiceChannel == vc)
                 await _audio.DisconnectAsync(vc, Context.Channel);
             else
-                await ReplyAsync("You are not in my voice channel, or there are people still listening.");
+            {
+                if (!_audio.GetListeningUsers(Context.Guild.Id).Any())  
+                    await _audio.DisconnectAsync(vc, Context.Channel);
+                else
+                    await ReplyAsync("You are not in my voice channel, or there are people still listening.");
+            }
         }
     }
 }

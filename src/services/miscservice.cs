@@ -129,17 +129,14 @@ namespace donniebot.services
                 else
                     description += $"a [link]({await _net.UploadToPastebinAsync(message)} to its message.";
 
-                description += "\n\nStack trace:\n";
-
                 string trace = e.StackTrace;
-                if (inex != null) trace += $"\ninner: {inex.StackTrace}";
+                if (inex is not null) trace += $"\ninner exception: {inex.StackTrace}";
 
-                if (trace.Length < 500)
-                    description += $"```{trace.Replace("`", @"\`")}```";
-                else
-                    description += $"[here]({await _net.UploadToPastebinAsync(trace)})";
+                var info = $"{e.Message}\n\n{trace}";
 
-                description += $"\n\nPlease be sure to DM jakedacatman#6121 on [Discord](https://discord.com) or file an issue on the [GitHub page](https://github.com/jakedacatman/donniebot) with this information.";
+                description += $"[Here is a link to the full information on this exception.]({await _net.UploadToPastebinAsync(info)})";
+
+                description += $"\n\nPlease be sure to DM jakedacatman#6121 on [Discord](https://discord.com) with this link or file an issue on the [GitHub page](https://github.com/jakedacatman/donniebot).";
             }
 
             EmbedBuilder embed = new EmbedBuilder()

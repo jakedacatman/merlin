@@ -26,17 +26,11 @@ namespace donniebot.commands
 
         [Command("remove")]
         [Alias("rem")]
-        [RequireDjRole]
+        [RequireDjRole, RequireSongs]
         [Summary("Removes the song at the specified index.")]
         public async Task RemoveAsync(int index)
         {
             var id = Context.Guild.Id;
-
-            if (!_audio.HasSongs(id))
-            {
-                await ReplyAsync("There are no songs in the queue.");
-                return;
-            }
 
             _audio.RemoveAt(id, index - 1);
             
