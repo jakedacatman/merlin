@@ -10,6 +10,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using donniebot.classes;
 using System.Net;
+using HtmlAgilityPack;
 
 namespace donniebot.services
 {
@@ -132,12 +133,17 @@ namespace donniebot.services
             }
             else if (url.Contains("tenor.com") && !url.Contains("media.tenor.com"))
             {
-                Regex r = new Regex(@"(https:\\u002F\\u002Fmedia1\.tenor\.com[A-z0-9]+\.gif)");
-                var html = await DownloadAsStringAsync(url);
-                var match = r.Match(html);
-                if (match != null)
-                    url = match.Groups[0].Value.Replace("\\u002F", "/");
+                var web = new HtmlWeb();
+                var html = await web.LoadFromWebAsync(url);
+
+                url = html
+                    .GetElementbyId("single-gif-container")
+                    .FirstChild
+                    .Element("div")
+                    .Element("img")
+                    .GetAttributeValue("src", null);
             }
+
             var response = await _hc.GetAsync(new Uri(url));
 
             if (response.IsSuccessStatusCode)
@@ -158,13 +164,17 @@ namespace donniebot.services
                     else
                         url = $"https://i.giphy.com/media/{url.Split('/').Last()}/giphy.gif";
             }
-            else if (url.Contains("tenor.com"))
+            else if (url.Contains("tenor.com") && !url.Contains("media.tenor.com"))
             {
-                Regex r = new Regex(@"(https:\\u002F\\u002Fmedia1\.tenor\.com[A-z0-9]+\.gif)");
-                var html = await DownloadAsStringAsync(url);
-                var match = r.Match(html);
-                if (match != null)
-                    url = match.Groups[0].Value.Replace("\\u002F", "/");
+                var web = new HtmlWeb();
+                var html = await web.LoadFromWebAsync(url);
+
+                url = html
+                    .GetElementbyId("single-gif-container")
+                    .FirstChild
+                    .Element("div")
+                    .Element("img")
+                    .GetAttributeValue("src", null);
             }
             
             var response = await _hc.GetAsync(new Uri(url));

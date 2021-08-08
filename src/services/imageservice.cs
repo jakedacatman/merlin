@@ -1378,16 +1378,22 @@ namespace donniebot.services
         public async Task SendToChannelAsync(ISImage img, ISocketMessageChannel ch, Discord.MessageReference msg = null, bool ping = false) => await SendToChannelAsync(Save(img), ch, msg, ping);
         public async Task SendToChannelAsync(string path, ISocketMessageChannel ch, Discord.MessageReference msg = null, bool ping = false)
         {
-            var ext = path.Split('.')[1];
-            var len = new FileInfo(path).Length;
+            try
+            {
+                var ext = path.Split('.')[1];
+                var len = new FileInfo(path).Length;
 
-            var doPing = ping ? Discord.AllowedMentions.All : Discord.AllowedMentions.None;
+                var doPing = ping ? Discord.AllowedMentions.All : Discord.AllowedMentions.None;
 
-            if (len > 8388119) //allegedly discord's limit
-                await ch.SendMessageAsync(await _net.UploadAsync(path, ext), messageReference: msg, allowedMentions: doPing);
-            else
-                await ch.SendFileAsync(path, messageReference: msg, allowedMentions: Discord.AllowedMentions.None);
-            File.Delete(path);
+                if (len > 8388119) //allegedly discord's limit
+                    await ch.SendMessageAsync(await _net.UploadAsync(path, ext), messageReference: msg, allowedMentions: doPing);
+                else
+                    await ch.SendFileAsync(path, messageReference: msg, allowedMentions: Discord.AllowedMentions.None);
+            }
+            finally 
+            { 
+                File.Delete(path);
+            }
         }
 
         public async Task<ISImage> DownloadFromUrlAsync(string url, int sizeX = 512, int sizeY = 512)

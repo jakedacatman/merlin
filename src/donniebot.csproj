@@ -21,6 +21,7 @@
     <PackageReference Include="Discord.Net.Rest" Version="2.4.0-dev-20210508.2" />
     <PackageReference Include="Discord.Net.Webhook" Version="2.4.0-dev-20210508.2" />
     <PackageReference Include="Discord.Net.WebSocket" Version="2.4.0-dev-20210508.2" />
+    <PackageReference Include="HtmlAgilityPack" Version="1.11.34" />
     <ProjectReference Include="../deps/SVGSharpie/src/UkooLabs.SVGSharpie.ImageSharp/UkooLabs.SVGSharpie.ImageSharp.csproj" />
     <!--> <ProjectReference Include="../deps/YoutubeExplode/YoutubeExplode/YoutubeExplode.csproj" /> <!-->
     <PackageReference Include="Discord.InteractivityAddon" Version="2.2.0-rc8" />

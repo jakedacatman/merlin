@@ -134,7 +134,7 @@ namespace donniebot.services
 
                 var info = $"{e.Message}\n\n{trace}";
 
-                description += $"[Here is a link to the full information on this exception.]({await _net.UploadToPastebinAsync(info)})";
+                description += $"\nHere is a [link]({await _net.UploadToPastebinAsync(info)}) to the full information on this exception.";
 
                 description += $"\n\nPlease be sure to DM jakedacatman#6121 on [Discord](https://discord.com) with this link or file an issue on the [GitHub page](https://github.com/jakedacatman/donniebot).";
             }
