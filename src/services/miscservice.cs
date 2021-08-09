@@ -286,7 +286,7 @@ namespace donniebot.services
             if (code.Length > 3 && code.Substring(0, 3) == "lua") code = code.Substring(3);
             
             var console = new StringBuilder();
-            var script = new MoonSharp.Interpreter.Script(CoreModules.Preset_SoftSandbox);
+            var script = new MoonSharp.Interpreter.Script(CoreModules.Preset_HardSandbox);
             script.Options
                 .DebugPrint = s => console.Append(s + "\n");
 
@@ -302,11 +302,12 @@ namespace donniebot.services
                     Console.WriteLine(e);
                 }
             });
+            script.Globals["_G"] = "_G";
             script.Globals["sendMessage"] = (Action<string>)(async (string text) => 
             {
                 try
                 {
-                    if (text.Length > 1000)
+                    if (text.Length > 2000)
                         text = $"Message too long; here is a link to it: {await _net.UploadToPastebinAsync(text)}";
 
                     await channel.SendMessageAsync(text);

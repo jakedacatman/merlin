@@ -5,4 +5,4 @@
 [submodule "deps/SVGSharpie"]
 	path = deps/SVGSharpie
 	url = https://github.com/jakedacatman/SVGSharpie
-	branch = jakedacatman-fix
+	branch = master
