@@ -100,7 +100,8 @@ namespace donniebot.services
 
                 await user.AddRoleAsync(role);
                 
-                await user.ModifyAsync(x => x.Mute = true);
+                if (user.VoiceChannel is not null)
+                    await user.ModifyAsync(x => x.Mute = true);
 
                 var action = new ModerationAction(user.Id, moderator.Id, guild.Id, donniebot.classes.ActionType.Mute, expiry, reason);
                 AddAction(action);
@@ -136,7 +137,9 @@ namespace donniebot.services
                     x.Type == donniebot.classes.ActionType.Mute
                 );
 
-                await user.ModifyAsync(x => x.Mute = false);
+                if (user.VoiceChannel is not null)
+                    await user.ModifyAsync(x => x.Mute = false);
+                    
                 return MuteResult.FromSuccess("", user.Id);
             }
             catch (Exception e)
