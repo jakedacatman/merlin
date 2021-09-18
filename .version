@@ -1,6 +1,6 @@
-Sat Sep 18 03:58:48 UTC 2021
-commit 168e2fae8ad8eba08a4d127654f095eb76c2f84d
+Sat Sep 18 15:54:34 UTC 2021
+commit c82ffc775ccd98d224483f58e9f9e9dc8bf8fdc7
 Author: jakedacatman <helloihaxxedu@gmail.com>
-Date:   2021-09-17 23:33:24 -0400
+Date:   2021-09-18 11:54:19 -0400
 
-    Merge branch 'master' of https://github.com/jakedacatman/donniebot
+    fixed stuff including skipping songs
