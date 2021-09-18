@@ -337,16 +337,7 @@ namespace donniebot.services
 
                     int bytesDown = 0, bytesRead = 0, bytesConverted = 0;
 
-                    var skipCts = new CancellationTokenSource();
-                    var token = skipCts.Token;
-
                     var pauseCts = new CancellationTokenSource();
-
-                    connection.SongSkipped += (AudioPlayer _, Song song) =>
-                    {
-                        skipCts.Cancel();
-                        return Task.CompletedTask;
-                    };
 
                     connection.SongPaused += (AudioPlayer _, bool state) =>
                     {
@@ -358,7 +349,7 @@ namespace donniebot.services
                         return Task.CompletedTask;
                     };
 
-                    async Task Download()
+                    async Task Download(CancellationToken token)
                     {
                         try
                         {
@@ -366,21 +357,21 @@ namespace donniebot.services
                             {
                                 if (token.IsCancellationRequested) break;
 
-                                bytesDown = await str.ReadAsync(bufferDown, 0, block_size, token);
+                                bytesDown = await str.ReadAsync(bufferDown, 0, block_size);
                                 connection.BytesDownloaded += (uint)bytesDown;
 
-                                await downloadStream.WriteAsync(bufferDown, 0, bytesDown, token);
+                                await downloadStream.WriteAsync(bufferDown, 0, bytesDown);
                             }
                             while (bytesDown > 0);
                         }
                         finally
                         {
-                            await downloadStream.FlushAsync();
                             downloadStream.CompleteWriting();
                         }
+                        Console.WriteLine("finished download");
                     }
 
-                    async Task Read()
+                    async Task Read(CancellationToken token)
                     {
                         try
                         {
@@ -388,28 +379,29 @@ namespace donniebot.services
                             {
                                 if (token.IsCancellationRequested) break;
 
-                                bytesRead = await downloadStream.ReadAsync(bufferRead, 0, block_size, token);
-                                await input.WriteAsync(bufferRead, 0, bytesRead, token);
+                                bytesRead = await downloadStream.ReadAsync(bufferRead, 0, block_size);
+                                await input.WriteAsync(bufferRead, 0, bytesRead);
                             }
                             while (bytesRead > 0);
                         }
-                        finally
+                        catch (IOException)
                         {
-                            await input.FlushAsync();
+
                         }
                     }
 
                     var hasHadFullChunkYet = false;
-                    async Task Write()
+                    async Task Write(CancellationToken token)
                     {
                         try
                         {
                             do
                             {
                                 while (connection.IsPaused) //don't write to discord while paused
+                                {
                                     try
                                     {
-                                        if (token.IsCancellationRequested) break;
+                                        if (token.IsCancellationRequested) return;
 
                                         await Task.Delay(-1, pauseCts.Token); //wait forever (until token is called)
                                     }
@@ -417,51 +409,52 @@ namespace donniebot.services
                                     {
 
                                     }
+                                }
                                 
                                 if (token.IsCancellationRequested) break;
 
                                 if (hasHadFullChunkYet && bytesConverted < block_size) //if bytesConverted is less than here, then the last (small) chunk is done
                                     break;
 
-                                bytesConverted = await output.ReadAsync(bufferWrite, 0, block_size, token);
+                                bytesConverted = await output.ReadAsync(bufferWrite, 0, block_size);
                                 connection.BytesPlayed += (uint)bytesConverted;
 
                                 if (bytesConverted == block_size)
                                     hasHadFullChunkYet = true;
 
-                                await discord.WriteAsync(bufferWrite, 0, bytesConverted, token);
+                                await discord.WriteAsync(bufferWrite, 0, bytesConverted);
                             }
                             while (bytesConverted > 0);
                         }
                         finally
                         {
-                            await discord.FlushAsync();
                             ffmpeg.Kill();
                         }
                     }
 
                     try //allows for skipping
                     {
-                        #pragma warning disable VSTHRD103 //WaitAll synchronously blocks. Use await instead. (only way i could make it work tbh)
-                        var download = Download();
-                        var read = Read();
-                        var write = Write();
-                        
-                        await Task.WhenAll(download, read, write);
-                        #pragma warning restore VSTHRD103
-                    }
-                    catch (OperationCanceledException) //allows for skipping
-                    {
+                        var cts = new CancellationTokenSource();
 
-                    }
-                    catch (AggregateException) //allows for skipping
-                    {
+                        connection.SongSkipped += (AudioPlayer _, Song _) =>
+                        {
+                            cts.Cancel();
+                            return Task.CompletedTask;
+                        };
 
+                        await Task.WhenAll(Download(cts.Token), Read(cts.Token), Write(cts.Token));
+                        Console.WriteLine("ended");
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(e);
                     }
                     finally
                     {
                         await discord.FlushAsync();
-                        if (!ffmpeg.HasExited) ffmpeg.Kill();
+
+                        if (!ffmpeg.HasExited) 
+                            ffmpeg.Kill();
                     }
                 }
             }
@@ -632,7 +625,7 @@ namespace donniebot.services
                 .GetUser(userId)
                 .Mention;
 
-        private bool GetConnection(ulong id, out AudioPlayer connection)
+        public bool GetConnection(ulong id, out AudioPlayer connection)
         {
             connection = null;
             var exists = _connections.Any(x => x.GuildId == id);

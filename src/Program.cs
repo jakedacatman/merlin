@@ -209,7 +209,7 @@ namespace donniebot
                     {
                         em
                             .WithTitle("🛑 Command failed precondition check")
-                                .WithDescription($"Either you or I lack the permissions to run this command, or the command can only be run in an NSFW channel.\nMessage: `{res.ErrorReason}`");
+                            .WithDescription(res.ErrorReason);
                         break;
                     }
                     case CommandError.BadArgCount:
