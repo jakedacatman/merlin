@@ -31,6 +31,8 @@ namespace donniebot.commands
         {
             if (role == null)
             {
+                await ReplyAsync("Would you like to unbind the DJ role? Reply with \"yes\" or \"y\" to confirm.");
+                
                 var res = await _inter.NextMessageAsync(timeout: TimeSpan.FromSeconds(10)); 
                 if (res.IsSuccess && (res.Value.Content.ToLower().Contains("yes") || res.Value.Content.ToLower() == "y"))
                 {

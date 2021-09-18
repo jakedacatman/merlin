@@ -358,12 +358,14 @@ namespace donniebot.services
                         return Task.CompletedTask;
                     };
 
-                    var download = Task.Run(async () =>
+                    async Task Download()
                     {
                         try
                         {
                             do
                             {
+                                if (token.IsCancellationRequested) break;
+
                                 bytesDown = await str.ReadAsync(bufferDown, 0, block_size, token);
                                 connection.BytesDownloaded += (uint)bytesDown;
 
@@ -376,14 +378,16 @@ namespace donniebot.services
                             await downloadStream.FlushAsync();
                             downloadStream.CompleteWriting();
                         }
-                    }, token);
+                    }
 
-                    var read = Task.Run(async () =>
+                    async Task Read()
                     {
                         try
                         {
                             do
                             {
+                                if (token.IsCancellationRequested) break;
+
                                 bytesRead = await downloadStream.ReadAsync(bufferRead, 0, block_size, token);
                                 await input.WriteAsync(bufferRead, 0, bytesRead, token);
                             }
@@ -393,11 +397,10 @@ namespace donniebot.services
                         {
                             await input.FlushAsync();
                         }
-                    }, token);
-
+                    }
 
                     var hasHadFullChunkYet = false;
-                    var write = Task.Run(async () =>
+                    async Task Write()
                     {
                         try
                         {
@@ -406,12 +409,16 @@ namespace donniebot.services
                                 while (connection.IsPaused) //don't write to discord while paused
                                     try
                                     {
+                                        if (token.IsCancellationRequested) break;
+
                                         await Task.Delay(-1, pauseCts.Token); //wait forever (until token is called)
                                     }
                                     catch (TaskCanceledException)
                                     {
 
                                     }
+                                
+                                if (token.IsCancellationRequested) break;
 
                                 if (hasHadFullChunkYet && bytesConverted < block_size) //if bytesConverted is less than here, then the last (small) chunk is done
                                     break;
@@ -431,12 +438,16 @@ namespace donniebot.services
                             await discord.FlushAsync();
                             ffmpeg.Kill();
                         }
-                    }, token);
+                    }
 
                     try //allows for skipping
                     {
                         #pragma warning disable VSTHRD103 //WaitAll synchronously blocks. Use await instead. (only way i could make it work tbh)
-                        Task.WaitAll(new[] { download, read, write }, token);
+                        var download = Download();
+                        var read = Read();
+                        var write = Write();
+                        
+                        await Task.WhenAll(download, read, write);
                         #pragma warning restore VSTHRD103
                     }
                     catch (OperationCanceledException) //allows for skipping
