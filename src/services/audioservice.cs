@@ -128,11 +128,11 @@ namespace donniebot.services
                     .WithTitle("Added playlist")
                     .WithFields(new List<EmbedFieldBuilder>
                     {
-                            new EmbedFieldBuilder().WithName("Title").WithValue(playlist.Title).WithIsInline(false),
-                            new EmbedFieldBuilder().WithName("Author").WithValue(playlist.Author).WithIsInline(true),
-                            new EmbedFieldBuilder().WithName("Count").WithValue(playlist.Songs.Count).WithIsInline(true),
-                            new EmbedFieldBuilder().WithName("URL").WithValue(playlist.Url).WithIsInline(false),
-                            new EmbedFieldBuilder().WithName("Estimated time").WithValue(estTime).WithIsInline(true)
+                        new EmbedFieldBuilder().WithName("Title").WithValue(playlist.Title).WithIsInline(false),
+                        new EmbedFieldBuilder().WithName("Author").WithValue(playlist.Author).WithIsInline(true),
+                        new EmbedFieldBuilder().WithName("Count").WithValue(playlist.Songs.Count).WithIsInline(true),
+                        new EmbedFieldBuilder().WithName("URL").WithValue(playlist.Url).WithIsInline(false),
+                        new EmbedFieldBuilder().WithName("Estimated time").WithValue(estTime).WithIsInline(true)
                     })
                     .WithColor(_rand.RandomColor())
                     .WithThumbnailUrl(playlist.ThumbnailUrl)
@@ -154,10 +154,10 @@ namespace donniebot.services
                 .WithTitle("Added song")
                 .WithFields(new List<EmbedFieldBuilder>
                 {
-                        new EmbedFieldBuilder().WithName("Title").WithValue(song.Title).WithIsInline(false),
-                        new EmbedFieldBuilder().WithName("Author").WithValue(song.Author).WithIsInline(true),
-                        new EmbedFieldBuilder().WithName("URL").WithValue(song.Url).WithIsInline(true),
-                        new EmbedFieldBuilder().WithName("Estimated time").WithValue(estTime).WithIsInline(true)
+                    new EmbedFieldBuilder().WithName("Title").WithValue(song.Title).WithIsInline(false),
+                    new EmbedFieldBuilder().WithName("Author").WithValue(song.Author).WithIsInline(true),
+                    new EmbedFieldBuilder().WithName("URL").WithValue(song.Url).WithIsInline(true),
+                    new EmbedFieldBuilder().WithName("Estimated time").WithValue(estTime).WithIsInline(true)
                 })
                 .WithColor(_rand.RandomColor())
                 .WithThumbnailUrl(song.ThumbnailUrl)
