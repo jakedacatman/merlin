@@ -36,6 +36,16 @@ namespace donniebot.services
                 return apiKey?.Key;
             }
         }
+        public int RemoveApiKey(string service)
+        {
+            using (var scope = _services.CreateScope())
+            {
+                var _db = scope.ServiceProvider.GetRequiredService<LiteDatabase>();
+                var collection = _db.GetCollection<ApiKey>("apikeys");
+
+                return collection.Delete(Query.Where("Service", x => x.AsString == service));
+            }
+        }
 
         public bool AddTag(string key, string value, ulong gId)
         {

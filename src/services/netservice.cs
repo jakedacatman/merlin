@@ -50,6 +50,7 @@ namespace donniebot.services
                 db.AddHost("imageHost", imageHost);
             }
 
+
             spotifyAuthString = db.GetApiKey("spotify");
             if (spotifyAuthString is null)
             {
@@ -59,20 +60,23 @@ namespace donniebot.services
                 Console.WriteLine("What is your Spotify app's client secret?");
                 var spotifyClientSecret = Console.ReadLine();
 
+                if (string.IsNullOrEmpty(spotifyClientId) || string.IsNullOrEmpty(spotifyClientSecret)) //refrain from poisoning db
+                    throw new Exception("Must provide Spotify information.");
+
                 spotifyAuthString = $"{spotifyClientId}:{spotifyClientSecret}";
                 db.AddApiKey("spotify", spotifyAuthString);
             }
 
-            uploadKey = db.GetApiKey("uploadKey") ?? db.GetApiKey("upload");
-            pasteKey = db.GetApiKey("pasteKey") ?? uploadKey;
-
             Environment.SetEnvironmentVariable("SpotifyApiClientId", spotifyAuthString.Split(':')[0]);
             Environment.SetEnvironmentVariable("SpotifyApiClientSecret", spotifyAuthString.Split(':')[1]);
 
-            Console.Clear();
-
             _spHc = new HttpClient();
             _accs = new AccountsService(_spHc);
+
+            uploadKey = db.GetApiKey("uploadKey") ?? db.GetApiKey("upload");
+            pasteKey = db.GetApiKey("pasteKey") ?? uploadKey;
+
+            Console.Clear();
         }
 
         public async Task<bool> IsVideoAsync(string url)
