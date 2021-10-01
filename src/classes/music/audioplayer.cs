@@ -62,16 +62,19 @@ namespace donniebot.classes
                 Queue.InsertRange(position.Value, s);
         }
 
-        public async Task LeaveAsync(ISocketMessageChannel tc = null)
+        public async Task LeaveAsync(bool sendMessage = true, ISocketMessageChannel tc = null)
         {
             _skips = 0;
             Queue.RemoveAll(x => x.GuildId >= 0);
             SongSkipped?.Invoke(this, this.Current);
 
-            if (tc != null)
-                await tc.SendMessageAsync("👋");
-            else 
-                await TextChannel.SendMessageAsync("👋");
+            if (sendMessage)
+            {
+                if (tc != null)
+                    await tc.SendMessageAsync("👋");
+                else 
+                    await TextChannel.SendMessageAsync("👋");
+            }
 
             HasDisconnected = true;
         }
@@ -131,7 +134,7 @@ namespace donniebot.classes
             await TextChannel.SendMessageAsync("Pausing playback.");
         }
 
-        private async Task<int> DoSkipAsync()
+        internal async Task<int> DoSkipAsync()
         {
             _skips = 0;
             SongSkipped?.Invoke(this, this.Current);

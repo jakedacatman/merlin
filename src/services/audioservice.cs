@@ -21,13 +21,15 @@ namespace donniebot.services
         private List<AudioPlayer> _connections = new List<AudioPlayer>();
         private readonly DiscordShardedClient _client;
         private readonly NetService _net;
+        private readonly DbService _db;
         private readonly RandomService _rand;
         private YoutubeClient yt = new YoutubeClient();
 
-        public AudioService(DiscordShardedClient client, NetService net, RandomService rand)
+        public AudioService(DiscordShardedClient client, NetService net, DbService db, RandomService rand)
         {
             _client = client;
             _net = net;
+            _db = db;
             _rand = rand;
 
             SongAdded += OnSongAddedAsync;
@@ -73,7 +75,7 @@ namespace donniebot.services
             if (GetConnection(id, out var connection))
             {
                 connection.IsPlaying = false;
-                await connection.LeaveAsync(tc);
+                await connection.LeaveAsync(true, tc);
 
                 _connections.Remove(connection);
                 connection.Dispose();
@@ -118,28 +120,63 @@ namespace donniebot.services
                     .ToString(@"hh\:mm\:ss");
             }
 
-            if (Uri.IsWellFormedUriString(queryOrUrl, UriKind.Absolute) && (queryOrUrl.Contains("&list=") || queryOrUrl.Contains("?list=")))
+            if (Uri.IsWellFormedUriString(queryOrUrl, UriKind.Absolute))
             {
-                var playlist = await GetPlaylistAsync(queryOrUrl, id, user.Id);
+                var msg = await channel.SendMessageAsync("Adding your playlist...");
 
-                await EnqueueManyAsync(channel, vc, playlist.Songs, shuffle, position);
+                if (queryOrUrl.Contains("&list=") || queryOrUrl.Contains("?list="))
+                {
+                    var playlist = await GetPlaylistAsync(queryOrUrl, id, user.Id);
 
-                await channel.SendMessageAsync(embed: new EmbedBuilder()
-                    .WithTitle("Added playlist")
-                    .WithFields(new List<EmbedFieldBuilder>
+                    await EnqueueManyAsync(channel, vc, playlist.Songs, shuffle, position);
+
+                    await channel.SendMessageAsync(embed: new EmbedBuilder()
+                        .WithTitle("Added playlist")
+                        .WithFields(new List<EmbedFieldBuilder>
+                        {
+                            new EmbedFieldBuilder().WithName("Title").WithValue(playlist.Title).WithIsInline(false),
+                            new EmbedFieldBuilder().WithName("Author").WithValue(playlist.Author).WithIsInline(true),
+                            new EmbedFieldBuilder().WithName("Count").WithValue(playlist.Songs.Count).WithIsInline(true),
+                            new EmbedFieldBuilder().WithName("URL").WithValue(playlist.Url).WithIsInline(false),
+                            new EmbedFieldBuilder().WithName("Estimated time").WithValue(estTime).WithIsInline(true)
+                        })
+                        .WithColor(_rand.RandomColor())
+                        .WithThumbnailUrl(playlist.ThumbnailUrl)
+                        .WithCurrentTimestamp()
+                        .Build());
+
+                    return;
+                }
+                else if (queryOrUrl.Contains("spotify.com"))
+                {
+                    var spotifyPl = await _net.GetSpotifySongsAsync(queryOrUrl);
+
+                    var playlist = new List<Song>();
+
+                    foreach (var s in spotifyPl)
                     {
-                        new EmbedFieldBuilder().WithName("Title").WithValue(playlist.Title).WithIsInline(false),
-                        new EmbedFieldBuilder().WithName("Author").WithValue(playlist.Author).WithIsInline(true),
-                        new EmbedFieldBuilder().WithName("Count").WithValue(playlist.Songs.Count).WithIsInline(true),
-                        new EmbedFieldBuilder().WithName("URL").WithValue(playlist.Url).WithIsInline(false),
-                        new EmbedFieldBuilder().WithName("Estimated time").WithValue(estTime).WithIsInline(true)
-                    })
-                    .WithColor(_rand.RandomColor())
-                    .WithThumbnailUrl(playlist.ThumbnailUrl)
-                    .WithCurrentTimestamp()
-                    .Build());
+                        playlist.Add(await CreateSongAsync(
+                            $"{string.Join(", ", s.Track.Artists?.Select(x => x.Name))} {s.Track.Name} audio", //Travis Scott, Drake SICKO MODE audio
+                            id, 
+                            uId
+                        ));
+                    }
 
-                return;
+                    await EnqueueManyAsync(channel, vc, playlist, shuffle, position);
+
+                    await channel.SendMessageAsync(embed: new EmbedBuilder()
+                        .WithTitle("Added Spotify playlist")
+                        .WithFields(new List<EmbedFieldBuilder>
+                        {
+                            new EmbedFieldBuilder().WithName("Count").WithValue(spotifyPl.Count).WithIsInline(true),
+                            new EmbedFieldBuilder().WithName("URL").WithValue(queryOrUrl).WithIsInline(false),
+                            new EmbedFieldBuilder().WithName("Estimated time").WithValue(estTime).WithIsInline(true)
+                        })
+                        .WithColor(_rand.RandomColor())
+                        .WithFooter("The song may sound different as it is coming from YouTube, not Spotify.")
+                        .WithCurrentTimestamp()
+                        .Build());
+                }
             }
 
             var song = await CreateSongAsync(queryOrUrl, id, uId);
@@ -217,27 +254,23 @@ namespace donniebot.services
             {
                 enq.Release();
             }
-
-            #pragma warning disable CS4014 //Because this call is not awaited, execution of the current method continues before the call is completed. Consider applying the 'await' operator to the result of the call.
-            Task.Run(async () => //let it run in the background... we don't really care about the output
-            {
-                foreach (var song in songs)
-                    song.Info = await GetAudioInfoAsync(song.Url);
-            });
-            #pragma warning restore CS4014
+            
+            foreach (var song in songs)
+                song.Info = await GetAudioInfoAsync(song.Url);
         }
 
-        public void RemoveAt(ulong id, int index)
+        public bool RemoveAt(ulong id, int index)
         {
             if (!GetConnection(id, out var c))
-                return;
+                return false;
 
             var queue = c.Queue;
 
-            if (index < 0 || index >= queue.Count)
-                return;
+            if (index < 1 || index >= queue.Count)
+                return false;
 
             queue.RemoveAt(index);
+            return true;
         }
 
         public void Shuffle(ulong id)
@@ -368,7 +401,6 @@ namespace donniebot.services
                         {
                             downloadStream.CompleteWriting();
                         }
-                        Console.WriteLine("finished download");
                     }
 
                     async Task Read(CancellationToken token)
@@ -443,11 +475,10 @@ namespace donniebot.services
                         };
 
                         await Task.WhenAll(Download(cts.Token), Read(cts.Token), Write(cts.Token));
-                        Console.WriteLine("ended");
                     }
-                    catch (Exception e)
+                    catch (Exception)
                     {
-                        Console.WriteLine(e);
+
                     }
                     finally
                     {
@@ -460,7 +491,9 @@ namespace donniebot.services
             }
             catch (Discord.Net.WebSocketClosedException)
             {
-                await DisconnectAsync(connection.VoiceChannel);
+                _connections.Remove(connection);
+                connection.Dispose();
+                return;
             }
             finally
             {
@@ -584,7 +617,19 @@ namespace donniebot.services
 
         public bool HasSongs(ulong id) => GetConnection(id, out var c) && (GetCurrent(id) != null || c.Queue.Any());
 
-        public async Task<int> SkipAsync(SocketGuildUser skipper) => GetConnection(skipper.Guild.Id, out var c) ? await c.SkipAsync(skipper) : 0;
+        public async Task<int> SkipAsync(SocketGuildUser skipper)
+        {
+            
+            if (GetConnection(skipper.Guild.Id, out var c))
+            {
+                var djRole = _db.GetItem<DjRole>("djroles", LiteDB.Query.EQ("GuildId", skipper.Guild.Id));
+                if (skipper.Roles.Any(x => x.Id == djRole?.RoleId))
+                    return await c.DoSkipAsync();
+
+                return await c.SkipAsync(skipper);
+            }
+            else return 0;
+        }
 
         public string GetSongPosition(ulong id) => GetConnection(id, out var con) ? $"{con.Position.ToString(@"hh\:mm\:ss")}/{con.Current.Length.ToString(@"hh\:mm\:ss")}" : null;
         public TimeSpan GetRawPosition(ulong id) => GetConnection(id, out var con) ? con.Current.Length - con.Position : TimeSpan.FromSeconds(0);

@@ -32,6 +32,12 @@ namespace donniebot.commands
         {
             var id = Context.Guild.Id;
 
+            if (index == 1)
+            {
+                await ReplyAsync("Can't remove the currently-playing song. Use the skip command to skip songs!");
+                return;
+            }
+
             _audio.RemoveAt(id, index - 1);
             
             await ReplyAsync($"Removed the song at index {index}.");

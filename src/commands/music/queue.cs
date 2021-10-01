@@ -50,7 +50,7 @@ namespace donniebot.commands
                         .WithName($"#{i * 10 + 1} to #{i * 10 + chunk.Count()}")
                         .WithValue(string.Join('\n', chunk))
                     )
-                    .WithTitle($"Total time left: {TimeSpan.FromSeconds(time).ToString(@"hh\:mm\:ss")}")
+                    .WithTitle($"Total songs: {queue.Count} (time left: {TimeSpan.FromSeconds(time).ToString(@"hh\:mm\:ss")})")
                 );
             }
             
