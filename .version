@@ -1,6 +1,6 @@
-Thu Sep 30 01:24:10 UTC 2021
-commit 3c716b1ab80aa164f4baa89d339cd3eaa1ceca83
-Author: Jacob <32282272+jakedacatman@users.noreply.github.com>
-Date:   2021-09-29 21:23:56 -0400
+Fri Oct 1 01:44:19 UTC 2021
+commit 18865de7f6cdf35e590d80fee689f7d6c0192ccf
+Author: jakedacatman <helloihaxxedu@gmail.com>
+Date:   2021-09-30 21:44:03 -0400
 
-    Delete donniebot
+    preliminary spotify support (playlists) + fixes
