@@ -177,6 +177,8 @@ namespace donniebot.services
                         .WithCurrentTimestamp()
                         .Build());
                 }
+
+                await msg.DeleteAsync();
             }
 
             var song = await CreateSongAsync(queryOrUrl, id, uId);
