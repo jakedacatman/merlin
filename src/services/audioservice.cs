@@ -298,6 +298,17 @@ namespace donniebot.services
             return true;
         }
 
+        public bool ClearQueue(ulong id)
+        {
+            if (!GetConnection(id, out var c))
+                return false;
+
+            var queue = c.Queue;
+
+            queue.RemoveRange(0, queue.Count);
+            return true;
+        }
+
         public void Shuffle(ulong id)
         {
             if (!GetConnection(id, out var c))
@@ -316,7 +327,7 @@ namespace donniebot.services
         {
             if (player.IsLooping)
                 await EnqueueAsync(player.TextChannel, player.VoiceChannel, s, position: 0);
-                
+
             if (player.Queue.Count > 0)
             {
                 if (player.GetListeningUsers().Any())
