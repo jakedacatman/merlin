@@ -47,7 +47,7 @@ namespace donniebot.commands
                         .WithUrl($"https://github.com/{currVer.Author}") //their profile
                     )
                     .WithFooter(new EmbedFooterBuilder()
-                        .WithText($"Published at {currVer.Date}{(currVer.Commit == latestVer.Commit ? "" : $"Out of date; latest version is {latestVer.Commit.Substring(0, 7)}")}") //utc
+                        .WithText($"Published at {currVer.Date}{(currVer.Commit == latestVer.Commit ? "" : $" | Out of date; latest version is {latestVer.Commit.Substring(0, 7)}")}") //utc
                     )
                     .WithFields(new List<EmbedFieldBuilder>
                     {
