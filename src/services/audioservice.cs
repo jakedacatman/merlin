@@ -24,6 +24,7 @@ namespace donniebot.services
         private readonly DbService _db;
         private readonly RandomService _rand;
         private YoutubeClient yt = new YoutubeClient();
+        private Dictionary<ulong, CancellationTokenSource> queueEndTokens = new Dictionary<ulong, CancellationTokenSource>();
 
         public AudioService(DiscordShardedClient client, NetService net, DbService db, RandomService rand)
         {
@@ -109,7 +110,7 @@ namespace donniebot.services
                 .ToString(@"hh\:mm\:ss")
                 : "Now";
 
-            if (estTime == "00:00:00") estTime = "Now";
+            if (estTime == "00:00:00" || position == 0) estTime = "Now";
 
             if (con != null && position.HasValue && con.Queue.Any())
             {
@@ -162,20 +163,25 @@ namespace donniebot.services
                         ));
                     }
 
-                    await EnqueueManyAsync(channel, vc, playlist, shuffle, position);
-
-                    await channel.SendMessageAsync(embed: new EmbedBuilder()
-                        .WithTitle("Added Spotify playlist")
-                        .WithFields(new List<EmbedFieldBuilder>
-                        {
-                            new EmbedFieldBuilder().WithName("Count").WithValue(spotifyPl.Count).WithIsInline(true),
-                            new EmbedFieldBuilder().WithName("URL").WithValue(queryOrUrl).WithIsInline(false),
-                            new EmbedFieldBuilder().WithName("Estimated time").WithValue(estTime).WithIsInline(true)
-                        })
-                        .WithColor(_rand.RandomColor())
-                        .WithFooter("The song may sound different as it is coming from YouTube, not Spotify.")
-                        .WithCurrentTimestamp()
-                        .Build());
+                    try
+                    {
+                        await EnqueueManyAsync(channel, vc, playlist, shuffle, position);
+                    }
+                    finally
+                    {
+                        await channel.SendMessageAsync(embed: new EmbedBuilder()
+                            .WithTitle("Added Spotify playlist")
+                            .WithFields(new List<EmbedFieldBuilder>
+                            {
+                                new EmbedFieldBuilder().WithName("Count").WithValue(spotifyPl.Count).WithIsInline(true),
+                                new EmbedFieldBuilder().WithName("URL").WithValue(queryOrUrl).WithIsInline(false),
+                                new EmbedFieldBuilder().WithName("Estimated time").WithValue(estTime).WithIsInline(true)
+                            })
+                            .WithColor(_rand.RandomColor())
+                            .WithFooter("The song may sound different as it is coming from YouTube, not Spotify.")
+                            .WithCurrentTimestamp()
+                            .Build());
+                    }
                 }
 
                 await msg.DeleteAsync();
@@ -261,6 +267,23 @@ namespace donniebot.services
                 song.Info = await GetAudioInfoAsync(song.Url);
         }
 
+        public bool ToggleLoop(ulong id)
+        {
+            if (!GetConnection(id, out var c))
+                return false;
+
+            c.ToggleLoop();
+            return c.IsLooping;
+        }
+
+        public bool IsLooping(ulong id)
+        {
+            if (!GetConnection(id, out var c))
+                return false;
+
+            return c.IsLooping;
+        }
+
         public bool RemoveAt(ulong id, int index)
         {
             if (!GetConnection(id, out var c))
@@ -291,12 +314,41 @@ namespace donniebot.services
 
         public async Task OnSongEndedAsync(Song s, AudioPlayer player)
         {
+            if (player.IsLooping)
+                await EnqueueAsync(player.TextChannel, player.VoiceChannel, s, position: 0);
+                
             if (player.Queue.Count > 0)
             {
                 if (player.GetListeningUsers().Any())
+                {
+
                     await PlayAsync(player.GuildId);
+                }
                 else
                     player.Dispose();
+            }
+            else
+            {
+                var id = player.GuildId;
+                
+                if (!queueEndTokens.ContainsKey(id)) 
+                    queueEndTokens.TryAdd(id, new CancellationTokenSource());
+
+                Task OnSongAdded(ulong gId, AudioPlayer p, Song _)
+                {
+                    if (gId == id)
+                        queueEndTokens[id].Cancel();
+
+                    return Task.CompletedTask;
+                }
+
+                SongAdded += OnSongAdded;
+                await Task.Delay(300000, queueEndTokens[id].Token); //5 minutes
+                if (queueEndTokens[id].IsCancellationRequested)
+                    await DisconnectAsync(player.VoiceChannel);
+
+                queueEndTokens.Remove(id);
+                SongAdded -= OnSongAdded;
             }
         }
 

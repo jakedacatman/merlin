@@ -37,10 +37,8 @@ namespace donniebot.commands
                 await ReplyAsync("Can't remove the currently-playing song. Use the skip command to skip songs!");
                 return;
             }
-
-            _audio.RemoveAt(id, index - 1);
             
-            await ReplyAsync($"Removed the song at index {index}.");
+            await ReplyAsync(_audio.RemoveAt(id, index - 1) ? $"Removed the song at index {index}." : "Failed to remove the song; are you sure that there is a song at that position?");
         }
     }
 }

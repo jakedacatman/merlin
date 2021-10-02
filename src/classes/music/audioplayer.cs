@@ -26,6 +26,7 @@ namespace donniebot.classes
         public bool HasDisconnected { get; private set; } = false;
         public bool IsPlaying { get; set; } = false;
         public bool IsPaused { get; private set; } = false;
+        public bool IsLooping { get; private set; } = false;
 
         private int _skips = 0;
         private List<ulong> _skippedUsers = new List<ulong>();
@@ -45,6 +46,8 @@ namespace donniebot.classes
             Stream = client.CreatePCMStream(AudioApplication.Mixed);
             Queue = new List<Song>();
         }
+
+        public void ToggleLoop() => IsLooping = !IsLooping;
 
         public void Enqueue(Song s, int? position)
         { 

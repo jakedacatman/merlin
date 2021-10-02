@@ -22,8 +22,11 @@ namespace donniebot.commands
         [Summary("Skips the current song to play another.")]
         public async Task SkipPlayAsync([Summary("The URL or YouTube search query."), Remainder] string queryOrUrl = null)
         {
+            if (_audio.IsLooping(Context.Guild.Id))
+                _audio.ToggleLoop(Context.Guild.Id);
+
             await _audio.SkipAsync(Context.User as SocketGuildUser);
-            await _audio.AddAsync(Context.User as SocketGuildUser, Context.Channel as SocketTextChannel, queryOrUrl, false, 0);
+            await _audio.AddAsync(Context.User as SocketGuildUser, Context.Channel as SocketTextChannel, queryOrUrl, position: 0);
         }
     }
 }
