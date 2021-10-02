@@ -1,6 +1,6 @@
-Fri Oct 1 02:11:19 UTC 2021
-commit 72d328563e0498265a883423109726fd2c9adcd9
+Sat Oct 2 03:34:13 UTC 2021
+commit 420679b4e3e531126e32a973cb40c1189a938489
 Author: jakedacatman <helloihaxxedu@gmail.com>
-Date:   2021-09-30 22:07:30 -0400
+Date:   2021-10-01 23:31:57 -0400
 
-    Merge branch 'master' of https://github.com/jakedacatman/donniebot
+    added looping :D
