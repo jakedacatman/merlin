@@ -89,13 +89,10 @@ namespace donniebot.services
             var vc = user.VoiceChannel;
             var uId = user.Id;
 
-            if (!IsConnected(id))
+            if (vc == null)
             {
-                if (vc == null)
-                {
-                    await channel.SendMessageAsync("You must be in a voice channel.");
-                    return;
-                }
+                await channel.SendMessageAsync("You must be in a voice channel.");
+                return;
             }
 
             if (string.IsNullOrWhiteSpace(queryOrUrl))
@@ -234,7 +231,7 @@ namespace donniebot.services
                 if (!GetConnection(id, out var player))
                     player = await ConnectAsync(textChannel, vc);
 
-                song.Info = await GetAudioInfoAsync(song.Url);
+                song.Info = await GetAudioInfoAsync(song.Url).ConfigureAwait(false);
 
                 player.Enqueue(song, position);
                 if (shuffle) Shuffle(player.GuildId);
@@ -264,7 +261,7 @@ namespace donniebot.services
             }
             
             foreach (var song in songs)
-                song.Info = await GetAudioInfoAsync(song.Url);
+                song.Info = await GetAudioInfoAsync(song.Url).ConfigureAwait(false);
         }
 
         public bool ToggleLoop(ulong id)
@@ -715,7 +712,7 @@ namespace donniebot.services
 
                 if (connection.Current != null)
                 {
-                    items.Add($"{(connection.IsPlaying ? "▶️" : "⏸️")} __**1**: {connection.Current.Title} (queued by {GetMention(gId, connection.Current.QueuerId)})__");
+                    items.Add($"{(connection.IsPaused ? "▶️" : "⏸️")} __**1**: {connection.Current.Title} (queued by {GetMention(gId, connection.Current.QueuerId)})__");
 
                     for (int i = 0; i < queue.Count; i++)
                         items.Add($"**{i + 2}**: {queue[i].Title} (queued by {GetMention(gId, queue[i].QueuerId)})");

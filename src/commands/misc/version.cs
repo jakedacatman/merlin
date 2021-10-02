@@ -9,6 +9,7 @@ using donniebot.services;
 using Discord.WebSocket;
 using Discord.Net;
 using System.IO;
+using donniebot.classes;
 
 namespace donniebot.commands
 {
@@ -17,11 +18,13 @@ namespace donniebot.commands
     {
         private readonly MiscService _misc;
         private readonly RandomService _rand;
+        private readonly NetService _net;
 
-        public VersionCommand(MiscService misc, RandomService rand)
+        public VersionCommand(MiscService misc, RandomService rand, NetService net)
         {
             _misc = misc;
             _rand = rand;
+            _net = net;
         }
 
         [Command("version")]
@@ -33,29 +36,43 @@ namespace donniebot.commands
                 await ReplyAsync("No version file found. If you are the bot owner, make sure that the .version file from the git repository is copied over to the same directory as the bot executable.");
             else
             {
-                var lines = await File.ReadAllLinesAsync(".version"); //echo `date` > .version && git log --date=iso >> .version
-                var commit = lines[1].Substring(7); //commit <commit>
-                var author = lines[2].Substring(8); //Author: <author> <email>
-                author = author.Substring(0, author.IndexOf(' '));
-                var date = lines[3].Substring(8); //Date:   <date in iso format>
+                var currVer = ParseFile(await File.ReadAllLinesAsync(".version")); //echo `date` > .version && git log --date=iso >> .version
+                var latestVer = ParseFile((await _net.DownloadAsStringAsync("https://raw.githubusercontent.com/jakedacatman/donniebot/master/.version")).Split('\n'));
                 
                 await ReplyAsync(embed: new EmbedBuilder()
-                    .WithTitle($"Commit {commit.Substring(0, 7)}") //7 character commit string like github
+                    .WithTitle($"Commit {currVer.Commit.Substring(0, 7)}") //7 character commit string like github
                     .WithColor(_rand.RandomColor())
                     .WithAuthor(new EmbedAuthorBuilder()
-                        .WithName($"Author: {author}")
-                        .WithUrl($"https://github.com/{author}") //their profile
+                        .WithName($"Author: {currVer.Author}")
+                        .WithUrl($"https://github.com/{currVer.Author}") //their profile
                     )
                     .WithFooter(new EmbedFooterBuilder()
-                        .WithText($"Published at {DateTime.Parse(date, styles: System.Globalization.DateTimeStyles.AdjustToUniversal )}") //utc
+                        .WithText($"Published at {currVer.Date}{(currVer.Commit == latestVer.Commit ? "" : $"Out of date; latest version is {latestVer.Commit.Substring(0, 7)}")}") //utc
                     )
                     .WithFields(new List<EmbedFieldBuilder>
                     {
-                        new EmbedFieldBuilder().WithName("Message").WithValue(lines[5].Substring(4)).WithIsInline(false) //commit message
+                        new EmbedFieldBuilder().WithName("Message").WithValue(currVer.Message).WithIsInline(false) //commit message
                     })
                     .Build()
                 );
             }
+        }
+
+        private VersionFile ParseFile(string[] text)
+        {
+            var commit = text[1].Substring(7); //commit <commit>
+            var author = text[2].Substring(8); //Author: <author> <email>
+            author = author.Substring(0, author.IndexOf(' '));
+            var date = DateTime.Parse(text[3].Substring(8), styles: System.Globalization.DateTimeStyles.AdjustToUniversal); //Date:   <date in iso format>
+            var message = text[5].Substring(4);
+
+            return new VersionFile
+            {
+                Commit = commit,
+                Author = author,
+                Date = date,
+                Message = message
+            };
         }
     }
 }
