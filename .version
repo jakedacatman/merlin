@@ -1,6 +1,6 @@
-Sat Oct 2 14:30:46 UTC 2021
-commit 60c143527cbdad42f61fc32ca674f8d6a6285bd3
+Wed Oct 6 03:07:23 UTC 2021
+commit 22221e9e6b38ba8c47bab43b0b5f58f974d665ef
 Author: jakedacatman <helloihaxxedu@gmail.com>
-Date:   2021-10-02 10:30:33 -0400
+Date:   2021-10-05 23:08:03 -0400
 
-    Merge branch 'master' of https://github.com/jakedacatman/donniebot
+    fix some permission issues
