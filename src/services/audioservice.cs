@@ -95,17 +95,23 @@ namespace donniebot.services
                 return;
             }
 
-            if (string.IsNullOrWhiteSpace(queryOrUrl))
-            {
-                await PlayAsync(id);
+            GetConnection(id, out var con);
 
+            if (vc != con.VoiceChannel)
+            {
+                await channel.SendMessageAsync("You must be in the same voice channel as me.");
                 return;
             }
 
-            var estTime = GetConnection(id, out var con) ? TimeSpan.FromSeconds(con.Queue
+            if (string.IsNullOrWhiteSpace(queryOrUrl))
+            {
+                await PlayAsync(id);
+                return;
+            }
+
+            var estTime = TimeSpan.FromSeconds(con.Queue
                 .Sum(x => x.Length.TotalSeconds) + (con.Current?.Length.TotalSeconds - con.Position.TotalSeconds ?? 0))
-                .ToString(@"hh\:mm\:ss")
-                : "Now";
+                .ToString(@"hh\:mm\:ss");
 
             if (estTime == "00:00:00" || position == 0) estTime = "Now";
 

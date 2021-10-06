@@ -3,7 +3,7 @@ using Discord.Commands;
 using Discord.WebSocket;
 using donniebot.services;
 using System.Threading.Tasks;
-using Interactivity;
+using donniebot.classes;
 
 namespace donniebot.commands
 {
@@ -16,6 +16,7 @@ namespace donniebot.commands
 
         [Command("skip")]
         [Alias("sk")]
+        [RequireSameVoiceChannel]
         [Summary("Votes to skip the current song.")]
         public async Task SkipAsync() => await _audio.SkipAsync(Context.User as SocketGuildUser);
     }

@@ -4,8 +4,7 @@ using Discord.Commands;
 using Discord.WebSocket;
 using donniebot.services;
 using System.Threading.Tasks;
-using System.Collections.Generic;
-using Interactivity;
+using donniebot.classes;
 
 namespace donniebot.commands
 {
@@ -18,6 +17,7 @@ namespace donniebot.commands
 
         [Command("add")]
         [Alias("p", "play", "pl")]
+        [RequireSameVoiceChannel]
         [Summary("Adds a song or playlist to the queue in order to be played.")]
         public async Task AddAsync([Summary("The URL or YouTube search query."), Remainder] string queryOrUrl = null) => await _audio.AddAsync(Context.User as SocketGuildUser, Context.Channel as SocketTextChannel, queryOrUrl);
     }

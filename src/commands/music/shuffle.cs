@@ -19,7 +19,7 @@ namespace donniebot.commands
 
         [Command("shuffle")]
         [Alias("sh")]
-        [RequireDjRole, RequireSongs, RequireVoiceChannel]
+        [RequireDjRole, RequireSongs, RequireSameVoiceChannel]
         [Summary("Shuffles the song queue.")]
         public async Task ShuffleAsync()
         {

@@ -22,7 +22,7 @@ namespace donniebot.commands
         [Command("playshuffle")]
         [Alias("ps", "playsh", "plsh")]
         [Summary("Adds a song or playlist to the queue, then shuffles the queue.")]
-        [RequireDjRole]
+        [RequireDjRole, RequireSameVoiceChannel]
         public async Task PlayShuffleAsync([Summary("The URL or YouTube search query."), Remainder] string queryOrUrl = null) => await _audio.AddAsync(Context.User as SocketGuildUser, Context.Channel as SocketTextChannel, queryOrUrl, true);
     }
 }
