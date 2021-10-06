@@ -80,7 +80,9 @@ namespace donniebot.services
             { typeof(RequireBotPermissionAttribute), "bot requires perms" },
             { typeof(RequireContextAttribute), "must be invoked in a guild or dm" },
 	        { typeof(RequireDjRoleAttribute), "requires dj role" },
-	        { typeof(RequireSongsAttribute), "requires songs in queue" }
+	        { typeof(RequireSongsAttribute), "requires songs in queue" },
+	        { typeof(RequireVoiceChannelAttribute), "must be in a voice channel" },
+	        { typeof(RequireSameVoiceChannelAttribute), "must be in bot's voice channel" }
         };
 
         private readonly List<string> prefixes = new List<string>

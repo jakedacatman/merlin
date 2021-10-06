@@ -94,10 +94,8 @@ namespace donniebot.services
                 await channel.SendMessageAsync("You must be in a voice channel.");
                 return;
             }
-
-            GetConnection(id, out var con);
-
-            if (vc != con.VoiceChannel)
+            
+            if (GetConnection(id, out var con) && vc != con.VoiceChannel)
             {
                 await channel.SendMessageAsync("You must be in the same voice channel as me.");
                 return;
@@ -109,7 +107,7 @@ namespace donniebot.services
                 return;
             }
 
-            var estTime = TimeSpan.FromSeconds(con.Queue
+            var estTime = con is null ? "Now" : TimeSpan.FromSeconds(con.Queue
                 .Sum(x => x.Length.TotalSeconds) + (con.Current?.Length.TotalSeconds - con.Position.TotalSeconds ?? 0))
                 .ToString(@"hh\:mm\:ss");
 
