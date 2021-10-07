@@ -235,7 +235,7 @@ namespace donniebot.services
                 if (!GetConnection(id, out var player))
                     player = await ConnectAsync(textChannel, vc);
 
-                song.Info = await GetAudioInfoAsync(song.Url).ConfigureAwait(false);
+                song.Info = await GetAudioInfoAsync(song.Url);
 
                 player.Enqueue(song, position);
                 if (shuffle) Shuffle(player.GuildId);
@@ -265,7 +265,7 @@ namespace donniebot.services
             }
             
             foreach (var song in songs)
-                song.Info = await GetAudioInfoAsync(song.Url).ConfigureAwait(false);
+                song.Info = await GetAudioInfoAsync(song.Url);
         }
 
         public bool ToggleLoop(ulong id)
@@ -327,7 +327,10 @@ namespace donniebot.services
         public async Task OnSongEndedAsync(Song s, AudioPlayer player)
         {
             if (player.IsLooping)
+            {
+                s.Info = null;
                 await EnqueueAsync(player.TextChannel, player.VoiceChannel, s, position: 0);
+            }
 
             if (player.Queue.Count > 0)
             {

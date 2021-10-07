@@ -28,12 +28,13 @@ namespace donniebot.commands
         [RequireUserPermission(GuildPermission.ManageMessages)]
         [Summary("Deletes up to 1000 messages from the current channel, or 100 from a user in the current channel.")]
         public async Task PurgeAsync([Summary("The amount of messages to delete.")] int count = 100)
-        {
+        {            
+            await Context.Message.DeleteAsync();
             var ct = await _mod.TryPurgeMessagesAsync(Context.Channel as SocketTextChannel, count);
             if (ct > 0)
                 await ReplyAsync($"Purged {ct} {(ct > 1 ? "messages" : "message")}.");
             else
-                await ReplyAsync("Failed to purge the channel (purged 0 messages).");
+                await ReplyAsync("Failed to purge the channel.");
         }
 
         [Command("purge")]
