@@ -1,6 +1,9 @@
 using System;
+using System.IO;
 using System.Linq;
 using Discord.Audio;
+using System.Threading;
+using Nerdbank.Streams;
 using Discord.WebSocket;
 using System.Threading.Tasks;
 using System.Collections.Generic;
@@ -34,8 +37,9 @@ namespace donniebot.classes
         internal uint BytesDownloaded { get; set; } = 0;
         internal uint BytesPlayed { get; set; } = 0;
 
-        public event Func<AudioPlayer, Song, Task> SongSkipped;
-        public event Func<AudioPlayer, bool, Task> SongPaused;
+        public event Func<Song, Task> SongEnded;
+        public event Func<Song, Task> SongSkipped;
+        public event Func<bool, Task> SongToggledPlaying;
 
         public AudioPlayer(ulong id, SocketVoiceChannel channel, IAudioClient client, SocketTextChannel textchannel)
         {
@@ -69,7 +73,7 @@ namespace donniebot.classes
         {
             _skips = 0;
             Queue.RemoveAll(x => x.GuildId >= 0);
-            SongSkipped?.Invoke(this, this.Current);
+            SongSkipped?.Invoke(this.Current);
 
             if (sendMessage)
             {
@@ -119,7 +123,7 @@ namespace donniebot.classes
             }
 
             IsPaused = false;
-            SongPaused?.Invoke(this, IsPaused);
+            SongToggledPlaying?.Invoke(IsPaused);
             await TextChannel.SendMessageAsync("Resuming playback.");
         }
 
@@ -133,14 +137,14 @@ namespace donniebot.classes
             }
 
             IsPaused = true;
-            SongPaused?.Invoke(this, IsPaused);
+            SongToggledPlaying?.Invoke(IsPaused);
             await TextChannel.SendMessageAsync("Pausing playback.");
         }
 
         internal async Task<int> DoSkipAsync()
         {
             _skips = 0;
-            SongSkipped?.Invoke(this, this.Current);
+            SongSkipped?.Invoke(Current);
             await TextChannel.SendMessageAsync("Skipping the current song.");
             return 0;
         }
@@ -183,6 +187,186 @@ namespace donniebot.classes
 
             await TextChannel.SendMessageAsync($"Voted to skip the current song. ({_skips} votes/{requiredCount} required)");
             return _skips;
+        }
+
+        public async Task PlayAsync()
+        {
+            if (VoiceChannel is null)
+                throw new InvalidOperationException("Not connected to a voice channel.");
+
+            if (!Queue.Any())
+                return;
+
+            Current = Pop();
+            
+            try
+            {
+                var botVc = VoiceChannel.Guild.CurrentUser.VoiceChannel;
+                if (botVc != VoiceChannel)
+                {
+                    await botVc.DisconnectAsync();
+                    Connection = await VoiceChannel.ConnectAsync(true, false);
+                }
+
+                if (IsPlaying)
+                    return;
+
+                if (HasDisconnected)
+                    await UpdateAsync(VoiceChannel);
+
+                var info = Current.Info ?? await GetAudioInfoAsync(Current.Url);
+
+                Current.Size = info.Size.Bytes;
+
+                using (var str = await GetAudioAsync(info))
+                using (var downloadStream = new SimplexStream())
+                using (var ffmpeg = CreateStream())
+                using (var output = ffmpeg.StandardOutput.BaseStream)
+                using (var input = ffmpeg.StandardInput.BaseStream)
+                {
+                    IsPlaying = true;
+
+                    const int block_size = 4096; //4 KiB
+
+                    var bufferDown = new byte[block_size];
+                    var bufferRead = new byte[block_size];
+                    var bufferWrite = new byte[block_size];
+
+                    int bytesDown = 0, bytesRead = 0, bytesConverted = 0;
+
+                    var pauseCts = new CancellationTokenSource();
+
+                    SongToggledPlaying += (bool state) =>
+                    {
+                        if (state)
+                            pauseCts.Cancel();
+                        else
+                            pauseCts = new CancellationTokenSource();
+
+                        return Task.CompletedTask;
+                    };
+
+                    async Task Download(CancellationToken token)
+                    {
+                        try
+                        {
+                            do
+                            {
+                                if (token.IsCancellationRequested) break;
+
+                                bytesDown = await str.ReadAsync(bufferDown, 0, block_size);
+                                BytesDownloaded += (uint)bytesDown;
+
+                                await downloadStream.WriteAsync(bufferDown, 0, bytesDown);
+                            }
+                            while (bytesDown > 0);
+                        }
+                        finally
+                        {
+                            downloadStream.CompleteWriting();
+                        }
+                    }
+
+                    async Task Read(CancellationToken token)
+                    {
+                        try
+                        {
+                            do
+                            {
+                                if (token.IsCancellationRequested) break;
+
+                                bytesRead = await downloadStream.ReadAsync(bufferRead, 0, block_size);
+                                await input.WriteAsync(bufferRead, 0, bytesRead);
+                            }
+                            while (bytesRead > 0);
+                        }
+                        catch (IOException)
+                        {
+
+                        }
+                    }
+
+                    var hasHadFullChunkYet = false;
+                    async Task Write(CancellationToken token)
+                    {
+                        try
+                        {
+                            do
+                            {
+                                while (IsPaused) //don't write to discord while paused
+                                {
+                                    try
+                                    {
+                                        if (token.IsCancellationRequested) return;
+
+                                        await Task.Delay(-1, pauseCts.Token); //wait forever (until token is called)
+                                    }
+                                    catch (TaskCanceledException)
+                                    {
+
+                                    }
+                                }
+                                
+                                if (token.IsCancellationRequested) break;
+
+                                if (hasHadFullChunkYet && bytesConverted < block_size) //if bytesConverted is less than here, then the last (small) chunk is done
+                                    break;
+
+                                bytesConverted = await output.ReadAsync(bufferWrite, 0, block_size);
+                                BytesPlayed += (uint)bytesConverted;
+
+                                if (bytesConverted == block_size)
+                                    hasHadFullChunkYet = true;
+
+                                await Stream.WriteAsync(bufferWrite, 0, bytesConverted);
+                            }
+                            while (bytesConverted > 0);
+                        }
+                        finally
+                        {
+                            ffmpeg.Kill();
+                        }
+                    }
+
+                    try //allows for skipping
+                    {
+                        var cts = new CancellationTokenSource();
+
+                        SongSkipped += (Song _) =>
+                        {
+                            cts.Cancel();
+                            return Task.CompletedTask;
+                        };
+
+                        await Task.WhenAll(Download(cts.Token), Read(cts.Token), Write(cts.Token));
+                    }
+                    catch (Exception)
+                    {
+
+                    }
+                    finally
+                    {
+                        await Stream.FlushAsync();
+
+                        if (!ffmpeg.HasExited) 
+                            ffmpeg.Kill();
+                    }
+                }
+            }
+            catch (Discord.Net.WebSocketClosedException)
+            {
+                Dispose();
+                return;
+            }
+            finally
+            {
+                BytesDownloaded = 0;
+                BytesPlayed = 0;
+                IsPlaying = false;
+                SongEnded?.Invoke(Current);
+
+                Current = null;
+            }
         }
 
 
