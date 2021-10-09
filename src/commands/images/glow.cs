@@ -4,6 +4,7 @@ using Discord.WebSocket;
 using Discord.Commands;
 using donniebot.services;
 using Interactivity;
+using Discord;
 
 namespace donniebot.commands
 {
@@ -24,18 +25,11 @@ namespace donniebot.commands
         [Command("glow")]
         [Alias("g")]
         [Summary("Makes an image glow.")]
-        public async Task GlowCmd([Summary("The image to make glow.")] string url = null)
+        public async Task GlowAsync([Summary("The image to make glow.")] string url = null)
         {
-            try
-            {
-                url = await _img.ParseUrlAsync(url, Context.Message);
-                var img = await _img.Glow(url.Trim('<').Trim('>'));
-                await _img.SendToChannelAsync(img, Context.Channel);
-            }
-            catch (Exception e)
-            {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
-            }
+            url = await _img.ParseUrlAsync(url, Context.Message);
+            var img = await _img.GlowAsync(url);
+            await _img.SendToChannelAsync(img, Context.Channel, new MessageReference(Context.Message.Id));
         }
     }
 }

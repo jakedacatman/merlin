@@ -4,6 +4,7 @@ using Discord.WebSocket;
 using Discord.Commands;
 using donniebot.services;
 using Interactivity;
+using Discord;
 
 namespace donniebot.commands
 {
@@ -24,20 +25,13 @@ namespace donniebot.commands
         [Command("resize")]
         [Alias("r")]
         [Summary("Resizes an image.")]
-        public async Task ResizeCmd([Summary("The width to change the size to.")] int width, [Summary("The height to change the size to.")] int height, [Summary("The image to change.")] string url = null)
+        public async Task ResizeAsync([Summary("The width to change the size to.")] int width, [Summary("The height to change the size to.")] int height, [Summary("The image to change.")] string url = null)
         {
-            try
+            url = await _img.ParseUrlAsync(url, Context.Message);
+            if ((width > 0 && height > 0) && (width <= 2000 && height <= 2000))
             {
-                url = await _img.ParseUrlAsync(url, Context.Message);
-                if ((width > 0 && height > 0) && (width <= 2000 && height <= 2000))
-                {
-                    var img = await _img.Resize(url, width, height);
-                    await _img.SendToChannelAsync(img, Context.Channel);
-                }
-            }
-            catch (Exception e)
-            {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
+                var img = await _img.ResizeAsync(url, width, height);
+                await _img.SendToChannelAsync(img, Context.Channel, new MessageReference(Context.Message.Id));
             }
         }
     }

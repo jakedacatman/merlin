@@ -27,43 +27,35 @@ namespace donniebot.commands
         [Command("avatar")]
         [Alias("a", "av")]
         [Summary("Gets a user's avatar.")]
-        public async Task AvatarCmd([Summary("The user.")] SocketGuildUser user = null)
+        public async Task AvatarAsync([Summary("The user.")] SocketGuildUser user = null)
         {
-            try
-            {
-                if (user == null) user = Context.User as SocketGuildUser;
+            if (user == null) user = Context.User as SocketGuildUser;
 
-                var url = user.GetAvatarUrl(size: 512);
-                await ReplyAsync(embed: new EmbedBuilder()
-                    .WithColor(_rand.RandomColor())
-                    .WithImageUrl(url)
-                    .WithCurrentTimestamp()
-                    .Build());
-            }
-            catch (Exception e)
-            {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
-            }
+            var url = user.GetAvatarUrl(size: 512);
+            await ReplyAsync(embed: new EmbedBuilder()
+                .WithColor(_rand.RandomColor())
+                .WithImageUrl(url)
+                .WithCurrentTimestamp()
+                .Build(), messageReference: new MessageReference(Context.Message.Id), allowedMentions: AllowedMentions.None);
         }
         [Command("avatar")]
         [Alias("a", "av")]
         [Summary("Gets a user's avatar.")]
-        public async Task AvatarCmd([Summary("The user.")] ulong userId)
+        public async Task AvatarAsync([Summary("The user.")] ulong userId)
         {
-            try
-            {
-                var url = (await _client.Rest.GetUserAsync(userId)).GetAvatarUrl(size: 512);
+            var url = (await _client.Rest.GetUserAsync(userId))?.GetAvatarUrl(size: 512);
 
-                await ReplyAsync(embed: new EmbedBuilder()
-                    .WithColor(_rand.RandomColor())
-                    .WithImageUrl(url)
-                    .WithCurrentTimestamp()
-                    .Build());
-            }
-            catch (Exception e)
+            if (url == null)
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
+                await ReplyAsync("Invalid user ID.");
+                return;
             }
+
+            await ReplyAsync(embed: new EmbedBuilder()
+                .WithColor(_rand.RandomColor())
+                .WithImageUrl(url)
+                .WithCurrentTimestamp()
+                .Build(), messageReference: new MessageReference(Context.Message.Id), allowedMentions: AllowedMentions.None);
         }
     }
 }

@@ -32,16 +32,6 @@ namespace donniebot.commands
         [Alias("get")]
         [Summary("Gets the current prefix.")]
         [RequireUserPermission(GuildPermission.ManageMessages)]
-        public async Task PrefixCmd()
-        {
-            try
-            {
-                await ReplyAsync($" My current prefix is `{_db.GetPrefix(Context.Guild.Id).Prefix ?? _default.Prefix}`.");
-            }
-            catch (Exception e)
-            {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
-            }
-        }
+        public async Task PrefixAsync() => await ReplyAsync($" My current prefix is `{_db.GetPrefix(Context.Guild.Id)?.Prefix ?? _default.Prefix}`.");
     }
 }

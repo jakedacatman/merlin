@@ -3,7 +3,7 @@ using Discord.Commands;
 using Discord.WebSocket;
 using donniebot.services;
 using System.Threading.Tasks;
-using Interactivity;
+using donniebot.classes;
 
 namespace donniebot.commands
 {
@@ -11,27 +11,13 @@ namespace donniebot.commands
     public class SkipCommand : ModuleBase<ShardedCommandContext>
     {
         private readonly AudioService _audio;
-        private readonly MiscService _misc;
 
-        public SkipCommand(AudioService audio, MiscService misc)
-        {
-            _audio = audio;
-            _misc = misc;
-        }
+        public SkipCommand(AudioService audio, MiscService misc) => _audio = audio;
 
         [Command("skip")]
         [Alias("sk")]
+        [RequireSameVoiceChannel]
         [Summary("Votes to skip the current song.")]
-        public async Task SkipCmd()
-        {
-            try
-            {
-                await _audio.SkipAsync(Context.User as SocketGuildUser);
-            }
-            catch (Exception e)
-            {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
-            }
-        }
+        public async Task SkipAsync() => await _audio.SkipAsync(Context.User as SocketGuildUser);
     }
 }

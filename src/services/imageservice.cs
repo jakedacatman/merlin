@@ -20,6 +20,9 @@ using System.Text.RegularExpressions;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using UkooLabs.SVGSharpie.ImageSharp;
+using ISImage = SixLabors.ImageSharp.Image;
+using Discord;
+using SixLabors.ImageSharp.Formats.Png;
 
 namespace donniebot.services
 {
@@ -28,6 +31,7 @@ namespace donniebot.services
         private readonly MiscService _misc;
         private readonly NetService _net;
         private readonly RandomService _rand;
+        private readonly DbService _db;
         private readonly DiscordShardedClient _client;
 
         private IImageFormat _format;
@@ -35,17 +39,18 @@ namespace donniebot.services
         private readonly Regex _reg = new Regex(@"[0-9]+(\.[0-9]{1,2})? fps");
         private readonly NekoEndpoints _nkeps;
 
-        public ImageService(MiscService misc, NetService net, RandomService rand, NekoEndpoints nkeps, DiscordShardedClient client)
+        public ImageService(MiscService misc, NetService net, RandomService rand, DbService db, NekoEndpoints nkeps, DiscordShardedClient client)
         {
             _misc = misc;
             _net = net;
             _rand = rand;
+            _db = db;
             _nkeps = nkeps;
             _client = client;
         }
 
-        public async Task<Image> Invert(string url) => Invert(await DownloadFromUrlAsync(url));
-        public Image Invert(Image source)
+        public async Task<ISImage> InvertAsync(string url) => Invert(await DownloadFromUrlAsync(url));
+        public ISImage Invert(ISImage source)
         {
             if (source.Frames.Count > 1)
                 GifFilter(source, Invert);
@@ -54,8 +59,8 @@ namespace donniebot.services
             return source;
         }
 
-        public async Task<Image> Brightness(string url, float brightness) => Brightness(await DownloadFromUrlAsync(url), brightness);
-        public Image Brightness(Image source, float brightness)
+        public async Task<ISImage> BrightnessAsync(string url, float brightness) => Brightness(await DownloadFromUrlAsync(url), brightness);
+        public ISImage Brightness(ISImage source, float brightness)
         {
             if (source.Frames.Count > 1)
                 GifFilter(source, brightness, Brightness);
@@ -64,8 +69,8 @@ namespace donniebot.services
             return source;
         }
 
-        public async Task<Image> Blur(string url, float amount) => Blur(await DownloadFromUrlAsync(url), amount);
-        public Image Blur(Image source, float amount)
+        public async Task<ISImage> BlurAsync(string url, float amount) => Blur(await DownloadFromUrlAsync(url), amount);
+        public ISImage Blur(ISImage source, float amount)
         {
             if (source.Frames.Count > 1)
                 GifFilter(source, amount, Blur);
@@ -74,8 +79,8 @@ namespace donniebot.services
             return source;
         }
 
-        public async Task<Image> Greyscale(string url) => Greyscale(await DownloadFromUrlAsync(url));
-        public Image Greyscale(Image source)
+        public async Task<ISImage> GreyscaleAsync(string url) => Greyscale(await DownloadFromUrlAsync(url));
+        public ISImage Greyscale(ISImage source)
         {
             if (source.Frames.Count > 1)
                 GifFilter(source, Greyscale);
@@ -84,8 +89,8 @@ namespace donniebot.services
             return source;
         }
 
-        public async Task<Image> Edges(string url) => Edges(await DownloadFromUrlAsync(url));
-        public Image Edges(Image source)
+        public async Task<ISImage> EdgesAsync(string url) => Edges(await DownloadFromUrlAsync(url));
+        public ISImage Edges(ISImage source)
         {
             if (source.Frames.Count > 1)
                 GifFilter(source, Edges);
@@ -94,8 +99,8 @@ namespace donniebot.services
             return source;
         }
 
-        public async Task<Image> Contrast(string url, float amount) => Contrast(await DownloadFromUrlAsync(url), amount);
-        public Image Contrast(Image source, float amount)
+        public async Task<ISImage> ContrastAsync(string url, float amount) => Contrast(await DownloadFromUrlAsync(url), amount);
+        public ISImage Contrast(ISImage source, float amount)
         {
             if (source.Frames.Count > 1)
                 GifFilter(source, amount, Contrast);
@@ -104,8 +109,8 @@ namespace donniebot.services
             return source;
         }
 
-        public async Task<Image> Sharpen(string url, float amount) => Sharpen(await DownloadFromUrlAsync(url), amount);
-        public Image Sharpen(Image source, float amount)
+        public async Task<ISImage> SharpenAsync(string url, float amount) => Sharpen(await DownloadFromUrlAsync(url), amount);
+        public ISImage Sharpen(ISImage source, float amount)
         {
             if (source.Frames.Count > 1)
                 GifFilter(source, amount, Sharpen);
@@ -114,8 +119,8 @@ namespace donniebot.services
             return source;
         }
 
-        public async Task<Image> Pixelate(string url, int size) => Pixelate(await DownloadFromUrlAsync(url), size);
-        public Image Pixelate(Image source, int size)
+        public async Task<ISImage> PixelateAsync(string url, int size) => Pixelate(await DownloadFromUrlAsync(url), size);
+        public ISImage Pixelate(ISImage source, int size)
         {
             if (source.Frames.Count > 1)
                 GifFilter(source, size, Pixelate);
@@ -124,9 +129,9 @@ namespace donniebot.services
             return source;
         }
         
-        public async Task<Image> Hue(string url, float amount) => Hue(await DownloadFromUrlAsync(url), amount);
+        public async Task<ISImage> HueAsync(string url, float amount) => Hue(await DownloadFromUrlAsync(url), amount);
 
-        public Image Hue(Image source, float amount)
+        public ISImage Hue(ISImage source, float amount)
         {
             if (source.Frames.Count > 1)
                 GifFilter(source, amount, Hue);
@@ -135,18 +140,18 @@ namespace donniebot.services
             return source;
         }
 
-        public async Task<Image> BackgroundColor(string url, int r, int g, int b) => BackgroundColor(await DownloadFromUrlAsync(url), r, g, b);
-        public Image BackgroundColor(Image source, int r, int g, int b)
+        public async Task<ISImage> BackgroundColorAsync(string url, int r, int g, int b) => BackgroundColor(await DownloadFromUrlAsync(url), r, g, b);
+        public ISImage BackgroundColor(ISImage source, int r, int g, int b)
         {
             if (source.Frames.Count > 1)
                 GifFilter(source, r, g, b, BackgroundColor);
             else
-                source.Mutate(x => x.BackgroundColor(new Color(new Rgba64((ushort)r, (ushort)g, (ushort)b, 255))));
+                source.Mutate(x => x.BackgroundColor(new SixLabors.ImageSharp.Color(new Rgba64((ushort)r, (ushort)g, (ushort)b, 255))));
             return source;
         }
 
-        public async Task<Image> Rotate(string url, float r) => Rotate(await DownloadFromUrlAsync(url), r);
-        public Image Rotate(Image source, float r)
+        public async Task<ISImage> RotateAsync(string url, float r) => Rotate(await DownloadFromUrlAsync(url), r);
+        public ISImage Rotate(ISImage source, float r)
         {
             if (source.Frames.Count > 1)
                 return GifFilterR(source, r, Rotate);
@@ -155,27 +160,9 @@ namespace donniebot.services
             return source;
         }
 
-        public async Task<Image> Caption(string url, string text) => Caption(await DownloadFromUrlAsync(url), text);
-        public Image Caption(Image source, string text)
+        public async Task<ISImage> CaptionAsync(string url, string text) => Caption(await DownloadFromUrlAsync(url), text);
+        public ISImage Caption(ISImage source, string text)
         {
-            var img = Image.Load(new byte[]
-            {
-                137, 80, 78, 71, 13, 
-                10, 26, 10, 0, 0, 
-                0, 13, 73, 72, 68, 
-                82, 0, 0, 0, 1, 
-                0, 0, 0, 1, 8, 
-                6, 0, 0, 0, 31, 
-                21, 196, 137, 0, 0, 
-                0, 11, 73, 68, 65, 
-                84, 8, 215, 99, 248, 
-                15, 4, 0, 9, 251, 
-                3, 253, 99, 38, 197, 
-                143, 0, 0, 0, 0, 
-                73, 69, 78, 68, 174, 
-                66, 96, 130
-            });
-
             var font = SystemFonts.Collection.CreateFont("LimerickCdSerial-Xbold", source.Width / 12f, FontStyle.Bold);
             //var font = SystemFonts.Collection.CreateFont("Twemoji", source.Width / 12f, FontStyle.Regular);
             float padding = 0.05f * source.Width;
@@ -189,25 +176,36 @@ namespace donniebot.services
             });
 
             var height = Math.Max((int)(bounds.Height * 1.25), (int)(source.Height / 4.5f));
-            
-            img.Mutate(x => x.Resize(source.Width, height + source.Height));
 
-            SystemFonts.TryFind("Twemoji Mozilla", out var tcef);
-            SystemFonts.TryFind("HanaMinA", out var hmf);
+            var img = new Image<Rgba32>(source.Width, source.Height + height);
+            
+
+            if (!SystemFonts.TryFind("Twemoji Mozilla", out var tcef) && !SystemFonts.TryFind("Twemoji", out tcef))
+                throw new ImageException("Failed to find the Twemoji font. Make sure that it is installed in the right place!");
+                
+            if (!SystemFonts.TryFind("HanaMinA", out var hmf) && !SystemFonts.TryFind("Yu Gothic", out hmf))
+                throw new ImageException("Failed to find the HanaMinA or Yu Gothic fonts. Make sure that either of them is installed in the right place!");
 
             var to = new TextOptions
             {
                 HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center,
                 WrapTextWidth = wrap,
-                FallbackFonts = { tcef ?? SystemFonts.Find("Twemoji"), hmf ?? SystemFonts.Find("Yu Gothic") }
+                FallbackFonts = { tcef, hmf }
             };
 
-            var options = new TextGraphicsOptions(new GraphicsOptions(), to);
+            var options = new DrawingOptions()
+            {
+                TextOptions = to
+            };
 
             PointF location = new PointF(padding, height * .5f);
 
-            img.Mutate(x => x.DrawText(options, text, font, Color.Black, location));
+            img.Mutate(x =>
+            {
+                x.Fill(SixLabors.ImageSharp.Color.White);
+                x.DrawText(options, text, font, SixLabors.ImageSharp.Color.Black, location);
+            });
 
             if (source.Frames.Count() > 1)
             {
@@ -219,14 +217,14 @@ namespace donniebot.services
                     img.Frames.InsertFrame(i, frame);
                 }
                         
-                return GifFilter((Image)img, source, new Point(0, height), source.Size(), 0f, Overlay);
+                return GifFilter((ISImage)img, source, new Point(0, height), source.Size(), 0f, Overlay);
             }
-            else return Overlay((Image)img, source, new Point(0, height), source.Size());
+            else return Overlay((ISImage)img, source, new Point(0, height), source.Size());
         }
 
-        public async Task<Image> Overlay(string sourceUrl, string overlayUrl, int x, int y, int width, int height, float rot = 0f)
+        public async Task<ISImage> OverlayAsync(string sourceUrl, string overlayUrl, int x, int y, int width, int height, float rot = 0f)
         {
-            Image source = await DownloadFromUrlAsync(sourceUrl);
+            ISImage source = await DownloadFromUrlAsync(sourceUrl);
             var overlay = await DownloadFromUrlAsync(overlayUrl);
 
             if (width == 0) width = overlay.Width;
@@ -245,7 +243,7 @@ namespace donniebot.services
 
             return Overlay(source, overlay, location, size, rot);  
         }
-        public Image Overlay(Image source, Image overlay, Point location, Size size, float rot = 0f)
+        public ISImage Overlay(ISImage source, ISImage overlay, PointF location, SizeF size, float rot = 0f)
         {
             if (overlay.Frames.Count > 1)
             {
@@ -257,7 +255,7 @@ namespace donniebot.services
                     source.Frames.InsertFrame(i, frame);
                 }
                         
-                return GifFilter((Image)source, overlay, location, size, rot, Overlay);
+                return GifFilter((ISImage)source, overlay, location, size, rot, Overlay);
             }
             else
             {
@@ -265,7 +263,7 @@ namespace donniebot.services
                     overlay.Mutate(h => h.Resize(new ResizeOptions
                     {
                         Mode = ResizeMode.Stretch,
-                        Size = size,
+                        Size = (Size)size,
                         Sampler = KnownResamplers.MitchellNetravali
                     }));
 
@@ -273,21 +271,21 @@ namespace donniebot.services
                 {
                     var ow = overlay.Width;
                     var oh = overlay.Height;
-                    overlay.Mutate(x => x.Rotate(rot));
+                    overlay.Mutate(x => x.Rotate(rot, KnownResamplers.MitchellNetravali));
                     var nw = overlay.Width;
                     var nh = overlay.Height;
             
-                    location = new Point(location.X - ((nw - ow) / 2), location.Y - ((nh - oh) / 2));
+                    location = new PointF(location.X - ((nw - ow) / 2), location.Y - ((nh - oh) / 2));
                 }
 
-                source.Mutate(x => x.DrawImage(overlay, location, 1f));
+                source.Mutate(x => x.DrawImage(overlay, (Point)location, 1f));
             }
 
             return source;
         }
 
-        public async Task<Image> Saturate(string url, float amount) => Saturate(await DownloadFromUrlAsync(url), amount);
-        public Image Saturate(Image source, float amount)
+        public async Task<ISImage> SaturateAsync(string url, float amount) => Saturate(await DownloadFromUrlAsync(url), amount);
+        public ISImage Saturate(ISImage source, float amount)
         {
             if (source.Frames.Count > 1)
                 GifFilter(source, amount, Saturate);
@@ -296,8 +294,8 @@ namespace donniebot.services
             return source;
         }
 
-        public async Task<Image> Glow(string url) => Glow(await DownloadFromUrlAsync(url));
-        public Image Glow(Image source)
+        public async Task<ISImage> GlowAsync(string url) => Glow(await DownloadFromUrlAsync(url));
+        public ISImage Glow(ISImage source)
         {
             if (source.Frames.Count > 1)
                 GifFilter(source, Glow);
@@ -306,8 +304,8 @@ namespace donniebot.services
             return source;
         }
 
-        public async Task<Image> Polaroid(string url) => Polaroid(await DownloadFromUrlAsync(url));
-        public Image Polaroid(Image source)
+        public async Task<ISImage> PolaroidAsync(string url) => Polaroid(await DownloadFromUrlAsync(url));
+        public ISImage Polaroid(ISImage source)
         {
             if (source.Frames.Count > 1)
                 GifFilter(source, Polaroid);
@@ -316,8 +314,8 @@ namespace donniebot.services
             return source;
         }
 
-        public async Task<Image> Jpeg(string url, int quality)=> Jpeg(await DownloadFromUrlAsync(url), quality);
-        public Image Jpeg(Image source, int quality)
+        public async Task<ISImage> JpegAsync(string url, int quality)=> Jpeg(await DownloadFromUrlAsync(url), quality);
+        public ISImage Jpeg(ISImage source, int quality)
         {
             if (source.Frames.Count > 1)
                 GifFilter(source, quality, Jpeg);
@@ -325,38 +323,16 @@ namespace donniebot.services
             {
                 var path = SaveAsJpeg(source, quality);
                 var f = File.Open(path, FileMode.Open);
-                source = Image.Load(f);
+                source = ISImage.Load(f);
                 f.Dispose();
                 File.Delete(path);  
             }
             return source;
         }
 
-        public async Task<Image> Demotivational(string url, string title, string text) => Demotivational(await DownloadFromUrlAsync(url), title, text);
-        public Image Demotivational(Image source, string title, string text)
+        public async Task<ISImage> DemotivationalAsync(string url, string title, string text) => Demotivational(await DownloadFromUrlAsync(url), title, text);
+        public ISImage Demotivational(ISImage source, string title, string text)
         {
-            Image bg = Image.Load(new byte[]
-            {
-                137, 80, 78, 71, 13, 
-                10, 26, 10, 0, 0, 
-                0, 13, 73, 72, 68, 
-                82, 0, 0, 0, 1, 
-                0, 0, 0, 1, 8, 
-                6, 0, 0, 0, 31, 
-                21, 196, 137, 0, 0, 
-                0, 6, 98, 75, 71, 
-                68, 0, 104, 0, 137, 
-                0, 128, 83, 93, 36, 
-                220, 0, 0, 0, 13, 
-                73, 68, 65, 84, 8, 
-                215, 99, 96, 100, 96, 
-                252, 15, 0, 1, 10, 
-                1, 2, 233, 211, 149, 
-                8, 0, 0, 0, 0, 
-                73, 69, 78, 68, 174, 
-                66, 96, 130
-            });
-
             var w = source.Width;
             var h = source.Height;
 
@@ -398,19 +374,14 @@ namespace donniebot.services
 
             var height = tBounds.Height + bh;
 
-            bg.Mutate(x => x.Resize(new ResizeOptions
-            {
-                Mode = ResizeMode.Stretch,
-                Size = new Size((int)Math.Round((5d / 4d) * w), (int)Math.Round((1.25f * h) + height + bounds.Height)),
-                Sampler = KnownResamplers.NearestNeighbor
-            }));
+            ISImage bg = new Image<Rgba32>((int)Math.Round((5d / 4d) * w), (int)Math.Round((1.25f * h) + height + bounds.Height));
 
             var rWidth = Math.Max(0.05f * bw, 3f);
             var offset = rWidth + 2;
             
             var r = new RectangleF(bw - offset, bh - offset, w + (2 * offset), h + (2 * offset));
 
-            bg.Mutate(x => x.Draw(Pens.Solid(Color.White, rWidth), r));
+            bg.Mutate(x => x.Draw(Pens.Solid(SixLabors.ImageSharp.Color.White, rWidth), r));
 
             var location = new PointF(bw + padding, r.Bottom + bh);
 
@@ -424,22 +395,27 @@ namespace donniebot.services
                 WrapTextWidth = wrap,
                 FallbackFonts = { tcef ?? SystemFonts.Find("Twemoji"), hmf ?? SystemFonts.Find("Yu Gothic") }
             };
-            var options = new TextGraphicsOptions(new GraphicsOptions(), to);
-            bg.Mutate(x => x.DrawText(options, title, tFont, Color.White, location));
+
+            var options = new DrawingOptions()
+            {
+                TextOptions = to
+            };
+
+            bg.Mutate(x => x.DrawText(options, title, tFont, SixLabors.ImageSharp.Color.White, location));
 
             var nextY = tBounds.Height;// + bh;
             if (bounds.Width > wrap)
                 nextY = (height + .25f * bounds.Height);
                 
             location.Y += (nextY);
-            bg.Mutate(x => x.DrawText(options, text, font, Color.White, location));
+            bg.Mutate(x => x.DrawText(options, text, font, SixLabors.ImageSharp.Color.White, location));
             
-            return Overlay((Image)bg, source, new Point(bw, bh), source.Size());
+            return Overlay((ISImage)bg, source, new Point(bw, bh), source.Size());
         }
 
-        public async Task<Image> Redpill(string choice1, string choice2)
+        public async Task<ISImage> RedpillAsync(string choice1, string choice2)
         {
-            var redpillImg = Image.Load(await _net.DownloadFromUrlAsync("https://i.jakedacatman.me/BIQtx.png"));
+            var redpillImg = ISImage.Load(await _net.DownloadFromUrlAsync("https://i.jakedacatman.me/BIQtx.png"));
 
             Font rF = SystemFonts.CreateFont("Impact", 40f);
             Font bF = SystemFonts.CreateFont("Impact", 40f);
@@ -502,35 +478,45 @@ namespace donniebot.services
                 WrapTextWidth = wrap,
                 FallbackFonts = { tcef ?? SystemFonts.Find("Twemoji"), hmf ?? SystemFonts.Find("Yu Gothic") }
             };
-            var options = new TextGraphicsOptions(new GraphicsOptions(), to);
 
-            redpillImg.Mutate(x => x.DrawText(options, choice1, rF, Pens.Solid(Color.Black, 3), location));
-            redpillImg.Mutate(x => x.DrawText(options, choice1, rF, Color.White, location));
+            var options = new DrawingOptions()
+            {
+                TextOptions = to
+            };
+
+            redpillImg.Mutate(x => 
+            {
+                x.DrawText(options, choice1, rF, Pens.Solid(SixLabors.ImageSharp.Color.Black, 3), location);
+                x.DrawText(options, choice1, rF, SixLabors.ImageSharp.Color.White, location);
+            });
 
             location = new PointF(521 - (.5f * blueBounds.Width), 270);
-            redpillImg.Mutate(x => x.DrawText(options, choice2, bF, Pens.Solid(Color.Black, 3), location));
-            redpillImg.Mutate(x => x.DrawText(options, choice2, bF, Color.White, location));
+            redpillImg.Mutate(x => 
+            {
+                x.DrawText(options, choice2, bF, Pens.Solid(SixLabors.ImageSharp.Color.Black, 3), location);
+                x.DrawText(options, choice2, bF, SixLabors.ImageSharp.Color.White, location);
+            });
 
             return redpillImg;
         }
 
-        public async Task<string> VideoFilter(string url, Func<Image, string, Image> func, string arg1)
+        public async Task<string> VideoFilterAsync(string url, Func<ISImage, string, ISImage> func, string arg1)
         {
             if (!await _net.IsVideoAsync(url)) throw new VideoException("Not a video.");
 
             var id = await _net.DownloadToFileAsync(url);
             
-            var framerate = _reg.Match(await Shell.Run($"ffprobe -hide_banner -show_streams {id}", true)).Value.Replace(" fps", "");
+            var framerate = _reg.Match(await Shell.RunAsync($"ffprobe -hide_banner -show_streams {id}", true)).Value.Replace(" fps", "");
 
             var tmp = Directory.CreateDirectory($"tmp-{id}");
-            await Shell.Ffmpeg($"-i {id} -hide_banner -vn {tmp.Name}/{id}.aac", true);
-            await Shell.Ffmpeg($"-i {id} -r {framerate} -f image2 -hide_banner {tmp.Name}/frame-%d.png", true);
+            await Shell.FfmpegAsync($"-i {id} -hide_banner -vn {tmp.Name}/{id}.aac", true);
+            await Shell.FfmpegAsync($"-i {id} -r {framerate} -f image2 -hide_banner {tmp.Name}/frame-%d.png", true);
 
             var files = tmp.EnumerateFiles().Where(x => x.Name.Contains(".png"));
             for (int i = 0; i < files.Count(); i++)
             {
                 var f = files.ElementAt(i);
-                var img = Image.Load(f.FullName);
+                var img = await ISImage.LoadAsync(f.FullName);
 
                 if (i == 0 && (img.Width > 1000 || img.Height > 1000))
                     throw new VideoException("Video too large.");
@@ -541,28 +527,28 @@ namespace donniebot.services
                 Save(img, f.FullName);
             }
 
-            await Shell.Ffmpeg($"-f image2 -framerate {framerate} -i {tmp.Name}/frame-%d.png -i {tmp.Name}/{id}.aac -hide_banner -c:v libx264 -c:a copy {id}.mp4", true);
+            await Shell.FfmpegAsync($"-f image2 -framerate {framerate} -i {tmp.Name}/frame-%d.png -i {tmp.Name}/{id}.aac -hide_banner -c:v libx264 -c:a copy {id}.mp4", true);
 
             File.Delete(id);
             Directory.Delete(tmp.Name, true);
 
             return $"{id}.mp4";
         }
-        public async Task<string> VideoFilter(string url, Func<Image, string, string, Image> func, string arg1, string arg2)
+        public async Task<string> VideoFilterAsync(string url, Func<ISImage, string, string, ISImage> func, string arg1, string arg2)
         {
             if (!await _net.IsVideoAsync(url)) throw new VideoException("Not a video.");
 
             var id = await _net.DownloadToFileAsync(url);
             
-            var framerate = _reg.Match(await Shell.Run($"ffprobe -hide_banner -show_streams {id}", true)).Value.Replace(" fps", "");
+            var framerate = _reg.Match(await Shell.RunAsync($"ffprobe -hide_banner -show_streams {id}", true)).Value.Replace(" fps", "");
 
             var tmp = Directory.CreateDirectory($"tmp-{id}");
-            await Shell.Ffmpeg($"-i {id} -hide_banner -vn {tmp.Name}/{id}.aac", true);
-            await Shell.Ffmpeg($"-i {id} -r {framerate} -f image2 -hide_banner {tmp.Name}/frame-%04d.png", true);
+            await Shell.FfmpegAsync($"-i {id} -hide_banner -vn {tmp.Name}/{id}.aac", true);
+            await Shell.FfmpegAsync($"-i {id} -r {framerate} -f image2 -hide_banner {tmp.Name}/frame-%04d.png", true);
 
             foreach (var f in tmp.EnumerateFiles().Where(x => x.Name.Contains(".png")))
             {
-                var img = Image.Load(f.FullName);
+                var img = await ISImage.LoadAsync(f.FullName);
 
                 if (img.Width > 1000 || img.Height > 1000)
                     throw new VideoException("Video too large.");
@@ -573,7 +559,7 @@ namespace donniebot.services
                 Save(img, f.FullName);
             }
 
-            await Shell.Ffmpeg($"-f image2 -framerate {framerate} -i {tmp.Name}/frame-%04d.png -i {tmp.Name}/{id}.aac -hide_banner -c:v libx264 -c:a copy {id}.mp4", true);
+            await Shell.FfmpegAsync($"-f image2 -framerate {framerate} -i {tmp.Name}/frame-%04d.png -i {tmp.Name}/{id}.aac -hide_banner -c:v libx264 -c:a copy {id}.mp4", true);
 
             File.Delete(id);
             Directory.Delete(tmp.Name, true);
@@ -581,7 +567,7 @@ namespace donniebot.services
             return $"{id}.mp4";
         }
  
-        public Image GifFilter(Image source, Func<Image, Image> func)
+        public ISImage GifFilter(ISImage source, Func<ISImage, ISImage> func)
         {
             if (source.Frames.Count <= 1) throw new InvalidOperationException("can't use a gif filter on a stationary image");
             
@@ -598,7 +584,7 @@ namespace donniebot.services
 
             return source;
         }
-        public Image GifFilter(Image source, float x, Func<Image, float, Image> func)
+        public ISImage GifFilter(ISImage source, float x, Func<ISImage, float, ISImage> func)
         {
             if (source.Frames.Count <= 1) throw new InvalidOperationException("can't use a gif filter on a stationary image");
             
@@ -615,7 +601,7 @@ namespace donniebot.services
 
             return source;
         }
-        public Image GifFilter(Image source, int x, Func<Image, int, Image> func)
+        public ISImage GifFilter(ISImage source, int x, Func<ISImage, int, ISImage> func)
         {
             if (source.Frames.Count <= 1) throw new InvalidOperationException("can't use a gif filter on a stationary image");
             
@@ -632,7 +618,7 @@ namespace donniebot.services
 
             return source;
         }
-        public Image GifFilter(Image source, string x, Func<Image, string, Image> func)
+        public ISImage GifFilter(ISImage source, string x, Func<ISImage, string, ISImage> func)
         {
             if (source.Frames.Count <= 1) throw new InvalidOperationException("can't use a gif filter on a stationary image");
 
@@ -649,7 +635,7 @@ namespace donniebot.services
 
             return source;
         }
-        public Image GifFilter(Image source, string x, string y, Func<Image, string, string, Image> func)
+        public ISImage GifFilter(ISImage source, string x, string y, Func<ISImage, string, string, ISImage> func)
         {
             if (source.Frames.Count <= 1) throw new InvalidOperationException("can't use a gif filter on a stationary image");
 
@@ -666,7 +652,7 @@ namespace donniebot.services
 
             return source;
         }
-        public Image GifFilter(Image source, int x, int y, int z, Func<Image, int, int, int, Image> func)
+        public ISImage GifFilter(ISImage source, int x, int y, int z, Func<ISImage, int, int, int, ISImage> func)
         {
             if (source.Frames.Count <= 1) throw new InvalidOperationException("can't use a gif filter on a stationary image");
 
@@ -683,7 +669,7 @@ namespace donniebot.services
 
             return source;
         }
-        public Image GifFilter(Image source, Image x, Point y, Size z, float w, Func<Image, Image, Point, Size, float, Image> func)
+        public ISImage GifFilter(ISImage source, ISImage x, PointF y, SizeF z, float w, Func<ISImage, ISImage, PointF, SizeF, float, ISImage> func)
         {
             if (x.Frames.Count <= 1 && source.Frames.Count <= 1) throw new InvalidOperationException("can't use a gif filter on a stationary image");
                 
@@ -712,7 +698,7 @@ namespace donniebot.services
 
             return source;
         }
-        public Image GifFilterR(Image source, float x, Func<Image, float, Image> func)
+        public ISImage GifFilterR(ISImage source, float x, Func<ISImage, float, ISImage> func)
         {
             if (source.Frames.Count <= 1) throw new InvalidOperationException("can't use a gif filter on a stationary image");
 
@@ -729,38 +715,11 @@ namespace donniebot.services
 
             return newSource;
         }
-        public Image ResizeGif(Image source, int x, int y)
+        public ISImage ResizeGif(ISImage source, int x, int y)
         {
             if (source.Frames.Count <= 1) throw new InvalidOperationException("can't use a gif filter on a stationary image");
 
-            var newImg = Image.Load(new byte[] 
-            { 
-                137, 80, 78, 71, 13, 
-                10, 26, 10, 0, 0, 
-                0, 13, 73, 72, 68, 
-                82, 0, 0, 0, 1, 
-                0, 0, 0, 1, 8, 
-                2, 0, 0, 0, 144, 
-                119, 83, 222, 0, 
-                0, 0, 9, 112, 72, 
-                89, 115, 0, 0, 14, 
-                196, 0, 0, 14, 196, 
-                1, 149, 43, 14, 27, 
-                0, 0, 0, 12, 73, 68, 
-                65, 84, 120, 156, 99, 
-                49, 52, 179, 6, 0, 1, 
-                78, 0, 167, 244, 36, 
-                3, 55, 0, 0, 0, 
-                0, 73, 69, 78, 68, 
-                174, 66, 96, 130
-            }); //1 pixel image
-
-            newImg.Mutate(h => h.Resize(new ResizeOptions
-            {
-                Mode = ResizeMode.Stretch,
-                Size = new SixLabors.ImageSharp.Size(x, y),
-                Sampler = KnownResamplers.MitchellNetravali
-            }));
+            var newImg = new Image<Rgba32>(x, y);
 
             var delay = source.Frames.RootFrame.Metadata.GetFormatMetadata(GifFormat.Instance).FrameDelay;
             for (int i = 0; i < source.Frames.Count; i++)
@@ -782,16 +741,16 @@ namespace donniebot.services
             return newImg;
         }
         
-        public async Task<string> VideoToGif(string url)
+        public async Task<string> VideoToGifAsync(string url)
         {
             if (!await _net.IsVideoAsync(url)) throw new VideoException("Not a video.");
 
             var id = await _net.DownloadToFileAsync(url);
             var tmp = $"{id}.gif";
 
-            var framerate = _reg.Match(await Shell.Run($"ffprobe -hide_banner -show_streams {id}", true)).Value.Replace(" fps", "");    
+            var framerate = _reg.Match(await Shell.RunAsync($"ffprobe -hide_banner -show_streams {id}", true)).Value.Replace(" fps", "");    
 
-            Console.WriteLine(await Shell.Ffmpeg($"-i {id} -r {framerate} -vf \"split[s0][s1];[s0]palettegen=stats_mode=diff[p];[s1][p]paletteuse\" -loop 0 {tmp}", true));
+            Console.WriteLine(await Shell.FfmpegAsync($"-i {id} -r {framerate} -vf \"split[s0][s1];[s0]palettegen=stats_mode=diff[p];[s1][p]paletteuse\" -loop 0 {tmp}", true));
 
 
             File.Delete(id);
@@ -799,40 +758,24 @@ namespace donniebot.services
             return tmp;
         }
 
-        public async Task<Image> PlaceBelow(string url, string belowUrl, bool resize = true) => PlaceBelow(await DownloadFromUrlAsync(url), await DownloadFromUrlAsync(belowUrl), resize);
-        public Image PlaceBelow(Image source, Image below, bool resize = true)
+        public async Task<ISImage> PlaceBelowAsync(string url, string belowUrl, bool resize = true) => PlaceBelow(await DownloadFromUrlAsync(url), await DownloadFromUrlAsync(belowUrl), resize);
+        public ISImage PlaceBelow(ISImage source, ISImage below, bool resize = true)
         {
-            var src = (Image)Image.Load(new byte[]
-            {
-                137, 80, 78, 71, 13, 
-                10, 26, 10, 0, 0, 
-                0, 13, 73, 72, 68, 
-                82, 0, 0, 0, 1, 
-                0, 0, 0, 1, 8, 
-                6, 0, 0, 0, 31, 
-                21, 196, 137, 0, 0, 
-                0, 11, 73, 68, 65, 
-                84, 8, 215, 99, 248, 
-                15, 4, 0, 9, 251, 
-                3, 253, 99, 38, 197, 
-                143, 0, 0, 0, 0, 
-                73, 69, 78, 68, 174, 
-                66, 96, 130
-            }); //1px image
+            var src = new Image<Rgba32>(source.Width, source.Height + below.Height);
 
             if (resize)
                 below.Mutate(x => x.Resize(source.Width, source.Width));
 
             src.Mutate(x => x.Resize(source.Width, source.Height + below.Height));
 
-            src = Overlay(src, source, new Point(0, 0), source.Size());
-            src = Overlay(src, below, new Point(0, source.Height), below.Size());
+            src = (Image<Rgba32>)Overlay((ISImage)src, source, new Point(0, 0), source.Size());
+            src = (Image<Rgba32>)Overlay((ISImage)src, below, new Point(0, source.Height), below.Size());
 
             return src;
         }
 
-        public async Task<Image> DrawText(string url, string text, string topText = null) => DrawText(await DownloadFromUrlAsync(url), text, topText);
-        public Image DrawText(Image source, string text, string bottomText = null)
+        public async Task<ISImage> DrawTextAsync(string url, string text, string topText = null) => DrawText(await DownloadFromUrlAsync(url), text, topText);
+        public ISImage DrawText(ISImage source, string text, string bottomText = null)
         {
             if (source.Frames.Count > 1)
                 return GifFilter(source, text, bottomText, DrawText);
@@ -840,67 +783,129 @@ namespace donniebot.services
             {
                 if (string.IsNullOrEmpty(text) && string.IsNullOrEmpty(bottomText))
                     throw new ImageException("Text cannot be blank.");
-            
-                var size = Math.Min(source.Height / 10, source.Width / 10);
-                Font f = SystemFonts.CreateFont("Impact", size);
 
                 float padding = 0.05f * source.Width;
-                float width = source.Width - (2 * padding);
+                float width = source.Width -  (2 * padding);
 
-                SystemFonts.TryFind("Twemoji Mozilla", out var tcef);
-                SystemFonts.TryFind("HanaMinA", out var hmf);
+                var maxArea = new SizeF(width, 0.4f * source.Height);
+            
+                var tSize = Math.Min(source.Height / 10f, source.Width / 10f);
+                Font tF = SystemFonts.CreateFont("Impact", tSize);
+
+                var meta = source.Metadata;
+
+                var tOptions = new RendererOptions(tF, 72f, 72f, new System.Numerics.Vector2(padding, 0))
+                {
+                    VerticalAlignment = VerticalAlignment.Top,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    WrappingWidth = width
+                };
+
+                var tBounds = TextMeasurer.Measure(text, tOptions);
+
+                if (tBounds.Height > maxArea.Height || tBounds.Width > maxArea.Width)
+                {
+                    tSize = Math.Min(maxArea.Height / tBounds.Height * tSize, maxArea.Width / tBounds.Width * tSize);
+                    tF = SystemFonts.CreateFont("Impact", tSize);
+                }
+            
+                var bSize = Math.Min(source.Height / 10f, source.Width / 10f);
+                Font bF = SystemFonts.CreateFont("Impact", bSize);
+
+
+                var bOptions = new RendererOptions(bF, 72f, 72f, new System.Numerics.Vector2(padding, 0))
+                {
+                    VerticalAlignment = VerticalAlignment.Bottom,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    WrappingWidth = width
+                };
+
+                var bBounds = TextMeasurer.Measure(bottomText, bOptions);
+
+                if (bBounds.Height > maxArea.Height || bBounds.Width > maxArea.Width)
+                {
+                    bSize = Math.Min(maxArea.Height / bBounds.Height * bSize, maxArea.Width / bBounds.Width * bSize);
+                    bF = SystemFonts.CreateFont("Impact", bSize);
+                }
+
+                if (!SystemFonts.TryFind("Twemoji Mozilla", out var tcef) && !SystemFonts.TryFind("Twemoji", out tcef))
+                    throw new ImageException("Failed to find the Twemoji font. Make sure that it is installed in the right place!");
+                
+                if (!SystemFonts.TryFind("HanaMinA", out var hmf) && !SystemFonts.TryFind("Yu Gothic", out hmf))
+                    throw new ImageException("Failed to find the HanaMinA or Yu Gothic fonts. Make sure that either of them is installed in the right place!");
 
                 var to = new TextOptions
                 {
+                    DpiX = 72f,
+                    DpiY = 72f,
                     HorizontalAlignment = HorizontalAlignment.Center,
                     VerticalAlignment = VerticalAlignment.Bottom,
                     WrapTextWidth = width,
-                    FallbackFonts = { tcef ?? SystemFonts.Find("Twemoji"), hmf ?? SystemFonts.Find("Yu Gothic") }
+                    FallbackFonts = { tcef, hmf }
                 };
 
-                var options = new TextGraphicsOptions(new GraphicsOptions(), to);
+                var options = new DrawingOptions()
+                {
+                    TextOptions = to
+                };
 
                 PointF location = new PointF(padding, .95f * source.Height);
 
-                float pSize = Math.Max(size / 10f, 1f);
+                float tPSize = Math.Max(tSize / 10f, 1f);
+                float bPSize = Math.Max(bSize / 10f, 1f);
 
                 if (bottomText == null)
                 {
-                    source.Mutate(x => x.DrawText(options, text, f, Pens.Solid(Color.Black, pSize), location));
-                    source.Mutate(x => x.DrawText(options, text, f, Color.White, location));
+                    source.Mutate(x =>
+                    {
+                        x.DrawText(options, text, bF, Pens.Solid(SixLabors.ImageSharp.Color.Black, bPSize), location);
+                        x.DrawText(options, text, bF, SixLabors.ImageSharp.Color.White, location);
+                    });
                 }
                 else
                 {
-                    source.Mutate(x => x.DrawText(options, bottomText, f, Pens.Solid(Color.Black, pSize), location));
-                    source.Mutate(x => x.DrawText(options, bottomText, f, Color.White, location));
+                    source.Mutate(x => 
+                    {
+                        x.DrawText(options, bottomText, bF, Pens.Solid(SixLabors.ImageSharp.Color.Black, bPSize), location);
+                        x.DrawText(options, bottomText, bF, SixLabors.ImageSharp.Color.White, location);
+                    });
+
                     options.TextOptions.VerticalAlignment = VerticalAlignment.Top;
-                    location = new PointF(padding, .05f * source.Height);
-                    source.Mutate(x => x.DrawText(options, text, f, Pens.Solid(Color.Black, pSize), location));
-                    source.Mutate(x => x.DrawText(options, text, f, Color.White, location));
+                    location.Y = .05f * source.Height;
+
+                    source.Mutate(x => 
+                    {
+                        x.DrawText(options, text, tF, Pens.Solid(SixLabors.ImageSharp.Color.Black, tPSize), location);
+                        x.DrawText(options, text, tF, SixLabors.ImageSharp.Color.White, location);
+                    });
                 }
+
                 return source;
             }
         }
 
-        public async Task<Image> Resize(string url, int x, int y) => Resize(await DownloadFromUrlAsync(url), x, y);
-        public Image Resize(Image source, int x, int y)
+        public async Task<ISImage> ResizeAsync(string url, int x, int y) => Resize(await DownloadFromUrlAsync(url, x, y), x, y);
+        public ISImage Resize(ISImage source, int x, int y)
         {
-            if (x > 2000 || y > 2000 || x < 0 || y < 0) throw new ImageException("The dimensions were either too small or too large.");
+            if (x > 2000 || y > 2000 || x < 1 || y < 1) throw new ImageException("The dimensions were either too small or too large. The maximum is 2000 x 2000 pixels and the minimum is 1 x 1 pixels.");
 
             if (source.Frames.Count > 1)
                 source = ResizeGif(source, x, y);
             else
-                source.Mutate(h => h.Resize(new ResizeOptions
-                {
-                    Mode = ResizeMode.Stretch,
-                    Size = new SixLabors.ImageSharp.Size(x, y),
-                    Sampler = KnownResamplers.MitchellNetravali
-                }));
+            {
+                if (x != source.Width && y != source.Height)
+                    source.Mutate(h => h.Resize(new ResizeOptions
+                    {
+                        Mode = ResizeMode.Stretch,
+                        Size = new SixLabors.ImageSharp.Size(x, y),
+                        Sampler = KnownResamplers.MitchellNetravali
+                    }));
+            }
 
             return source;
         }
-        public async Task<Image> Resize(string url, float scaleX, float scaleY) => Resize(await DownloadFromUrlAsync(url), scaleX, scaleY);
-        public Image Resize(Image source, float scaleX, float scaleY)
+        public async Task<ISImage> ResizeAsync(string url, float scaleX, float scaleY) => Resize(await DownloadFromUrlAsync(url), scaleX, scaleY);
+        public ISImage Resize(ISImage source, float scaleX, float scaleY)
         {
             var x = (int)Math.Round(source.Width * scaleX);
             var y = (int)Math.Round(source.Height * scaleY);
@@ -920,8 +925,8 @@ namespace donniebot.services
             return source;
         }
 
-        public async Task<Image> SpeedUp(string url, double speed) => SpeedUp(await DownloadFromUrlAsync(url), 2);
-        public Image SpeedUp(Image source, double speed)
+        public async Task<ISImage> SpeedUpAsync(string url, double speed) => SpeedUp(await DownloadFromUrlAsync(url), speed);
+        public ISImage SpeedUp(ISImage source, double speed)
         {
             if (speed > 1000d || speed <= 0d) speed = 2d;
             
@@ -939,8 +944,8 @@ namespace donniebot.services
         }
         
 
-        public async Task<Image> Reverse(string url) => Reverse(await DownloadFromUrlAsync(url));
-        public Image Reverse(Image source)
+        public async Task<ISImage> ReverseAsync(string url) => Reverse(await DownloadFromUrlAsync(url));
+        public ISImage Reverse(ISImage source)
         {
             var ct = source.Frames.Count;
             for (int i = 0; i < ct / 2; i++)
@@ -1027,6 +1032,7 @@ namespace donniebot.services
                 var s = r["sourceURL"]?.Value<string>() ?? "unknown";
 
                 //temporary fix until the website is functional
+                /*
                 if (r["source"]?.Value<string>() == "Gelbooru")
                 {
                     var fn = url.Split('/').Last();
@@ -1037,6 +1043,7 @@ namespace donniebot.services
                     var fn = url.Split('/').Last();
                     url = $"https://cdn.donmai.us/original/{fn.Substring(0, 2)}/{fn.Substring(2, 2)}/{fn}";
                 }
+                */
                 
                 image = new GuildImage(url, gId, s, un, title: $"{r["id"]?.Value<string>()} - {r["source"]?.Value<string>()}");
 
@@ -1094,7 +1101,7 @@ namespace donniebot.services
                 };
  
                 var postdata = post["children"].Shuffle();
-                if (GetImage(postdata, gId, nsfw, out img)) break;
+                if (GetImage(postdata, gId, nsfw, out img, false)) break;
 
                 if (postdata.Count() < count) return img; //no more pages
                 else
@@ -1105,7 +1112,7 @@ namespace donniebot.services
             return img;
         }
 
-        private bool GetImage(IEnumerable<JToken> postdata, ulong gId, bool nsfw, out GuildImage image, bool video = false)
+        private bool GetImage(IEnumerable<JToken> postdata, ulong gId, bool nsfw, out GuildImage image, bool doRepeats, bool video = false)
         {
             for (int i = 0; i < postdata.Count(); i++)
             {
@@ -1125,20 +1132,23 @@ namespace donniebot.services
                         hint = "video";
                     }
 
+                    if (hint == "image" && url.Substring(url.Length - 4, 4) == ".gif")
+                        hint = "gif";
+
                     image = new GuildImage(url, gId, author: $"u/{post["author"].Value<string>()}", title: title, type: hint);
 
-                    if (!sentImages.ContainsObj(image))
-                    {
-                        if (nsfw)
+                        if (!sentImages.ContainsObj(image) || doRepeats)
                         {
-                            sentImages.Add(image);
-                            return true;
-                        }
-                        else if (!post["over_18"].Value<bool>())
-                        {
-                            sentImages.Add(image);
-                            return true;
-                        } 
+                            if (nsfw)
+                            {
+                                sentImages.Add(image);
+                                return true;
+                            }
+                            else if (!post["over_18"].Value<bool>())
+                            {
+                                sentImages.Add(image);
+                                return true;
+                            } 
                     }
                 }
             }
@@ -1146,14 +1156,24 @@ namespace donniebot.services
             return false;
         }
 
-        private readonly SemaphoreSlim dlSem = new SemaphoreSlim(1, 1);
-        public async Task DownloadRedditVideoAsync(string postUrl, SocketGuildChannel channel, bool nsfw = false)
+        private readonly SemaphoreSlim dlSem = new SemaphoreSlim(1, 1); //my bot runs on a raspberry pi so i don't want 10 different videos downloading at once
+        public async Task<bool> DownloadRedditVideoAsync(string postUrl, SocketGuildChannel channel, bool nsfw = false, Discord.MessageReference msg = null)
         {
             await dlSem.WaitAsync();
             try
             {
                 var post = JsonConvert.DeserializeObject<JArray>(await _net.DownloadAsStringAsync($"{postUrl}.json"))[0];
-                if (!GetImage(post["data"]["children"], channel.Guild.Id, nsfw, out var img, true) || img.Type != "video") return;
+                if (!GetImage(post["data"]["children"], channel.Guild.Id, nsfw, out var img, true, true)) return false;
+                if (img.Type != "video" && img.Type != "gif") return false;
+
+                if (img.Type == "gif")
+                {
+                    var f = $"{_rand.GenerateId()}.gif";
+                    var data = await _net.DownloadFromUrlAsync(img.Url);
+                    await File.WriteAllBytesAsync(f, data);
+                    await SendToChannelAsync(f, channel as ISocketMessageChannel, msg);
+                    return true;
+                }
 
                 var reg = new Regex("DASH_[0-9]{1,4}");
                 var videoUrl = img.Url;
@@ -1161,14 +1181,15 @@ namespace donniebot.services
                 var fn = $"{_rand.GenerateId()}.mp4";
 
                 if (await _net.IsSuccessAsync(audioUrl))
-                    await Shell.Ffmpeg($"-i \"{videoUrl}\" -i \"{audioUrl}\" {fn}");
+                    await Shell.FfmpegAsync($"-i \"{videoUrl}\" -i \"{audioUrl}\" {fn}");
                 else
                 {
                     var data = await _net.DownloadFromUrlAsync(videoUrl);
                     await File.WriteAllBytesAsync(fn, data);
                 }
 
-                await SendToChannelAsync(fn, channel as ISocketMessageChannel);
+                await SendToChannelAsync(fn, channel as ISocketMessageChannel, msg, true);
+                return true;
             }
             finally
             {
@@ -1176,7 +1197,7 @@ namespace donniebot.services
             }
         }
 
-        public async Task<ImageProperties> GetInfo(string url)
+        public async Task<ImageProperties> GetInfoAsync(string url)
         {
             var img = await DownloadFromUrlAsync(url);
             return new ImageProperties(img.Width, img.Height, img.Frames.Count, img.PixelType.BitsPerPixel, 
@@ -1186,16 +1207,78 @@ namespace donniebot.services
 
         public async Task<string> ParseUrlAsync(string url, SocketUserMessage msg, bool isNext = false)
         {
-            if (url != null) 
+            if (url is not null) 
             {
+                var reg = new Regex(@"http[s]?:\/\/");
+
                 if (Discord.MentionUtils.TryParseUser(url, out var uId))
                     return _client.GetUser(uId).GetAvatarUrl(size: 512);
-
-                if (Discord.Emote.TryParse(url, out var e) && await _net.IsSuccessAsync(e.Url))
+                else if (Discord.Emote.TryParse(url, out var e) && await _net.IsSuccessAsync(e.Url))
                     return e.Url;
+                else if (url.Length > 7 && url.Substring(0, 7) == "roblox:")
+                {
+                    var usernameOrId = url.Substring(7);
+                    var size = 512;
+
+                    if (usernameOrId.Contains("@"))
+                    {
+                        var userAndSize = usernameOrId.Split('@');
+
+                        if (!int.TryParse(userAndSize[1], out size))
+                            throw new ImageException($"{userAndSize[1]} is not a valid size.");
+
+                        if (size < 100)
+                            throw new ImageException($"{size} is not a valid size. (must be 100 or greater)");
+
+                        if (size > 512)
+                            throw new ImageException($"{size} is not a valid size. (must be 512 or lower)");
+
+                        usernameOrId = userAndSize[0];
+                    }
+
+                    var robloxUrl = $"https://www.roblox.com/Thumbs/Avatar.ashx?x={size}&y={size}&Format=Png&username=";
+                    if (ulong.TryParse(usernameOrId, out var id))
+                    {
+                        var res = JsonConvert.DeserializeObject<JObject>(await _net.DownloadAsStringAsync($"https://users.roblox.com/v1/users/{id}"));
+                        if (res["errors"] is not null)
+                            throw new ImageException($"Invalid Roblox user ID. ({res["errors"][0]["message"].Value<string>()})");
+                        else
+                            robloxUrl += res["name"].Value<string>();
+                    }
+                    else
+                    {
+                        var res = JsonConvert.DeserializeObject<JObject>(await _net.DownloadAsStringAsync($"https://users.roblox.com/v1/users/search?keyword={usernameOrId}&limit=10"));
+
+                        if (!res["data"].Any() || !res["data"].Any(x => x["name"].Value<string>() == usernameOrId))
+                            throw new ImageException("Invalid Roblox username.");
+                        else
+                            robloxUrl += usernameOrId;
+                    }
+
+                    return robloxUrl;
+                }
+                else if (url.Length > 4 && url.Substring(0, 4) == "tag:")
+                {
+                    var key = url.Substring(4);
+                    var tag = _db.GetTag(key, (msg.Channel as SocketGuildChannel).Guild.Id);
+
+                    if (tag is null)
+                        throw new ImageException("That tag does not exist.");
+                    else
+                    {
+                        var value = tag.Value;
+
+                        if (!reg.Match(value).Success || !await _net.IsSuccessAsync(value)) 
+                            return await ParseUrlAsync(value, msg, true);
+                        else 
+                            return value; 
+                    }
+                }
                 else
                 {
-                    var points = url.Utf8ToCodePoints().Select(x => x.ToString("x4")).ToList();
+                    var points = url.EnumerateRunes()
+                        .Select(x => x.Value.ToString("x4"))
+                        .ToList();
                     var svgUrl = $"https://raw.githubusercontent.com/twitter/twemoji/master/assets/svg/{string.Join("-", points)}.svg";
                     if (await _net.IsSuccessAsync(svgUrl))
                         return svgUrl;
@@ -1210,39 +1293,35 @@ namespace donniebot.services
 
                     url = url.Trim('<').Trim('>');
 
-                    if (!Uri.IsWellFormedUriString(url, UriKind.Absolute))
-                    {
-                        if (isNext)
-                            throw new ImageException("Try the command with a url, or attach an image.");
-                        else
-                        {
-                            var previousmsg = await _misc.GetPreviousMessageAsync(msg.Channel as SocketTextChannel);
-                            return await ParseUrlAsync(previousmsg.Content, previousmsg as SocketUserMessage, true);
-                        }
-                    }
-                }
-
-            }
-            else if (string.IsNullOrWhiteSpace(url) || !Uri.IsWellFormedUriString(url, UriKind.Absolute))
-            {
-                if (!msg.Attachments.Any())
-                {
-                    if (isNext)
+                    if (!string.IsNullOrWhiteSpace(url) && reg.Match(url).Success && Uri.IsWellFormedUriString(url, UriKind.Absolute))
+                        return url;
+                    else if (msg is not null && msg.Attachments.Any())
+                        return msg?.Attachments.First().Url;
+                    else if (isNext)
                         throw new ImageException("Try the command with a url, or attach an image.");
                     else
                     {
                         var previousmsg = await _misc.GetPreviousMessageAsync(msg.Channel as SocketTextChannel);
-                        return await ParseUrlAsync(previousmsg.Content, previousmsg as SocketUserMessage, true);
+                        return await ParseUrlAsync(previousmsg.Content, previousmsg as SocketUserMessage, true); //we don't want it iterating through every message
                     }
                 }
-                else
-                    return msg.Attachments.First().Url;
             }
+            else
+            {
+                if (msg.Attachments.Any())
+                    return msg?.Attachments.First().Url;
 
-            return url;
+                var refMsg = msg?.ReferencedMessage;
+
+                if (refMsg is not null)
+                    return await ParseUrlAsync(refMsg.Content, (SocketUserMessage)refMsg, true);
+
+                var previousmsg = await _misc.GetPreviousMessageAsync(msg.Channel as SocketTextChannel);
+                return await ParseUrlAsync(previousmsg.Content, previousmsg as SocketUserMessage, true); //we don't want it iterating through every message
+            }
         }
 
-        public string Save(Image source, string path = null)
+        public string Save(ISImage source, string path = null)
         {
             if (path != null)
                 using (var file = File.Open(path, FileMode.OpenOrCreate))
@@ -1253,17 +1332,25 @@ namespace donniebot.services
 
                 if ((_format?.DefaultMimeType == "image/gif") || source.Frames.Count > 1) 
                 {
-                    source.Metadata.GetFormatMetadata(GifFormat.Instance).ColorTableMode = GifColorTableMode.Local;
                     source.Metadata.GetFormatMetadata(GifFormat.Instance).RepeatCount = 0;
+                    var e = new GifEncoder()
+                    {
+                        ColorTableMode = GifColorTableMode.Local
+                    };
+
                     path = $"{id}.gif";
                     using (var file = File.Open(path, FileMode.OpenOrCreate))
-                        source.SaveAsGif(file);
+                        source.SaveAsGif(file, e);
                 }
                 else
                 {
                     path = $"{id}.png";
                     using (var file = File.Open(path, FileMode.OpenOrCreate))
-                        source.SaveAsPng(file);
+                        source.SaveAsPng(file, new PngEncoder
+                        {
+                            ColorType = PngColorType.RgbWithAlpha,
+                            TransparentColorMode = PngTransparentColorMode.Preserve
+                        });
                 }
             }
 
@@ -1271,7 +1358,7 @@ namespace donniebot.services
             return path;
         }
 
-        public string SaveAsJpeg(Image source, int quality)
+        public string SaveAsJpeg(ISImage source, int quality)
         {
             var id = _rand.GenerateId();
 
@@ -1281,31 +1368,41 @@ namespace donniebot.services
             using (var file = File.Open(path, FileMode.OpenOrCreate))
             {
                 JpegEncoder s = new JpegEncoder { Quality = quality };
+                
                 source.SaveAsJpeg(file, s);
                 source.Dispose();
                 return path;
             }
         }
 
-        public async Task SendToChannelAsync(Image img, ISocketMessageChannel ch) => await SendToChannelAsync(Save(img), ch);
-        public async Task SendToChannelAsync(string path, ISocketMessageChannel ch)
+        public async Task SendToChannelAsync(ISImage img, ISocketMessageChannel ch, Discord.MessageReference msg = null, bool ping = false) => await SendToChannelAsync(Save(img), ch, msg, ping);
+        public async Task SendToChannelAsync(string path, ISocketMessageChannel ch, Discord.MessageReference msg = null, bool ping = false)
         {
-            var ext = path.Split('.')[1];
-            var len = new FileInfo(path).Length;
-            if (len > 8388119) //allegedly discord's limit
-                await ch.SendMessageAsync(await _net.UploadAsync(path, ext));
-            else
-                await ch.SendFileAsync(path);
-            File.Delete(path);
+            try
+            {
+                var ext = path.Split('.')[1];
+                var len = new FileInfo(path).Length;
+
+                var doPing = ping ? Discord.AllowedMentions.All : Discord.AllowedMentions.None;
+
+                if (len > 8388119) //allegedly discord's limit
+                    await ch.SendMessageAsync(await _net.UploadAsync(path, ext), messageReference: msg, allowedMentions: doPing);
+                else
+                    await ch.SendFileAsync(path, messageReference: msg, allowedMentions: Discord.AllowedMentions.None);
+            }
+            finally 
+            { 
+                File.Delete(path);
+            }
         }
 
-        public async Task<Image> DownloadFromUrlAsync(string url)
+        public async Task<ISImage> DownloadFromUrlAsync(string url, int sizeX = 512, int sizeY = 512)
         {
             if (!url.Contains("svg") && (await _net.GetContentTypeAsync(url))?.ToLower() != "image/svg+xml")
-                return Image.Load(await _net.DownloadFromUrlAsync(url), out _format);
+                return ISImage.Load(await _net.DownloadFromUrlAsync(url), out _format);
             else 
             {
-                var img = SvgImageRenderer.RenderFromString<Rgba32>(await _net.DownloadAsStringAsync(url), 500, 500);
+                var img = SvgImageRenderer.RenderFromString<Rgba32>(await _net.DownloadAsStringAsync(url), sizeX, sizeY);
                 _format = new SvgFormat();
                 return img;
             }

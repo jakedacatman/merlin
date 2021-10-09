@@ -4,6 +4,7 @@ using Discord.WebSocket;
 using Discord.Commands;
 using donniebot.services;
 using Interactivity;
+using Discord;
 
 namespace donniebot.commands
 {
@@ -24,18 +25,11 @@ namespace donniebot.commands
         [Command("polaroid")]
         [Alias("po")]
         [Summary("Applies a Polaroid effect to an image.")]
-        public async Task PolaroidCmd([Summary("The image to apply the effect to.")] string url = null)
+        public async Task PolaroidAsync([Summary("The image to apply the effect to.")] string url = null)
         {
-            try
-            {
-                url = await _img.ParseUrlAsync(url, Context.Message);
-                var img = await _img.Polaroid(url.Trim('<').Trim('>'));
-                await _img.SendToChannelAsync(img, Context.Channel);
-            }
-            catch (Exception e)
-            {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
-            }
+            url = await _img.ParseUrlAsync(url, Context.Message);
+            var img = await _img.PolaroidAsync(url);
+            await _img.SendToChannelAsync(img, Context.Channel, new MessageReference(Context.Message.Id));
         }
     }
 }

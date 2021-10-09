@@ -13,37 +13,20 @@ namespace donniebot.commands
     public class SkipPlayCommand : ModuleBase<ShardedCommandContext>
     {
         private readonly AudioService _audio;
-        private readonly MiscService _misc;
-        private readonly CommandService _cmds;
 
-        public SkipPlayCommand(AudioService audio, MiscService misc, CommandService cmds)
-        {
-            _audio = audio;
-            _misc = misc;
-            _cmds = cmds;
-        }
+        public SkipPlayCommand(AudioService audio, MiscService misc, CommandService cmds, GuildPrefix defPre) => _audio = audio;
 
         [Command("skipplay")]
         [Alias("sp", "skp", "skpl")]
-        [RequireDjRole]
+        [RequireDjRole, RequireSongs, RequireSameVoiceChannel]
         [Summary("Skips the current song to play another.")]
-        public async Task SkipPlayCmd([Summary("The URL or YouTube search query."), Remainder] string queryOrUrl = null)
+        public async Task SkipPlayAsync([Summary("The URL or YouTube search query."), Remainder] string queryOrUrl = null)
         {
-            try
-            {
-                if (!_audio.HasSongs(Context.Guild.Id))
-                {
-                    await ReplyAsync("There are no songs to skip! Use don.add instead.");
-                    return;
-                }
+            if (_audio.IsLooping(Context.Guild.Id))
+                _audio.ToggleLoop(Context.Guild.Id);
 
-                await _audio.SkipAsync(Context.User as SocketGuildUser);
-                await _audio.AddAsync(Context.User as SocketGuildUser, Context.Channel as SocketTextChannel, queryOrUrl, false, 0);
-            }
-            catch (Exception e)
-            {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
-            }
+            await _audio.SkipAsync(Context.User as SocketGuildUser);
+            await _audio.AddAsync(Context.User as SocketGuildUser, Context.Channel as SocketTextChannel, queryOrUrl, position: 0);
         }
     }
 }

@@ -24,43 +24,31 @@ namespace donniebot.commands
 
         [Command("purge")]
         [Alias("prune")]
+        [RequireBotPermission(GuildPermission.ManageMessages)]
         [RequireUserPermission(GuildPermission.ManageMessages)]
         [Summary("Deletes up to 1000 messages from the current channel, or 100 from a user in the current channel.")]
-        public async Task PurgeCmd([Summary("The amount of messages to delete.")] int count = 100)
-        {
-            try
-            {
-                var ct = await _mod.TryPurgeMessagesAsync(Context.Channel as SocketTextChannel, count);
-                if (ct > 0)
-                    await ReplyAsync($"Purged {ct} {(ct > 1 ? "messages" : "message")}.");
-                else
-                    await ReplyAsync("Failed to purge the channel (purged 0 messages).");
-            }
-            catch (Exception e)
-            {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
-            }
+        public async Task PurgeAsync([Summary("The amount of messages to delete.")] int count = 100)
+        {            
+            await Context.Message.DeleteAsync();
+            var ct = await _mod.TryPurgeMessagesAsync(Context.Channel as SocketTextChannel, count);
+            if (ct > 0)
+                await ReplyAsync($"Purged {ct} {(ct > 1 ? "messages" : "message")}.");
+            else
+                await ReplyAsync("Failed to purge the channel.");
         }
 
         [Command("purge")]
         [Alias("prune")]
         [RequireUserPermission(GuildPermission.ManageMessages)]
         [Summary("Deletes up to 100 messages from a user in the current channel.")]
-        public async Task PurgeCmd([Summary("The user to purge messages from.")]SocketGuildUser user, [Summary("The amount of messages to delete.")] int count = 100)
+        public async Task PurgeAsync([Summary("The user to purge messages from.")]SocketGuildUser user, [Summary("The amount of messages to delete.")] int count = 100)
         {
-            try
-            {
-                await Context.Message.DeleteAsync();
-                var ct = await _mod.TryPurgeMessagesAsync(Context.Channel as SocketTextChannel, count, user);
-                if (ct > 0)
-                    await ReplyAsync($"Purged {ct} {(ct > 1 ? "messages" : "message")} from `{user}`.");
-                else
-                    await ReplyAsync("Failed to purge the channel.");
-            }
-            catch (Exception e)
-            {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
-            }
+            await Context.Message.DeleteAsync();
+            var ct = await _mod.TryPurgeMessagesAsync(Context.Channel as SocketTextChannel, count, user);
+            if (ct > 0)
+                await ReplyAsync($"Purged {ct} {(ct > 1 ? "messages" : "message")} from `{user}`.");
+            else
+                await ReplyAsync("Failed to purge the channel.");
         }
     }
 }

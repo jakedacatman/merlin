@@ -26,28 +26,19 @@ namespace donniebot.commands
 
         [Command("remove")]
         [Alias("rem")]
-        [RequireDjRole]
+        [RequireDjRole, RequireSongs]
         [Summary("Removes the song at the specified index.")]
-        public async Task ShuffleCmd(int index)
+        public async Task RemoveAsync(int index)
         {
-            try
-            {
-                var id = Context.Guild.Id;
+            var id = Context.Guild.Id;
 
-                if (!_audio.HasSongs(id))
-                {
-                    await ReplyAsync("There are no songs in the queue.");
-                    return;
-                }
-
-                _audio.RemoveAt(id, index - 1);
-                
-                await ReplyAsync($"Removed the song at index {index}.");
-            }
-            catch (Exception e)
+            if (index == 1)
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
+                await ReplyAsync("Can't remove the currently-playing song. Use the skip command to skip songs!");
+                return;
             }
+            
+            await ReplyAsync(_audio.RemoveAt(id, index - 1) ? $"Removed the song at index {index}." : "Failed to remove the song; are you sure that there is a song at that position?");
         }
     }
 }

@@ -12,37 +12,33 @@ namespace donniebot.commands
     public class DisconnectCommand : ModuleBase<ShardedCommandContext>
     {
         private readonly AudioService _audio;
-        private readonly MiscService _misc;
 
-        public DisconnectCommand(AudioService audio, MiscService misc)
-        {
-            _audio = audio;
-            _misc = misc;
-        }
+        public DisconnectCommand(AudioService audio) => _audio = audio;
 
         [Command("disconnect")]
         [Alias("di", "dis", "leave")]
         [RequireDjRole]
         [Summary("Leaves the current voice channel.")]
-        public async Task LeaveCmd()
+        public async Task LeaveAsync()
         {
-            try
+            var vc = Context.Guild.CurrentUser.VoiceChannel;
+            if (vc == null)
             {
-                var vc = Context.Guild.CurrentUser.VoiceChannel;
-                if (vc == null)
-                {
-                    await ReplyAsync("I am not connected to a voice channel.");
-                    return;
-                }
-
-                if ((Context.User as SocketGuildUser).VoiceChannel == vc || !_audio.GetListeningUsers(Context.Guild.Id).Any())
-                    await _audio.DisconnectAsync(vc);
-                else
-                    await ReplyAsync("You are not in my voice channel, or there are people still listening.");
+                await ReplyAsync("I am not connected to a voice channel.");
+                return;
             }
-            catch (Exception e)
+
+            if ((Context.User as SocketGuildUser).VoiceChannel == vc)
+                await _audio.DisconnectAsync(vc, Context.Channel);
+            else
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
+                if (_audio.GetListeningUsers(Context.Guild.Id).Any() || 
+                    (_audio.GetCurrent(Context.Guild.Id) is not null && 
+                    _audio.GetRawQueue(Context.Guild.Id).Any())
+                )  
+                    await ReplyAsync("You are not in my voice channel, or there are people still listening.");
+                else
+                    await _audio.DisconnectAsync(vc, Context.Channel);
             }
         }
     }

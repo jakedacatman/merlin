@@ -1,11 +1,11 @@
-using System.Collections.ObjectModel;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using LiteDB;
 using System.IO;
 
 namespace donniebot.classes
 {
-    public class SubredditCollection : Collection<string>
+    public class SubredditCollection : List<string>
     {
         [BsonId]
         public string Name { get; set; }
@@ -17,20 +17,16 @@ namespace donniebot.classes
 
         public static SubredditCollection Load(string fileName, string name)
         {
+            var sl = new SubredditCollection(name);
             if (!File.Exists(fileName))
-                return null;
+                return sl;
             
             var lines = File.ReadAllLines(fileName);
-
-            var sl = new SubredditCollection(name);
-
-            foreach (var line in lines)
-                sl.Add(line);
-
+            sl.AddRange(lines);
             return sl;
         }
 
-        public async Task Save(string fileName, SubredditCollection list)
+        public async Task SaveAsync(string fileName, SubredditCollection list)
         {
             if (File.Exists(fileName))
                 File.Delete(fileName);

@@ -9,6 +9,11 @@ using System.Net.Http.Headers;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using donniebot.classes;
+using System.Net;
+using HtmlAgilityPack;
+using SpotifyApi.NetCore;
+using SpotifyApi.NetCore.Authorization;
+using LiteDB;
 
 namespace donniebot.services
 {
@@ -21,25 +26,52 @@ namespace donniebot.services
         private readonly string imageHost;
         private readonly string pasteHost;
 
+        private readonly string spotifyAuthString;
+        private readonly HttpClient _spHc;
+        private readonly AccountsService _accs;
+
         public NetService(DbService db, RandomService rand)
         {
             _hc = new HttpClient();
             _rand = rand;
 
             pasteHost = db.GetHost("pastebin");
-            if (pasteHost == null)
+            if (pasteHost is null)
             {
                 Console.WriteLine("What is your preferred pastebin upload endpoint? (only logged to database.db)");
                 pasteHost = Console.ReadLine() ?? "https://paste.jakedacatman.me/paste";
                 db.AddHost("pastebin", pasteHost);
             }
             imageHost = db.GetHost("imageHost");
-            if (imageHost == null)
+            if (imageHost is null)
             {
                 Console.WriteLine("What is your preferred image host upload endpoint? (only logged to database.db)");
                 imageHost = Console.ReadLine() ?? "https://i.jakedacatman.me/upload";
                 db.AddHost("imageHost", imageHost);
             }
+
+
+            spotifyAuthString = db.GetApiKey("spotify");
+            if (spotifyAuthString is null)
+            {
+                Console.WriteLine("What is your Spotify app's client id?");
+                var spotifyClientId = Console.ReadLine();
+
+                Console.WriteLine("What is your Spotify app's client secret?");
+                var spotifyClientSecret = Console.ReadLine();
+
+                if (string.IsNullOrEmpty(spotifyClientId) || string.IsNullOrEmpty(spotifyClientSecret)) //refrain from poisoning db
+                    throw new Exception("Must provide Spotify information.");
+
+                spotifyAuthString = $"{spotifyClientId}:{spotifyClientSecret}";
+                db.AddApiKey("spotify", spotifyAuthString);
+            }
+
+            Environment.SetEnvironmentVariable("SpotifyApiClientId", spotifyAuthString.Split(':')[0]);
+            Environment.SetEnvironmentVariable("SpotifyApiClientSecret", spotifyAuthString.Split(':')[1]);
+
+            _spHc = new HttpClient();
+            _accs = new AccountsService(_spHc);
 
             uploadKey = db.GetApiKey("uploadKey") ?? db.GetApiKey("upload");
             pasteKey = db.GetApiKey("pasteKey") ?? uploadKey;
@@ -96,11 +128,21 @@ namespace donniebot.services
         public async Task<bool> IsSuccessAsync(string url)
         {
             url = ParseUrl(url);
-            if (url == null || !Uri.TryCreate(url, UriKind.Absolute, out var uri)) return false;
+            if (url == null || !Uri.IsWellFormedUriString(url, UriKind.Absolute) || !Uri.TryCreate(url, UriKind.Absolute, out var uri)) return false;
 
             var res = await _hc.SendAsync(new HttpRequestMessage(HttpMethod.Head, uri));
 
             if (res.IsSuccessStatusCode) return true;
+            
+            switch (res.StatusCode)
+            {
+                case HttpStatusCode.Redirect:
+                    return true;
+                case HttpStatusCode.RedirectKeepVerb:
+                    return true;
+                case HttpStatusCode.RedirectMethod:
+                    return true;
+            }
 
             return false;
         }
@@ -121,12 +163,17 @@ namespace donniebot.services
             }
             else if (url.Contains("tenor.com") && !url.Contains("media.tenor.com"))
             {
-                Regex r = new Regex(@"(https:\\u002F\\u002Fmedia1\.tenor\.com[A-z0-9]+\.gif)");
-                var html = await DownloadAsStringAsync(url);
-                var match = r.Match(html);
-                if (match != null)
-                    url = match.Groups[0].Value.Replace("\\u002F", "/");
+                var web = new HtmlWeb();
+                var html = await web.LoadFromWebAsync(url);
+
+                url = html
+                    .GetElementbyId("single-gif-container")
+                    .FirstChild
+                    .Element("div")
+                    .Element("img")
+                    .GetAttributeValue("src", null);
             }
+
             var response = await _hc.GetAsync(new Uri(url));
 
             if (response.IsSuccessStatusCode)
@@ -147,20 +194,24 @@ namespace donniebot.services
                     else
                         url = $"https://i.giphy.com/media/{url.Split('/').Last()}/giphy.gif";
             }
-            else if (url.Contains("tenor.com"))
+            else if (url.Contains("tenor.com") && !url.Contains("media.tenor.com"))
             {
-                Regex r = new Regex(@"(https:\\u002F\\u002Fmedia1\.tenor\.com[A-z0-9]+\.gif)");
-                var html = await DownloadAsStringAsync(url);
-                var match = r.Match(html);
-                if (match != null)
-                    url = match.Groups[0].Value.Replace("\\u002F", "/");
+                var web = new HtmlWeb();
+                var html = await web.LoadFromWebAsync(url);
+
+                url = html
+                    .GetElementbyId("single-gif-container")
+                    .FirstChild
+                    .Element("div")
+                    .Element("img")
+                    .GetAttributeValue("src", null);
             }
             
             var response = await _hc.GetAsync(new Uri(url));
             if (response.IsSuccessStatusCode)
             {
                 var id = _rand.GenerateId();
-                using (var f = File.Open(id.ToString(), FileMode.OpenOrCreate))
+                using (var f = File.Open(id.ToString(), System.IO.FileMode.OpenOrCreate))
                 {
                     var content = await response.Content.ReadAsByteArrayAsync();
                     await f.WriteAsync(content, 0, content.Length);
@@ -212,6 +263,69 @@ namespace donniebot.services
                 File.Delete(path); 
                 return await response.Content.ReadAsStringAsync();
             }
+        }
+
+        public async Task<List<PlaylistTrack>> GetSpotifySongsAsync(string url)
+        {
+            url = ParseUrl(url);
+            if (url == null || 
+                !Uri.IsWellFormedUriString(url, UriKind.Absolute) || 
+                !Uri.TryCreate(url, UriKind.Absolute, out var uri) ||
+                !url.Contains("open.spotify.com/")) 
+                    throw new WebException("Invalid URL.");
+
+            var list = new List<PlaylistTrack>();
+
+            if (url.Contains("/playlist/")) //different apis
+            {
+                var r = Regex.Match(url, @"\/playlist\/([^\/\?\&]+)\??");
+
+                if (!r.Success)
+                    throw new NotSupportedException("That was not a supported Spotify URL.");
+
+                var id = r.Captures[0].Value.Replace("/playlist/", "");
+
+                //shamelessly stolen from the example here: https://github.com/Ringobot/SpotifyApi.NetCore/blob/master/README.md
+                var playlists = new PlaylistsApi(_spHc, _accs);
+                int limit = 100;
+                var playlist = await playlists.GetTracks(id, limit: limit);
+                int offset = 0;
+                while (playlist.Items.Any())
+                {
+                    for (int i = 0; i < playlist.Items.Length; i++)
+                    {
+                        list.Add(playlist.Items[i]);
+                    }
+                    offset += limit;
+                    playlist = await playlists.GetTracks(id, limit: limit, offset: offset);
+                }
+            }
+            /*else if (url.Contains("/album/"))
+            {
+                var r = Regex.Match(url, @"\/album\/([^\/\?\&]+)\??");
+                var id = r.Captures[0].Value;
+                
+                var albums = new AlbumsApi(_spHc, _accs);
+
+                int limit = 50;
+                var album = await albums.GetAlbumTracks<PlaylistPaged>(id, limit: limit);
+                int offset = 0;
+                while (album.Items.Any())
+                {
+                    for (int i = 0; i < album.Items.Length; i++)
+                    {
+                        list.Add(album.Items[0]);
+                    }
+                    offset += limit;
+                    album = await albums.GetAlbumTracks<PlaylistPaged>(id, limit: limit, offset: offset);
+                }
+            }*/
+            else
+            {
+                throw new NotSupportedException("That was not a supported Spotify URL.");
+            }
+
+            return list;
         }
 
         private string ParseUrl(string url) => url.TrimStart('<').TrimEnd('>');

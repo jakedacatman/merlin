@@ -4,6 +4,7 @@ using Discord.WebSocket;
 using Discord.Commands;
 using donniebot.services;
 using Interactivity;
+using Discord;
 
 namespace donniebot.commands
 {
@@ -24,18 +25,11 @@ namespace donniebot.commands
         [Command("contrast")]
         [Alias("ct")]
         [Summary("Changes an image's contrast.")]
-        public async Task ContrastCmd([Summary("The value to change the contrast by.")] float contrast = 1,[Summary("The image to change.")] string url = null)
+        public async Task ContrastAsync([Summary("The value to change the contrast by.")] float contrast = 1,[Summary("The image to change.")] string url = null)
         {
-            try
-            {
-                url = await _img.ParseUrlAsync(url, Context.Message);
-                var img = await _img.Contrast(url.Trim('<').Trim('>'), contrast);
-                await _img.SendToChannelAsync(img, Context.Channel);
-            }
-            catch (Exception e)
-            {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
-            }
+            url = await _img.ParseUrlAsync(url, Context.Message);
+            var img = await _img.ContrastAsync(url, contrast);
+            await _img.SendToChannelAsync(img, Context.Channel, new MessageReference(Context.Message.Id));
         }
     }
 }

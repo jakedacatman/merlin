@@ -4,6 +4,7 @@ using Discord.WebSocket;
 using Discord.Commands;
 using donniebot.services;
 using Interactivity;
+using Discord;
 
 namespace donniebot.commands
 {
@@ -24,18 +25,11 @@ namespace donniebot.commands
         [Command("rotate")]
         [Alias("ro", "rot")]
         [Summary("Rotates an image.")]
-        public async Task RotateCmd([Summary("The amount in degrees to rotate.")] float deg, [Summary("The image to rotate.")] string url = null)
+        public async Task RotateAsync([Summary("The angle in degrees to rotate the image by.")] float deg, [Summary("The image to rotate.")] string url = null)
         {
-            try
-            {
-                url = await _img.ParseUrlAsync(url, Context.Message);
-                var img = await _img.Rotate(url.Trim('<').Trim('>'), deg);
-                await _img.SendToChannelAsync(img, Context.Channel);
-            }
-            catch (Exception e)
-            {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
-            }
+            url = await _img.ParseUrlAsync(url, Context.Message);
+            var img = await _img.RotateAsync(url, deg);
+            await _img.SendToChannelAsync(img, Context.Channel, new MessageReference(Context.Message.Id));
         }
     }
 }

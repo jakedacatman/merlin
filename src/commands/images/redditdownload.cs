@@ -35,21 +35,27 @@ namespace donniebot.commands
         [Command("redditdownload")]
         [Alias("rdd", "rddl", "reddl")]
         [Summary("Downloads a video from Reddit.")]
-        public async Task RedditDownloadCmd([Summary("The post to download from.")]string post)
+        public async Task RedditDownloadAsync([Summary("The post to download from.")]string post)
         {
             try
             {
+                if (!Uri.IsWellFormedUriString(post, UriKind.Absolute) || !post.Contains("reddit.com"))
+                {
+                    await ReplyAsync("Invalid Reddit link; try a link to the original post.");
+                    return;
+                }
+
                 var msg = await ReplyAsync("Downloading your video...");
-                await _img.DownloadRedditVideoAsync(post, Context.Channel as SocketGuildChannel);
-                _inter.DelayedSendMessageAndDeleteAsync(Context.Channel, deleteDelay: TimeSpan.FromSeconds(30), text: $"{Context.User.Mention}, your video is ready.");
+                var c = Context.Channel as SocketGuildChannel;
+                var succ = await _img.DownloadRedditVideoAsync(post, c, (c as SocketTextChannel).IsNsfw, new MessageReference(Context.Message.Id));
+                if (!succ)
+                    await ReplyAsync("Video failed to download. Was it really a video or GIF?");
+
+                await msg.DeleteAsync();
             }
             catch (System.Net.Http.HttpRequestException e)
             {
                 await ReplyAsync($"Downloading encountered an error: `{e.Message}`");
-            }
-            catch (Exception e)
-            {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
             }
         }
     }

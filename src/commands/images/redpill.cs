@@ -4,6 +4,7 @@ using Discord.WebSocket;
 using Discord.Commands;
 using donniebot.services;
 using Interactivity;
+using Discord;
 
 namespace donniebot.commands
 {
@@ -24,17 +25,10 @@ namespace donniebot.commands
         [Command("redpill")]
         [Alias("rp")]
         [Summary("Creates an image with two choices..")]
-        public async Task RedpillCmd([Summary("The first choice (red pill).")] string choice1, [Summary("The second choice (blue pill).")] string choice2)
+        public async Task RedpillAsync([Summary("The first choice (red pill).")] string choice1, [Summary("The second choice (blue pill).")] string choice2)
         {
-            try
-            {
-                var img = await _img.Redpill(choice1, choice2);
-                await _img.SendToChannelAsync(img, Context.Channel);
-            }
-            catch (Exception e)
-            {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
-            }
+            var img = await _img.RedpillAsync(choice1, choice2);
+            await _img.SendToChannelAsync(img, Context.Channel, new MessageReference(Context.Message.Id));
         }
     }
 }

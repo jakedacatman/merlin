@@ -23,20 +23,23 @@ namespace donniebot.services
         private List<AudioPlayer> _connections = new List<AudioPlayer>();
         private readonly DiscordShardedClient _client;
         private readonly NetService _net;
+        private readonly DbService _db;
         private readonly RandomService _rand;
         private YoutubeClient yt = new YoutubeClient();
         private HttpClient _hc = new HttpClient();
+        private Dictionary<ulong, CancellationTokenSource> queueEndTokens = new Dictionary<ulong, CancellationTokenSource>();
 
-        public AudioService(DiscordShardedClient client, NetService net, RandomService rand)
+        public AudioService(DiscordShardedClient client, NetService net, DbService db, RandomService rand)
         {
             _client = client;
             _net = net;
+            _db = db;
             _rand = rand;
 
-            SongAdded += OnSongAdded;
-            SongEnded += OnSongEnded;
+            SongAdded += OnSongAddedAsync;
+            SongEnded += OnSongEndedAsync;
 
-            _client.UserVoiceStateUpdated += OnVoiceUpdate;
+            _client.UserVoiceStateUpdated += OnVoiceUpdateAsync;
         }
 
         public event Func<ulong, AudioPlayer, Song, Task> SongAdded;
@@ -49,7 +52,7 @@ namespace donniebot.services
 
             if (currUser.VoiceChannel != null)
                 await channel.DisconnectAsync();
-            
+
             var connection = await channel.ConnectAsync(true, false);
 
             var np = new AudioPlayer(id, channel, connection, textChannel);
@@ -67,7 +70,7 @@ namespace donniebot.services
             return np;
         }
 
-        public async Task DisconnectAsync(SocketVoiceChannel channel)
+        public async Task DisconnectAsync(SocketVoiceChannel channel, ISocketMessageChannel tc = null)
         {
             var id = channel.Guild.Id;
 
@@ -75,7 +78,8 @@ namespace donniebot.services
 
             if (GetConnection(id, out var connection))
             {
-                await connection.LeaveAsync();
+                connection.IsPlaying = false;
+                await connection.LeaveAsync(true, tc);
 
                 _connections.Remove(connection);
                 connection.Dispose();
@@ -88,43 +92,48 @@ namespace donniebot.services
             var vc = user.VoiceChannel;
             var uId = user.Id;
 
-            if (!IsConnected(id))
+            if (vc == null)
             {
-                if (vc == null)
-                {
-                    await channel.SendMessageAsync("You must be in a voice channel.");
-                    return;
-                }
+                await channel.SendMessageAsync("You must be in a voice channel.");
+                return;
+            }
+            
+            if (GetConnection(id, out var con) && vc != con.VoiceChannel)
+            {
+                await channel.SendMessageAsync("You must be in the same voice channel as me.");
+                return;
             }
 
-                if (string.IsNullOrWhiteSpace(queryOrUrl))
-                {
-                    await PlayAsync(id);
-                    
-                    return;
-                }
+            if (string.IsNullOrWhiteSpace(queryOrUrl))
+            {
+                await PlayAsync(id);
+                return;
+            }
 
-                var estTime = GetConnection(id, out var con) ? TimeSpan.FromSeconds(con.Queue
-                    .Sum(x => x.Length.TotalSeconds) + (con.Current?.Length.TotalSeconds - con.Position.TotalSeconds ?? 0))
-                    .ToString(@"hh\:mm\:ss")
-                    : "Now";
+            var estTime = con is null ? "Now" : TimeSpan.FromSeconds(con.Queue
+                .Sum(x => x.Length.TotalSeconds) + (con.Current?.Length.TotalSeconds - con.Position.TotalSeconds ?? 0))
+                .ToString(@"hh\:mm\:ss");
 
-                if (estTime == "00:00:00") estTime = "Now";
+            if (estTime == "00:00:00" || position == 0) estTime = "Now";
 
-                if (con != null && position.HasValue && con.Queue.Any())
-                {
-                    var len = con.Queue.Take(position.Value).Sum(x => x.Length.TotalSeconds);
+            if (con != null && position.HasValue && con.Queue.Any())
+            {
+                var len = con.Queue.Take(position.Value).Sum(x => x.Length.TotalSeconds);
 
-                    estTime = TimeSpan.FromSeconds(len + 
-                        (con.Current?.Length.TotalSeconds - con.Position.TotalSeconds ?? 0))
-                        .ToString(@"hh\:mm\:ss");
-                }
+                estTime = TimeSpan.FromSeconds(len +
+                    (con.Current?.Length.TotalSeconds - con.Position.TotalSeconds ?? 0))
+                    .ToString(@"hh\:mm\:ss");
+            }
 
-                if (Uri.IsWellFormedUriString(queryOrUrl, UriKind.Absolute) && (queryOrUrl.Contains("&list=") || queryOrUrl.Contains("?list=")))
+            if (Uri.IsWellFormedUriString(queryOrUrl, UriKind.Absolute))
+            {
+                var msg = await channel.SendMessageAsync("Adding your playlist...");
+
+                if (queryOrUrl.Contains("&list=") || queryOrUrl.Contains("?list="))
                 {
                     var playlist = await GetPlaylistAsync(queryOrUrl, id, user.Id);
 
-                    await EnqueueMany(channel, vc, playlist.Songs, shuffle, position);
+                    await EnqueueManyAsync(channel, vc, playlist.Songs, shuffle, position);
 
                     await channel.SendMessageAsync(embed: new EmbedBuilder()
                         .WithTitle("Added playlist")
@@ -143,24 +152,68 @@ namespace donniebot.services
 
                     return;
                 }
+                else if (queryOrUrl.Contains("spotify.com"))
+                {
+                    var spotifyPl = await _net.GetSpotifySongsAsync(queryOrUrl);
 
-                var song = await CreateSongAsync(queryOrUrl, id, uId);
+                    var playlist = new List<Song>();
 
-                await channel.SendMessageAsync(embed: new EmbedBuilder()
-                    .WithTitle("Added song")
-                    .WithFields(new List<EmbedFieldBuilder>
+                    foreach (var s in spotifyPl)
                     {
-                        new EmbedFieldBuilder().WithName("Title").WithValue(song.Title).WithIsInline(false),
-                        new EmbedFieldBuilder().WithName("Author").WithValue(song.Author).WithIsInline(true),
-                        new EmbedFieldBuilder().WithName("URL").WithValue(song.Url).WithIsInline(true),
-                        new EmbedFieldBuilder().WithName("Estimated time").WithValue(estTime).WithIsInline(true)
-                    })
-                    .WithColor(_rand.RandomColor())
-                    .WithThumbnailUrl(song.ThumbnailUrl)
-                    .WithCurrentTimestamp()
-                .Build());
+                        playlist.Add(await CreateSongAsync(
+                            $"{string.Join(", ", s.Track.Artists?.Select(x => x.Name))} {s.Track.Name} audio", //Travis Scott, Drake SICKO MODE audio
+                            id, 
+                            uId
+                        ));
+                    }
 
-                await Enqueue(channel, vc, song, shuffle, position);
+                    try
+                    {
+                        await EnqueueManyAsync(channel, vc, playlist, shuffle, position);
+                    }
+                    finally
+                    {
+                        await channel.SendMessageAsync(embed: new EmbedBuilder()
+                            .WithTitle("Added Spotify playlist")
+                            .WithFields(new List<EmbedFieldBuilder>
+                            {
+                                new EmbedFieldBuilder().WithName("Count").WithValue(spotifyPl.Count).WithIsInline(true),
+                                new EmbedFieldBuilder().WithName("URL").WithValue(queryOrUrl).WithIsInline(false),
+                                new EmbedFieldBuilder().WithName("Estimated time").WithValue(estTime).WithIsInline(true)
+                            })
+                            .WithColor(_rand.RandomColor())
+                            .WithFooter("The song may sound different as it is coming from YouTube, not Spotify.")
+                            .WithCurrentTimestamp()
+                            .Build());
+                    }
+                }
+
+                await msg.DeleteAsync();
+            }
+
+            var song = await CreateSongAsync(queryOrUrl, id, uId);
+
+            if (song is null)
+            {
+                await channel.SendMessageAsync("Unable to locate a song with that ID or search query; please try again.");
+                return;
+            }
+
+            await channel.SendMessageAsync(embed: new EmbedBuilder()
+                .WithTitle("Added song")
+                .WithFields(new List<EmbedFieldBuilder>
+                {
+                    new EmbedFieldBuilder().WithName("Title").WithValue(song.Title).WithIsInline(false),
+                    new EmbedFieldBuilder().WithName("Author").WithValue(song.Author).WithIsInline(true),
+                    new EmbedFieldBuilder().WithName("URL").WithValue(song.Url).WithIsInline(true),
+                    new EmbedFieldBuilder().WithName("Estimated time").WithValue(estTime).WithIsInline(true)
+                })
+                .WithColor(_rand.RandomColor())
+                .WithThumbnailUrl(song.ThumbnailUrl)
+                .WithCurrentTimestamp()
+            .Build());
+
+            await EnqueueAsync(channel, vc, song, shuffle, position);
         }
 
         public async Task ResumeAsync(ulong guildId)
@@ -176,7 +229,7 @@ namespace donniebot.services
         }
 
         private readonly SemaphoreSlim enq = new SemaphoreSlim(1, 1);
-        public async Task Enqueue(SocketTextChannel textChannel, SocketVoiceChannel vc, Song song, bool shuffle = false, int? position = null)
+        public async Task EnqueueAsync(SocketTextChannel textChannel, SocketVoiceChannel vc, Song song, bool shuffle = false, int? position = null)
         {
             await enq.WaitAsync();
             try
@@ -188,16 +241,17 @@ namespace donniebot.services
                 if (song.Url.Contains("youtube.com"))
                     song.Info = await GetAudioInfoAsync(song.Url);
                 
+                song.Info = await GetAudioInfoAsync(song.Url);
                 player.Enqueue(song, position);
                 if (shuffle) Shuffle(player.GuildId);
                 SongAdded?.Invoke(id, player, song);
             }
-            finally 
+            finally
             {
-                enq.Release(); 
+                enq.Release();
             }
         }
-        public async Task EnqueueMany(SocketTextChannel textChannel, SocketVoiceChannel vc, IEnumerable<Song> songs, bool shuffle = false, int? position = null)
+        public async Task EnqueueManyAsync(SocketTextChannel textChannel, SocketVoiceChannel vc, IEnumerable<Song> songs, bool shuffle = false, int? position = null)
         {
             await enq.WaitAsync();
             try
@@ -205,36 +259,60 @@ namespace donniebot.services
                 var id = vc.Guild.Id;
                 if (!GetConnection(id, out var player))
                     player = await ConnectAsync(textChannel, vc);
-                
+
                 player.EnqueueMany(songs, position);
                 if (shuffle) Shuffle(player.GuildId);
                 SongAdded?.Invoke(id, player, songs.First());
             }
-            finally 
+            finally
             {
-                enq.Release(); 
+                enq.Release();
             }
-
-            #pragma warning disable CS4014
-            Task.Run(async () => //let it run in the background... we don't really care about the output
-            {
-                foreach (var song in songs)
-                    song.Info = await GetAudioInfoAsync(song.Url);
-            });
-            #pragma warning restore CS4014
+            
+            foreach (var song in songs)
+                song.Info = await GetAudioInfoAsync(song.Url);
         }
 
-        public void RemoveAt(ulong id, int index)
+        public bool ToggleLoop(ulong id)
         {
             if (!GetConnection(id, out var c))
-                return;
+                return false;
+
+            c.ToggleLoop();
+            return c.IsLooping;
+        }
+
+        public bool IsLooping(ulong id)
+        {
+            if (!GetConnection(id, out var c))
+                return false;
+
+            return c.IsLooping;
+        }
+
+        public bool RemoveAt(ulong id, int index)
+        {
+            if (!GetConnection(id, out var c))
+                return false;
 
             var queue = c.Queue;
 
-            if (index < 0 || index >= queue.Count)
-                return;
+            if (index < 1 || index >= queue.Count)
+                return false;
 
             queue.RemoveAt(index);
+            return true;
+        }
+
+        public bool ClearQueue(ulong id)
+        {
+            if (!GetConnection(id, out var c))
+                return false;
+
+            var queue = c.Queue;
+
+            queue.RemoveRange(0, queue.Count);
+            return true;
         }
 
         public void Shuffle(ulong id)
@@ -245,41 +323,79 @@ namespace donniebot.services
             c.Shuffle();
         }
 
-        public async Task OnSongAdded(ulong id, AudioPlayer player, Song s)
+        public async Task OnSongAddedAsync(ulong id, AudioPlayer player, Song s)
         {
             if (!player.IsPlaying)
                 await PlayAsync(id);
         }
 
-        public async Task OnSongEnded(Song s, AudioPlayer player)
+        public async Task OnSongEndedAsync(Song s, AudioPlayer player)
         {
+            if (player.IsLooping)
+            {
+                s.Info = null;
+                await EnqueueAsync(player.TextChannel, player.VoiceChannel, s, position: 0);
+            }
+
             if (player.Queue.Count > 0)
             {
                 if (player.GetListeningUsers().Any())
+                {
+
                     await PlayAsync(player.GuildId);
+                }
                 else
                     player.Dispose();
             }
+            else
+            {
+                var id = player.GuildId;
+                
+                if (!queueEndTokens.ContainsKey(id)) 
+                    queueEndTokens.TryAdd(id, new CancellationTokenSource());
+
+                Task OnSongAdded(ulong gId, AudioPlayer p, Song _)
+                {
+                    if (gId == id)
+                        queueEndTokens[id].Cancel();
+
+                    return Task.CompletedTask;
+                }
+
+                SongAdded += OnSongAdded;
+                await Task.Delay(300000, queueEndTokens[id].Token); //5 minutes
+                if (queueEndTokens[id].IsCancellationRequested)
+                    await DisconnectAsync(player.VoiceChannel);
+
+                queueEndTokens.Remove(id);
+                SongAdded -= OnSongAdded;
+            }
         }
 
-        public async Task OnVoiceUpdate(SocketUser user, SocketVoiceState oldS, SocketVoiceState newS)
+        public async Task OnVoiceUpdateAsync(SocketUser user, SocketVoiceState oldS, SocketVoiceState newS)
         {
-            if (user != _client.CurrentUser) return;
+            try
+            {
+                if (user != _client.CurrentUser) return;
 
-            var oldVc = oldS.VoiceChannel;
-            var newVc = newS.VoiceChannel;
+                var oldVc = oldS.VoiceChannel;
+                var newVc = newS.VoiceChannel;
 
-            if (oldVc == null) return;
+                if (oldVc == null) return;
 
-            if (GetConnection(oldVc.Guild.Id, out var connection))
-                if (newVc == null)
-                {
-                    var queue = connection.Queue;
-                    queue.RemoveRange(0, queue.Count);
-                    await DisconnectAsync(connection.VoiceChannel);
-                }
-                else
-                    await connection.UpdateAsync(newVc);
+                if (GetConnection(oldVc.Guild.Id, out var connection))
+                    if (newVc == null)
+                        await DisconnectAsync(connection.VoiceChannel);
+                    else
+                    {
+                        await connection.PauseAsync();
+                        await connection.UpdateAsync(newVc);
+                    }
+            }
+            catch (Discord.Net.WebSocketClosedException e)
+            {
+                Console.WriteLine($"{e}\n{e.StackTrace}");
+            }
         }
 
         public async Task PlayAsync(ulong id)
@@ -288,7 +404,7 @@ namespace donniebot.services
                 throw new InvalidOperationException("Not connected to a voice channel.");
 
             if (!connection.Queue.Any())
-                    return;
+                return;
 
             var song = connection.Pop();
             connection.Current = song;
@@ -320,6 +436,9 @@ namespace donniebot.services
                     str = await GetAudioAsync(song.Url);
                     song.Size = await _net.GetContentLengthAsync(song.Url);
                 }
+                var info = song.Info ?? await GetAudioInfoAsync(song.Url);
+
+                song.Size = info.Size.Bytes;
 
                 using (str)
                 using (var downloadStream = new SimplexStream())
@@ -337,16 +456,7 @@ namespace donniebot.services
 
                     int bytesDown = 0, bytesRead = 0, bytesConverted = 0;
 
-                    var skipCts = new CancellationTokenSource();
-                    var token = skipCts.Token;
-
                     var pauseCts = new CancellationTokenSource();
-                    
-                    connection.SongSkipped += (AudioPlayer _, Song song) =>
-                    {
-                        skipCts.Cancel();
-                        return Task.CompletedTask;
-                    };
 
                     connection.SongPaused += (AudioPlayer _, bool state) =>
                     {
@@ -354,102 +464,122 @@ namespace donniebot.services
                             pauseCts.Cancel();
                         else
                             pauseCts = new CancellationTokenSource();
-                        
+
                         return Task.CompletedTask;
                     };
-                        
-                    var download = Task.Run(async () => 
+
+                    async Task Download(CancellationToken token)
                     {
                         try
                         {
                             do
                             {
-                                bytesDown = await str.ReadAsync(bufferDown, 0, block_size, token);
+                                if (token.IsCancellationRequested) break;
+
+                                bytesDown = await str.ReadAsync(bufferDown, 0, block_size);
                                 connection.BytesDownloaded += (uint)bytesDown;
 
-                                await downloadStream.WriteAsync(bufferDown, 0, bytesDown, token);
+                                await downloadStream.WriteAsync(bufferDown, 0, bytesDown);
                             }
                             while (bytesDown > 0);
                         }
                         finally
                         {
-                            await downloadStream.FlushAsync();
                             downloadStream.CompleteWriting();
                         }
-                    }, token);
+                    }
 
-                    var read = Task.Run(async () => 
+                    async Task Read(CancellationToken token)
                     {
                         try
                         {
                             do
                             {
-                                bytesRead = await downloadStream.ReadAsync(bufferRead, 0, block_size, token);
-                                await input.WriteAsync(bufferRead, 0, bytesRead, token);
+                                if (token.IsCancellationRequested) break;
+
+                                bytesRead = await downloadStream.ReadAsync(bufferRead, 0, block_size);
+                                await input.WriteAsync(bufferRead, 0, bytesRead);
                             }
                             while (bytesRead > 0);
                         }
-                        finally
+                        catch (IOException)
                         {
-                            await input.FlushAsync();
-                        }
-                    }, token);
 
+                        }
+                    }
 
                     var hasHadFullChunkYet = false;
-                    var write = Task.Run(async () => 
+                    async Task Write(CancellationToken token)
                     {
                         try
                         {
-                            do 
+                            do
                             {
                                 while (connection.IsPaused) //don't write to discord while paused
+                                {
                                     try
                                     {
+                                        if (token.IsCancellationRequested) return;
+
                                         await Task.Delay(-1, pauseCts.Token); //wait forever (until token is called)
                                     }
                                     catch (TaskCanceledException)
                                     {
 
                                     }
+                                }
+                                
+                                if (token.IsCancellationRequested) break;
 
                                 if (hasHadFullChunkYet && bytesConverted < block_size) //if bytesConverted is less than here, then the last (small) chunk is done
                                     break;
 
-                                bytesConverted = await output.ReadAsync(bufferWrite, 0, block_size, token);
+                                bytesConverted = await output.ReadAsync(bufferWrite, 0, block_size);
                                 connection.BytesPlayed += (uint)bytesConverted;
 
                                 if (bytesConverted == block_size)
                                     hasHadFullChunkYet = true;
 
-                                await discord.WriteAsync(bufferWrite, 0, bytesConverted, token);
+                                await discord.WriteAsync(bufferWrite, 0, bytesConverted);
                             }
                             while (bytesConverted > 0);
                         }
-                        finally 
+                        finally
                         {
-                            await discord.FlushAsync();
                             ffmpeg.Kill();
                         }
-                    }, token);
+                    }
 
                     try //allows for skipping
                     {
-                        Task.WaitAll(new[] { download, read, write }, token);
+                        var cts = new CancellationTokenSource();
+
+                        connection.SongSkipped += (AudioPlayer _, Song _) =>
+                        {
+                            cts.Cancel();
+                            return Task.CompletedTask;
+                        };
+
+                        await Task.WhenAll(Download(cts.Token), Read(cts.Token), Write(cts.Token));
                     }
-                    catch (OperationCanceledException) //allows for skipping
+                    catch (Exception)
                     {
-                        
+
                     }
-                    catch (AggregateException) //allows for skipping
+                    finally
                     {
-                        
+                        await discord.FlushAsync();
+
+                        if (!ffmpeg.HasExited) 
+                            ffmpeg.Kill();
                     }
                 }
             }
             catch (Discord.Net.WebSocketClosedException)
             {
-                
+                _connections.Remove(connection);
+                connection.Dispose();
+                return;
             }
             finally
             {
@@ -463,8 +593,14 @@ namespace donniebot.services
 
         private async Task<AudioOnlyStreamInfo> GetAudioInfoAsync(string ytUrl)
         {
-            var info = await yt.Videos.Streams.GetManifestAsync(new VideoId(ytUrl));
-            return info.GetAudioOnly().OrderByDescending(x => x.Bitrate).First();
+            var id = VideoId.TryParse(ytUrl);
+            if (id is null) throw new VideoException("Failed to parse the URL.");
+
+            var info = await yt.Videos.Streams.GetManifestAsync(VideoId.Parse(ytUrl));
+            return info
+                .GetAudioOnlyStreams()
+                .OrderByDescending(x => x.Bitrate)
+                .First();
         }
 
         private async Task<Stream> GetAudioAsync(AudioOnlyStreamInfo info) => await yt.Videos.Streams.GetAsync(info);
@@ -472,7 +608,7 @@ namespace donniebot.services
 
         public async Task<Song> CreateSongAsync(string queryOrUrl, ulong guildId, ulong userId)
         {
-            Video video;
+            SongInfo info;
 
             if (!Uri.IsWellFormedUriString(queryOrUrl, UriKind.Absolute))
                 video = await GetVideoAsync(queryOrUrl);
@@ -492,6 +628,41 @@ namespace donniebot.services
             }
 
             var info = new SongInfo(video.Title, video.Url, video.Thumbnails.MediumResUrl, video.Author, video.Duration);
+            if (!Uri.IsWellFormedUriString(queryOrUrl, UriKind.Absolute) || !new Uri(queryOrUrl).Host.Contains("youtube") || !new Uri(queryOrUrl).Host.Contains("youtu.be"))
+            {
+                var video = await GetVideoAsync(queryOrUrl);
+                if (video is null) return null;
+
+                info = new SongInfo(
+                    video.Title, 
+                    video.Url, 
+                    video.Thumbnails
+                        .OrderByDescending(x => x.Resolution.Area)
+                        .First()
+                        .Url, 
+                    video.Author.Title, 
+                    video.Duration ?? new TimeSpan(0)
+                );
+            }
+            else
+            {
+                var id = VideoId.TryParse(queryOrUrl);
+                if (id is null) throw new VideoException("Invalid video.");
+
+                var video = await yt.Videos.GetAsync(id.Value);
+                if (video is null) throw new VideoException("Invalid video.");
+
+                info = new SongInfo(
+                    video.Title, 
+                    video.Url, 
+                    video.Thumbnails
+                        .OrderByDescending(x => x.Resolution.Area)
+                        .First()
+                        .Url,
+                    video.Author.Title,
+                    video.Duration ?? new TimeSpan(0)
+                );
+            }
 
             return new Song(info, userId, guildId);
         }
@@ -499,12 +670,14 @@ namespace donniebot.services
         public async Task<classes.Playlist> GetPlaylistAsync(string playlistId, ulong guildId, ulong userId)
         {
             var songs = new List<Song>();
-            var id = new PlaylistId(playlistId);
 
-            var data = await yt.Playlists.GetAsync(id);
-            var videos = await yt.Playlists.GetVideosAsync(id);
+            var id = PlaylistId.TryParse(playlistId);
+            if (id is null) throw new VideoException("Invalid playlist.");
 
-            foreach (var video in videos)
+            var data = await yt.Playlists.GetAsync(id.Value);
+            var videos = yt.Playlists.GetVideosAsync(id.Value);
+
+            await foreach (var video in videos)
                 songs.Add(new Song(
                     new SongInfo(
                         video.Title, 
@@ -513,9 +686,29 @@ namespace donniebot.services
                         video.Author, 
                         video.Duration),
                     userId, 
+                    new SongInfo(video.Title,
+                        video.Url,
+                        video.Thumbnails
+                            .OrderByDescending(x => x.Resolution.Area)
+                            .First()
+                            .Url,
+                        video.Author.Title,
+                        video.Duration ?? new TimeSpan(0)),
+                    userId,
                     guildId));
 
-            return new classes.Playlist(songs, data.Title, data.Author, data.Url, data.Thumbnails.MediumResUrl, userId, guildId);
+            return new classes.Playlist(
+                songs, 
+                data.Title, 
+                data.Author.Title, 
+                data.Url, 
+                data.Thumbnails
+                    .OrderByDescending(x => x.Resolution.Area)
+                    .First()
+                    .Url,
+                userId, 
+                guildId
+            );
         }
 
         private Process CreateStream()
@@ -530,15 +723,28 @@ namespace donniebot.services
             });
         }
 
-        private async Task<Video> GetVideoAsync(string query) => await yt.Search.GetVideosAsync(query).FirstAsync();
+        private async Task<YoutubeExplode.Search.VideoSearchResult> GetVideoAsync(string query) => await yt.Search.GetVideosAsync(query).FirstOrDefaultAsync();
 
         public bool IsConnected(ulong id) => GetConnection(id, out var _);
 
         public bool HasSongs(ulong id) => GetConnection(id, out var c) && (GetCurrent(id) != null || c.Queue.Any());
 
-        public async Task<int> SkipAsync(SocketGuildUser skipper) => GetConnection(skipper.Guild.Id, out var c) ? await c.SkipAsync(skipper) : 0;
+        public async Task<int> SkipAsync(SocketGuildUser skipper)
+        {
+            
+            if (GetConnection(skipper.Guild.Id, out var c))
+            {
+                var djRole = _db.GetItem<DjRole>("djroles", LiteDB.Query.EQ("GuildId", skipper.Guild.Id));
+                if (skipper.Roles.Any(x => x.Id == djRole?.RoleId))
+                    return await c.DoSkipAsync();
+
+                return await c.SkipAsync(skipper);
+            }
+            else return 0;
+        }
 
         public string GetSongPosition(ulong id) => GetConnection(id, out var con) ? $"{con.Position.ToString(@"hh\:mm\:ss")}/{con.Current.Length.ToString(@"hh\:mm\:ss")}" : null;
+        public TimeSpan GetRawPosition(ulong id) => GetConnection(id, out var con) ? con.Current.Length - con.Position : TimeSpan.FromSeconds(0);
         public double GetDownloadedPercent(ulong id) => GetConnection(id, out var con) ? (double)con.BytesDownloaded / con.Current.Size : 0d;
 
         public List<SocketGuildUser> GetListeningUsers(ulong id) => GetConnection(id, out var connection) ? connection.GetListeningUsers().ToList() : new List<SocketGuildUser>();
@@ -554,29 +760,29 @@ namespace donniebot.services
                 var queue = connection.Queue;
                 var gId = connection.GuildId;
 
-                if (connection.Current != null) 
+                if (connection.Current != null)
                 {
-                    items.Add($"__**{1}**: {connection.Current.Title} (queued by {GetMention(gId, connection.Current.QueuerId)})__");
+                    items.Add($"{(connection.IsPaused ? "▶️" : "⏸️")} __**1**: {connection.Current.Title} (queued by {GetMention(gId, connection.Current.QueuerId)})__");
 
                     for (int i = 0; i < queue.Count; i++)
-                        items.Add($"**{i+2}**: {queue[i].Title} (queued by {GetMention(gId, queue[i].QueuerId)})");
+                        items.Add($"**{i + 2}**: {queue[i].Title} (queued by {GetMention(gId, queue[i].QueuerId)})");
                 }
                 else
                     for (int i = 0; i < queue.Count; i++)
-                        items.Add($"**{i+1}**: {queue[i].Title} (queued by {GetMention(gId, queue[i].QueuerId)})");
+                        items.Add($"**{i + 1}**: {queue[i].Title} (queued by {GetMention(gId, queue[i].QueuerId)})");
             }
 
             return items;
         }
         public List<Song> GetRawQueue(ulong id) => GetConnection(id, out var c) ? c.Queue : new List<Song>();
 
-        private string GetMention(ulong guildId, ulong userId) => 
+        private string GetMention(ulong guildId, ulong userId) =>
             _client
                 .GetGuild(guildId)
                 .GetUser(userId)
                 .Mention;
 
-        private bool GetConnection(ulong id, out AudioPlayer connection)
+        public bool GetConnection(ulong id, out AudioPlayer connection)
         {
             connection = null;
             var exists = _connections.Any(x => x.GuildId == id);

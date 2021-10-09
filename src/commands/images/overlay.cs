@@ -4,6 +4,7 @@ using Discord.WebSocket;
 using Discord.Commands;
 using donniebot.services;
 using Interactivity;
+using Discord;
 
 namespace donniebot.commands
 {
@@ -22,21 +23,19 @@ namespace donniebot.commands
         }
 
         [Command("overlay")]
-        [Alias("o")]
+        [Alias("o", "ov", "ol")]
         [Summary("Overlays an image on another image.")]
-        public async Task OverlayCmd([Summary("The image to overlay.")] string overlayUrl, [Summary("The x-position to overlay to.")] int x = -1, [Summary("The y-position to overlay to.")] int y = -1, [Summary("The width of the overlaid image.")] int width = 0, [Summary("The height of the overlaid image.")] int height = 0, [Summary("The image to be overlaid upon.")] string url = null)
+        public async Task OverlayAsync([Summary("The image to overlay.")] string overlayUrl, 
+            [Summary("The x-position to overlay to. Defaults to the center of the background image.")] int x = -1, 
+            [Summary("The y-position to overlay to. Defaults to the center of the background image.")] int y = -1, 
+            [Summary("The width of the overlaid/foreground image.")] int width = 0, 
+            [Summary("The height of the foreground image.")] int height = 0, 
+            [Summary("The image to be overlaid upon/background image.")] string url = null)
         {
-            try
-            {
-                url = await _img.ParseUrlAsync(url, Context.Message);
-                overlayUrl = await _img.ParseUrlAsync(overlayUrl, Context.Message);
-                var img = await _img.Overlay(url, overlayUrl, x, y, width, height);
-                await _img.SendToChannelAsync(img, Context.Channel);
-            }
-            catch (Exception e)
-            {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
-            }
+            url = await _img.ParseUrlAsync(url, Context.Message);
+            overlayUrl = await _img.ParseUrlAsync(overlayUrl, Context.Message);
+            var img = await _img.OverlayAsync(url, overlayUrl, x, y, width, height);
+            await _img.SendToChannelAsync(img, Context.Channel, new MessageReference(Context.Message.Id));
         }
     }
 }

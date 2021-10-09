@@ -25,25 +25,18 @@ namespace donniebot.commands
         [Command("wiki")]
         [Alias("w", "wikipedia")]
         [Summary("Searches Wikipedia for an article.")]
-        public async Task WikiCmd([Summary("The search term."), Remainder] string term)
+        public async Task WikiAsync([Summary("The search term."), Remainder] string term)
         {
-            try
-            {
-                var article = await _net.GetWikipediaArticleAsync(term);
-                if (article.Title == "" && article.Url == "")
-                    await ReplyAsync("Failed to find the article.");
-                else
-                    await ReplyAsync(embed: new EmbedBuilder()
-                        .WithTitle(article.Title)
-                        .WithUrl(article.Url)
-                        .WithDescription("Click the title to view the article!")
-                        .WithColor(_rand.RandomColor())
-                    .Build());
-            }
-            catch (Exception e)
-            {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
-            }
+            var article = await _net.GetWikipediaArticleAsync(term);
+            if (article.Title == "" && article.Url == "")
+                await ReplyAsync("Failed to find the article.");
+            else
+                await ReplyAsync(embed: new EmbedBuilder()
+                    .WithTitle(article.Title)
+                    .WithUrl(article.Url)
+                    .WithDescription("Click the title to view the article!")
+                    .WithColor(_rand.RandomColor())
+                .Build());
         }
     }
 }

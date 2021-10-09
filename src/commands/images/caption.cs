@@ -4,6 +4,7 @@ using Discord.WebSocket;
 using Discord.Commands;
 using donniebot.services;
 using Interactivity;
+using Discord;
 
 namespace donniebot.commands
 {
@@ -26,25 +27,18 @@ namespace donniebot.commands
         [Command("caption")]
         [Alias("c", "cap")]
         [Summary("Captions an image.")]
-        public async Task CaptionCmd([Summary("The text to caption.")]string text, [Summary("The image to caption.")] string url = null)
+        public async Task CaptionAsync([Summary("The text to caption.")]string text, [Summary("The image to caption.")] string url = null)
         {
-            try
+            url = await _img.ParseUrlAsync(url, Context.Message);
+            if (await _net.IsVideoAsync(url))
             {
-                url = await _img.ParseUrlAsync(url, Context.Message);
-                if (await _net.IsVideoAsync(url))
-                {
-                    var path = await _img.VideoFilter(url, _img.Caption, text);
-                    await _img.SendToChannelAsync(path, Context.Channel);
-                }
-                else
-                {
-                    var img = await _img.Caption(url, text);
-                    await _img.SendToChannelAsync(img, Context.Channel);
-                }
+                var path = await _img.VideoFilterAsync(url, _img.Caption, text);
+                await _img.SendToChannelAsync(path, Context.Channel, new MessageReference(Context.Message.Id));
             }
-            catch (Exception e)
+            else
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
+                var img = await _img.CaptionAsync(url, text);
+                await _img.SendToChannelAsync(img, Context.Channel, new MessageReference(Context.Message.Id));
             }
         }
     }

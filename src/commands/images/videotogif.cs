@@ -4,6 +4,7 @@ using Discord.WebSocket;
 using Discord.Commands;
 using donniebot.services;
 using Interactivity;
+using Discord;
 
 namespace donniebot.commands
 {
@@ -24,18 +25,11 @@ namespace donniebot.commands
         [Command("videotogif")]
         [Alias("vtg", "v2g")]
         [Summary("Converts a video to a GIF.")]
-        public async Task VideoToGifCmd([Summary("The video to convert.")] string url = null)
+        public async Task VideoToGifAsync([Summary("The video to convert.")] string url = null)
         {
-            try
-            {
-                url = await _img.ParseUrlAsync(url, Context.Message);
-                var path = await _img.VideoToGif(url);
-                await _img.SendToChannelAsync(path, Context.Channel);
-            }
-            catch (Exception e)
-            {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
-            }
+            url = await _img.ParseUrlAsync(url, Context.Message);
+            var path = await _img.VideoToGifAsync(url);
+            await _img.SendToChannelAsync(path, Context.Channel, new MessageReference(Context.Message.Id));
         }
     }
 }

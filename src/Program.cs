@@ -24,24 +24,16 @@ namespace donniebot
         private CommandService _commands;
         private IServiceProvider _services;
 
-        public static Task Main() => new Program().Start();
+        public static Task Main() => new Program().StartAsync();
 
-        private readonly string defaultPrefix = "don.";
+        private readonly string defaultPrefix = "mer.";
 
         private DbService _db;
 
-        public async Task Start()
+        public async Task StartAsync()
         {
-            _client = new DiscordShardedClient(new DiscordSocketConfig
-            {
-                LogLevel = LogSeverity.Verbose,
-                AlwaysDownloadUsers = false,
-                ConnectionTimeout = int.MaxValue,
-                TotalShards = 2,
-                DefaultRetryMode = RetryMode.AlwaysRetry,
-                MessageCacheSize = 1024,
-                ExclusiveBulkDelete = true
-            });
+            _client = new DiscordShardedClient();
+
             _commands = new CommandService(new CommandServiceConfig
             {
                 ThrowOnError = true,
@@ -54,7 +46,7 @@ namespace donniebot
             NekoEndpoints nekoEndpoints;
             using (var hc = new HttpClient())
                 nekoEndpoints = new NekoEndpoints(JsonConvert.DeserializeObject<JObject>(await hc.GetStringAsync("https://raw.githubusercontent.com/Nekos-life/nekos-dot-life/master/endpoints.json")));
-            
+
             _services = new ServiceCollection()
                 .AddSingleton(_client)
                 .AddSingleton(_commands)
@@ -75,6 +67,8 @@ namespace donniebot
             await _commands.AddModulesAsync(Assembly.GetEntryAssembly(), _services);
 
             _db = _services.GetService<DbService>();
+                        
+            Console.WriteLine($"Current directory: {Environment.CurrentDirectory}");
             var apiKey = _db.GetApiKey("discord");
             if (apiKey == null)
             {
@@ -87,43 +81,53 @@ namespace donniebot
             await _client.LoginAsync(TokenType.Bot, apiKey);
             await _client.StartAsync();
 
+            var cfg = new DiscordSocketConfig
+            {
+                LogLevel = LogSeverity.Verbose,
+                AlwaysDownloadUsers = false,
+                ConnectionTimeout = int.MaxValue,
+                TotalShards = await _client.GetRecommendedShardCountAsync(),
+                DefaultRetryMode = RetryMode.AlwaysRetry,
+                MessageCacheSize = 1024,
+                ExclusiveBulkDelete = true
+            };
+
+            _client = new DiscordShardedClient(cfg);
+
+            await _client.LoginAsync(TokenType.Bot, apiKey);
+            await _client.StartAsync();
+
             await _client.SetActivityAsync(new Game($"myself start up {_client.Shards.Count} shards", ActivityType.Watching));
 
-            _client.Log += Log;
-            _client.MessageReceived += MsgReceived;
-
-            int counter = 1;
+            _client.Log += LogAsync;
+            _client.MessageReceived += MsgReceivedAsync;
 
             _client.ShardConnected += async (DiscordSocketClient client) =>
             {
-                if (counter >= _client.Shards.Count)
+                try
                 {
-                    try
-                    {
-                        await UpdateStatus(counter);
-                    }
-                    catch (Exception e)
-                    {
-                        Console.WriteLine(e);
-                        await UpdateStatus(counter);
-                    }
+                    await UpdateStatusAsync(client);
                 }
-                else
-                {   
-                    counter++;
-                    return;
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                    await UpdateStatusAsync(client);
                 }
             };
 
-            _commands.Log += Log;
+            _commands.Log += LogAsync;
+
+            _commands.CommandExecuted += CommandExecutedAsync;
 
             if (!File.Exists("nsfw.txt"))
                 await File.WriteAllTextAsync("nsfw.txt", await _services.GetService<NetService>().DownloadAsStringAsync("https://paste.jakedacatman.me/raw/YU4vA"));
+            if (!File.Exists("phrases.txt"))
+                await File.WriteAllTextAsync("phrases.txt", await _services.GetService<NetService>().DownloadAsStringAsync("https://paste.jakedacatman.me/raw/8foSm"));
 
             await Task.Delay(-1);
         }
 
-        private Task Log(LogMessage msg)
+        private Task LogAsync(LogMessage msg)
         {
             try
             {
@@ -139,7 +143,7 @@ namespace donniebot
             }
         }
 
-        private async Task MsgReceived(SocketMessage _msg)
+        private async Task MsgReceivedAsync(SocketMessage _msg)
         {
             try
             {
@@ -172,10 +176,7 @@ namespace donniebot
                         return;
                 }
 
-                var result = await _commands.ExecuteAsync(context, argPos, _services, MultiMatchHandling.Best);
-
-                if (result is PreconditionResult res && !res.IsSuccess)
-                    await context.Channel.SendMessageAsync($"🛑 You lack the permissions to run this command. ({res.ErrorReason})");
+                await _commands.ExecuteAsync(context, argPos, _services, MultiMatchHandling.Best);
             }   
             catch (Exception e)
             {
@@ -183,6 +184,60 @@ namespace donniebot
             }
         }
 
-        private async Task UpdateStatus(int counter) => await _client.SetActivityAsync(new Game($"over {counter} out of {_client.Shards.Count} shard{(_client.Shards.Count > 1 ? "s" : "")}", ActivityType.Watching));
+        private async Task CommandExecutedAsync(Optional<CommandInfo> info, ICommandContext context, IResult res)
+        {
+            if (!res.IsSuccess)
+            {
+                var em = new EmbedBuilder()
+                    .WithColor(_services
+                        .GetService<RandomService>()
+                        .RandomColor()
+                    )
+                    .WithCurrentTimestamp()
+                    .WithFooter(context.Message.Content)
+                    .WithAuthor(x => 
+                    {
+                        x.Name = context.User.Username;
+                        x.IconUrl = context.User.GetAvatarUrl(size: 512);
+                    })
+                    .WithTitle("Command failed")
+                    .WithDescription(res.ErrorReason);
+
+                switch (res.Error)
+                {
+                    case CommandError.UnmetPrecondition:
+                    {
+                        em
+                            .WithTitle("🛑 Command failed precondition check")
+                            .WithDescription(res.ErrorReason);
+                        break;
+                    }
+                    case CommandError.BadArgCount:
+                    {
+                        em
+                            .WithTitle("⁉️ Improper amount of arguments")
+                            .WithDescription(res.ErrorReason);
+                        break;
+                    }
+                    case CommandError.UnknownCommand:
+                    {
+                        em
+                            .WithTitle("❓ That command does not exist.")
+                            .WithDescription(res.ErrorReason);
+                        break;
+                    }
+
+                    case CommandError.Exception:
+                    {
+                        em = await _services.GetService<MiscService>().GenerateErrorMessageAsync(((ExecuteResult)res).Exception);
+                        break;
+                    }
+                }
+
+                await context.Channel.SendMessageAsync(embed: em.Build(), messageReference: new MessageReference(context.Message.Id), allowedMentions: AllowedMentions.None);
+            }
+        }
+
+        private async Task UpdateStatusAsync(DiscordSocketClient client) => await client.SetActivityAsync(new Game($"over shard {client.ShardId + 1}/{_client.Shards.Count}", ActivityType.Watching));
     }
 }

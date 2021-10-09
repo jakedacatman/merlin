@@ -1,10 +1,12 @@
 using System;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
 using donniebot.classes;
 using LiteDB;
+using System.Collections.Generic;
 
 namespace donniebot.services
 {
@@ -12,14 +14,58 @@ namespace donniebot.services
     {
         private readonly DiscordShardedClient _client;
         private readonly DbService _db;
+
+        List<ModerationAction> _actions = new List<ModerationAction>();
         
         public ModerationService(DiscordShardedClient client, DbService db)
         {
             _client = client;
             _db = db;
+
+            _actions.AddRange(_db.LoadActions());
+
+            _client.ShardReady += (DiscordSocketClient client) => 
+            {
+                if (client.ShardId >= _client.Shards.Count - 1)
+                {
+                    var complete = Task.Run(async () => 
+                    {
+                        while (true)
+                        {
+                            if (_actions.Any())
+                                foreach (var action in _actions.ToList())
+                                    if (action.Expiry.HasValue && action.Expiry <= DateTime.UtcNow)
+                                    {
+                                        var guild = _client.Guilds.First(x => x.Id == action.GuildId);
+                                        var user = guild.Users.First(x => x.Id == action.UserId);
+                            
+                                        switch (action.Type)
+                                        {
+                                            case classes.ActionType.Mute:
+                                            {
+                                                await TryUnmuteUserAsync(guild, guild.Users.First(x => x.Id == action.UserId));
+                                                break;
+                                            }
+                                            case classes.ActionType.Ban:
+                                            {
+                                                await guild.RemoveBanAsync(user);
+                                                break;
+                                            }
+                                        }
+
+                                        RemoveAction(action);
+                                    }
+
+                            await Task.Delay(1000);
+                        }
+                    });
+                }
+
+                return Task.CompletedTask;
+            };
         }
 
-        public async Task<bool> TryMuteUserAsync(SocketGuild guild, SocketGuildUser moderator, SocketGuildUser user)
+        public async Task<MuteResult> TryMuteUserAsync(SocketGuild guild, SocketGuildUser moderator, SocketGuildUser user, string reason = null, TimeSpan? expiry = null)
         {
             try
             {
@@ -45,23 +91,27 @@ namespace donniebot.services
                 }
 
                 if (role.Position < user.Roles.OrderBy(x => x.Position).Last().Position)
-                    return false;
+                    return MuteResult.FromError("The \"Muted\" role is below the user's highest role.", user.Id);
 
-                if (user.Roles.Contains(role)) return false;
+                if (user.Roles.Contains(role)) return MuteResult.FromError("The user is already muted.", user.Id);
 
                 await user.AddRoleAsync(role);
                 
-                //await user.ModifyAsync(x => x.Mute = true);
-                return true;
+                if (user.VoiceChannel is not null)
+                    await user.ModifyAsync(x => x.Mute = true);
+
+                var action = new ModerationAction(user.Id, moderator.Id, guild.Id, donniebot.classes.ActionType.Mute, expiry, reason);
+                AddAction(action);
+
+                return MuteResult.FromSuccess(action);
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
-                return false;
+                return MuteResult.FromError($"There was an exception while muting the user. ({e.Message})", user.Id);
             }
         }
 
-        public async Task<bool> TryUnmuteUserAsync(SocketGuild guild, SocketGuildUser user)
+        public async Task<MuteResult> TryUnmuteUserAsync(SocketGuild guild, SocketGuildUser user)
         {
             try
             {
@@ -69,22 +119,29 @@ namespace donniebot.services
 
                 if (guild.Roles.Any(x => x.Name == "Muted"))
                     role = guild.Roles.FirstOrDefault(x => x.Name == "Muted");
-                else return false;
+                else return MuteResult.FromError("There is not a \"Muted\" role in the server.", user.Id);
 
                 if (role.Position < user.Roles.OrderBy(x => x.Position).Last().Position)
-                    return false;
+                    return MuteResult.FromError("The \"Muted\" role is below the user's highest role.", user.Id);
 
-                if (!user.Roles.Contains(role)) return false;
+                if (!user.Roles.Contains(role)) return MuteResult.FromError("The user is already unmuted.", user.Id);
 
                 await user.RemoveRoleAsync(role);
 
-                //await user.ModifyAsync(x => x.Mute = false);
-                return true;
+                RemoveAction(x => 
+                    x.UserId == user.Id && 
+                    x.GuildId == guild.Id && 
+                    x.Type == donniebot.classes.ActionType.Mute
+                );
+
+                if (user.VoiceChannel is not null)
+                    await user.ModifyAsync(x => x.Mute = false);
+                    
+                return MuteResult.FromSuccess("", user.Id);
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
-                return false;
+                return MuteResult.FromError($"There was an exception while unmuting the user. ({e.Message})", user.Id);
             }
         }
 
@@ -122,6 +179,27 @@ namespace donniebot.services
                 Console.WriteLine(e);
                 return 0;
             }
+        }
+
+        public List<ModerationAction> GetActionsForUser(ulong uId) => _actions.Where(x => x.UserId == uId).ToList();
+
+        public void AddAction(ModerationAction action)
+        {
+            _actions.Add(action);
+            _db.AddAction(action);
+        }
+
+        public void RemoveAction(ModerationAction action)
+        {
+            _actions.Remove(action);
+            _db.RemoveAction(action);
+        }
+        public void RemoveAction(Func<ModerationAction, bool> query)
+        {
+            var action = _actions.First(query);
+
+            _actions.Remove(action);
+            _db.RemoveAction(action);
         }
     }
 }

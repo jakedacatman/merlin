@@ -4,6 +4,7 @@ using Discord.WebSocket;
 using Discord.Commands;
 using donniebot.services;
 using Interactivity;
+using Discord;
 
 namespace donniebot.commands
 {
@@ -22,20 +23,13 @@ namespace donniebot.commands
         }
 
         [Command("speedup")]
-        [Alias("su")]
+        [Alias("su", "speed")]
         [Summary("Speeds up a GIF.")]
-        public async Task SpeedUpCmd([Summary("The speed to change the playback to (in times).")] double speed, [Summary("The image to change.")] string url = null)
+        public async Task SpeedUpAsync([Summary("The speed to change the playback to (in times).")] double speed, [Summary("The image to change.")] string url = null)
         {
-            try
-            {
-                url = await _img.ParseUrlAsync(url, Context.Message);
-                var img = await _img.SpeedUp(url, speed);
-                await _img.SendToChannelAsync(img, Context.Channel);
-            }
-            catch (Exception e)
-            {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
-            }
+            url = await _img.ParseUrlAsync(url, Context.Message);
+            var img = await _img.SpeedUpAsync(url, speed);
+            await _img.SendToChannelAsync(img, Context.Channel, new MessageReference(Context.Message.Id));
         }
     }
 }

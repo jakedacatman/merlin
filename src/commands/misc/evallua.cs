@@ -24,19 +24,12 @@ namespace donniebot.commands
         [Command("evallua")]
         [Alias("el", "elua", "evaluatelua")]
         [Summary("Evaluates Lua code.")]
-        public async Task EvalLuaCmd([Summary("The code to evaluate."), Remainder] string code)
+        public async Task EvalLuaAsync([Summary("The code to evaluate."), Remainder] string code)
         {
-            try
-            {
-                var channel = Context.Channel as SocketTextChannel;
-                var msg = await _misc.EvaluateLuaAsync(channel, code.Replace("--noreply", ""));
-                if (!code.Contains("--noreply"))
-                    await ReplyAsync(embed: msg.Build());
-            }
-            catch (Exception e)
-            {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
-            }
+            var channel = Context.Channel as SocketTextChannel;
+            var msg = await _misc.EvaluateLuaAsync(channel, code.Replace("--noreply", ""));
+            if (!code.Contains("--noreply"))
+                await ReplyAsync(embed: msg.Build());
         }
     }
 }

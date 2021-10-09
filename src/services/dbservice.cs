@@ -10,7 +10,6 @@ namespace donniebot.services
     public class DbService
     {
         private readonly IServiceProvider _services;
-        private const string defaultPrefix = "don.";
 
         public DbService(IServiceProvider services)
         {
@@ -35,6 +34,16 @@ namespace donniebot.services
 
                 var apiKey = collection.FindOne(Query.Where("Service", x => x.AsString == service));
                 return apiKey?.Key;
+            }
+        }
+        public int RemoveApiKey(string service)
+        {
+            using (var scope = _services.CreateScope())
+            {
+                var _db = scope.ServiceProvider.GetRequiredService<LiteDatabase>();
+                var collection = _db.GetCollection<ApiKey>("apikeys");
+
+                return collection.Delete(Query.Where("Service", x => x.AsString == service));
             }
         }
 
@@ -78,6 +87,16 @@ namespace donniebot.services
                 var _db = scope.ServiceProvider.GetRequiredService<LiteDatabase>();
                 var collection = _db.GetCollection<ModerationAction>("actions");
                 return collection.Delete(Query.And(Query.EQ("GuildId", action.GuildId), Query.EQ("ModeratorId", action.ModeratorId), Query.EQ("UserId", action.UserId), Query.EQ("Type", (int)action.Type)));
+            }
+        }
+        
+        public List<ModerationAction> LoadActions()
+        {
+            using (var scope = _services.CreateScope())
+            {
+                var _db = scope.ServiceProvider.GetRequiredService<LiteDatabase>();
+                var collection = _db.GetCollection<ModerationAction>("actions");
+                return collection.FindAll().ToList();
             }
         }
 

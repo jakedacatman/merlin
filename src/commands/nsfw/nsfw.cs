@@ -32,7 +32,7 @@ namespace donniebot.commands
         [Alias("n")]
         [Summary("Grabs a random NSFW image from Reddit.")]
         [RequireNsfw]
-        public async Task NsfwCmd([Summary("The optional subreddit to pull from.")]string sub = null, [Summary("The optional sort mode in lowercase. Accepts the same modes as the reddit command.")]string mode = "top")
+        public async Task NsfwAsync([Summary("The optional subreddit to pull from.")]string sub = null, [Summary("The optional sort mode in lowercase. Accepts the same modes as the reddit command.")]string mode = "top")
         {
             try
             {
@@ -73,10 +73,6 @@ namespace donniebot.commands
             catch(System.Net.Http.HttpRequestException)
             {
                 await ReplyAsync("Invalid subreddit.");
-            }
-            catch (Exception e)
-            {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
             }
         }
     }

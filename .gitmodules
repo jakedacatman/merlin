@@ -1,7 +1,8 @@
-[submodule "deps/SVGSharpie"]
-	path = deps/SVGSharpie
-	url = https://github.com/UkooLabs/SVGSharpie
 [submodule "deps/YoutubeExplode"]
 	path = deps/YoutubeExplode
-	url = https://github.com/d4n3436/YoutubeExplode
-	branch = playlist_fix
+	url = https://github.com/Tyrrrz/YoutubeExplode
+	branch = master
+[submodule "deps/SVGSharpie"]
+	path = deps/SVGSharpie
+	url = https://github.com/jakedacatman/SVGSharpie
+	branch = master

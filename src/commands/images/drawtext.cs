@@ -4,6 +4,7 @@ using Discord.WebSocket;
 using Discord.Commands;
 using donniebot.services;
 using Interactivity;
+using Discord;
 
 namespace donniebot.commands
 {
@@ -26,25 +27,18 @@ namespace donniebot.commands
         [Command("drawtext")]
         [Alias("d")]
         [Summary("Draws text on an image.")]
-        public async Task DrawTextCmd([Summary("The text to draw.")]string text, [Summary("The optional bottom text to draw.")] string bottomText = null, [Summary("The image to modify.")] string url = null)
+        public async Task DrawTextAsync([Summary("The text to draw.")]string text, [Summary("The optional bottom text to draw.")] string bottomText = null, [Summary("The image to modify.")] string url = null)
         {
-            try
+            url = await _img.ParseUrlAsync(url, Context.Message);
+            if (await _net.IsVideoAsync(url))
             {
-                url = await _img.ParseUrlAsync(url, Context.Message);
-                if (await _net.IsVideoAsync(url))
-                {
-                    var path = await _img.VideoFilter(url, _img.DrawText, text, bottomText);
-                    await _img.SendToChannelAsync(path, Context.Channel);
-                }
-                else
-                {
-                    var img = await _img.DrawText(url, text, bottomText);
-                    await _img.SendToChannelAsync(img, Context.Channel);
-                }
+                var path = await _img.VideoFilterAsync(url, _img.DrawText, text, bottomText);
+                await _img.SendToChannelAsync(path, Context.Channel, new MessageReference(Context.Message.Id));
             }
-            catch (Exception e)
+            else
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
+                var img = await _img.DrawTextAsync(url, text, bottomText);
+                await _img.SendToChannelAsync(img, Context.Channel, new MessageReference(Context.Message.Id));
             }
         }
     }

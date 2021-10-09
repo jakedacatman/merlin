@@ -28,27 +28,20 @@ namespace donniebot.commands
         [Alias("nen", "nekon", "nekn")]
         [RequireNsfw]
         [Summary("Grabs an NSFW image from the nekos.life API.")]
-        public async Task NekoNSFWCmd([Summary("The endpoint to pull from. Do `don.nen list` for a list of endpoints.")] string ep = "nsfw_neko_gif")
+        public async Task NekoNSFWAsync([Summary("The endpoint to pull from. Run the command with argument `list` for a list of endpoints.")] string ep = "nsfw_neko_gif")
         {
-            try
+            if (ep == "list")
             {
-                if (ep == "list")
-                {
-                    await ReplyAsync(_img.GetNekoEndpoints(true));
-                    return;
-                }
+                await ReplyAsync(_img.GetNekoEndpoints(true));
+                return;
+            }
 
-                var info = await _img.GetNekoImageAsync(true, Context.Guild.Id, ep);
-                await ReplyAsync(embed: (new EmbedBuilder()
-                    .WithColor(_rand.RandomColor())
-                    .WithImageUrl(info)
-                    .WithTimestamp(DateTime.UtcNow)
-                ).Build());
-            }
-            catch (Exception e)
-            {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
-            }
+            var info = await _img.GetNekoImageAsync(true, Context.Guild.Id, ep);
+            await ReplyAsync(embed: (new EmbedBuilder()
+                .WithColor(_rand.RandomColor())
+                .WithImageUrl(info)
+                .WithTimestamp(DateTime.UtcNow)
+            ).Build(), messageReference: new MessageReference(Context.Message.Id), allowedMentions: AllowedMentions.None);
         }
     }
 }

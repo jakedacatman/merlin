@@ -26,6 +26,7 @@ namespace donniebot.classes
         public bool HasDisconnected { get; private set; } = false;
         public bool IsPlaying { get; set; } = false;
         public bool IsPaused { get; private set; } = false;
+        public bool IsLooping { get; private set; } = false;
 
         private int _skips = 0;
         private List<ulong> _skippedUsers = new List<ulong>();
@@ -46,6 +47,8 @@ namespace donniebot.classes
             Queue = new List<Song>();
         }
 
+        public void ToggleLoop() => IsLooping = !IsLooping;
+
         public void Enqueue(Song s, int? position)
         { 
             if (!position.HasValue)
@@ -62,12 +65,20 @@ namespace donniebot.classes
                 Queue.InsertRange(position.Value, s);
         }
 
-        public async Task LeaveAsync()
+        public async Task LeaveAsync(bool sendMessage = true, ISocketMessageChannel tc = null)
         {
             _skips = 0;
             Queue.RemoveAll(x => x.GuildId >= 0);
             SongSkipped?.Invoke(this, this.Current);
-            await TextChannel.SendMessageAsync("👋");
+
+            if (sendMessage)
+            {
+                if (tc != null)
+                    await tc.SendMessageAsync("👋");
+                else 
+                    await TextChannel.SendMessageAsync("👋");
+            }
+
             HasDisconnected = true;
         }
 
@@ -92,6 +103,7 @@ namespace donniebot.classes
         public async Task UpdateAsync(SocketVoiceChannel channel)
         {
             VoiceChannel = channel;
+            await channel.DisconnectAsync();
             Connection = await channel.ConnectAsync(true, false);
             Stream = Connection.CreatePCMStream(AudioApplication.Mixed);
             HasDisconnected = false;
@@ -125,7 +137,7 @@ namespace donniebot.classes
             await TextChannel.SendMessageAsync("Pausing playback.");
         }
 
-        private async Task<int> DoSkipAsync()
+        internal async Task<int> DoSkipAsync()
         {
             _skips = 0;
             SongSkipped?.Invoke(this, this.Current);
@@ -173,6 +185,8 @@ namespace donniebot.classes
             return _skips;
         }
 
+
+        #pragma warning disable VSTHRD100 //Avoid "async void" methods, because any exceptions not handled by the method will crash the process. (what else can i do? if i make it return Task the inheritance does not work)
         public async void Dispose()
         {
             HasDisconnected = true;
@@ -182,5 +196,6 @@ namespace donniebot.classes
             Connection.Dispose();
             await Stream.DisposeAsync();
         }
+        #pragma warning restore VSTHRD100
     }
 }

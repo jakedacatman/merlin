@@ -4,6 +4,7 @@ using Discord.WebSocket;
 using Discord.Commands;
 using donniebot.services;
 using Interactivity;
+using Discord;
 
 namespace donniebot.commands
 {
@@ -24,18 +25,11 @@ namespace donniebot.commands
         [Command("brightness")]
         [Alias("br", "bright")]
         [Summary("Changes an image's brightness.")]
-        public async Task BrightnessCmd([Summary("The value to change the brightness by.")] float brightness = 1,[Summary("The image to change.")] string url = null)
+        public async Task BrightnessAsync([Summary("The value to change the brightness by.")] float brightness = 1,[Summary("The image to change.")] string url = null)
         {
-            try
-            {
-                url = await _img.ParseUrlAsync(url, Context.Message);
-                var img = await _img.Brightness(url.Trim('<').Trim('>'), brightness);
-                await _img.SendToChannelAsync(img, Context.Channel);
-            }
-            catch (Exception e)
-            {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
-            }
+            url = await _img.ParseUrlAsync(url, Context.Message);
+            var img = await _img.BrightnessAsync(url, brightness);
+            await _img.SendToChannelAsync(img, Context.Channel, new MessageReference(Context.Message.Id));
         }
     }
 }

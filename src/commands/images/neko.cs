@@ -27,27 +27,20 @@ namespace donniebot.commands
         [Command("neko")]
         [Alias("ne", "nek")]
         [Summary("Grabs an image from the nekos.life API.")]
-        public async Task NekoCmd([Summary("The endpoint to pull from. Do `don.ne list` for a list of endpoints.")] string ep = "neko")
+        public async Task NekoAsync([Summary("The endpoint to pull from. Run the command with argument `list` for a list of endpoints.")] string ep = "neko")
         {
-            try
+            if (ep == "list")
             {
-                if (ep == "list")
-                {
-                    await ReplyAsync(_img.GetNekoEndpoints(false));
-                    return;
-                }
+                await ReplyAsync(_img.GetNekoEndpoints(false));
+                return;
+            }
 
-                var info = await _img.GetNekoImageAsync(false, Context.Guild.Id, ep);
-                await ReplyAsync(embed: (new EmbedBuilder()
-                    .WithColor(_rand.RandomColor())
-                    .WithImageUrl(info)
-                    .WithTimestamp(DateTime.UtcNow)
-                ).Build());
-            }
-            catch (Exception e)
-            {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
-            }
+            var info = await _img.GetNekoImageAsync(false, Context.Guild.Id, ep);
+            await ReplyAsync(embed: (new EmbedBuilder()
+                .WithColor(_rand.RandomColor())
+                .WithImageUrl(info)
+                .WithTimestamp(DateTime.UtcNow)
+            ).Build(), messageReference: new MessageReference(Context.Message.Id), allowedMentions: AllowedMentions.None);
         }
     }
 }

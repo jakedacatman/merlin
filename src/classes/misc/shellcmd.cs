@@ -7,7 +7,7 @@ namespace donniebot.classes
 {
     public static class Shell
     {
-        public async static Task<string> Run(string command, bool stderr = false)
+        public async static Task<string> RunAsync(string command, bool stderr = false)
         {
             var proc = new Process
             {
@@ -32,7 +32,7 @@ namespace donniebot.classes
             }
         }
 
-        public async static Task<string> Ffmpeg(string args, bool stderr = false)
+        public async static Task<string> FfmpegAsync(string args, bool stderr = false)
         {
             var proc = new Process
             {

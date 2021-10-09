@@ -33,7 +33,7 @@ namespace donniebot.commands
         [Command("reddit")]
         [Alias("red", "rd")]
         [Summary("Grabs a random image from Reddit.")]
-        public async Task RedditCmd([Summary("The subreddit to pull from.")]string sub, [Summary("The optional sort mode in lowercase. Accepts \"top\", \"best\", \"new\", \"rising\", \"hot\", and \"controversial\".")]string mode = "top")
+        public async Task RedditAsync([Summary("The subreddit to pull from.")]string sub, [Summary("The optional sort mode in lowercase. Accepts \"top\", \"best\", \"new\", \"rising\", \"hot\", and \"controversial\".")]string mode = "top")
         {
             try
             {
@@ -54,7 +54,7 @@ namespace donniebot.commands
                         .WithFooter($"Posted by {img.Author} • From {img.Subreddit}");
 
                         
-                    await ReplyAsync(embed: embed.Build());
+                    await ReplyAsync(embed: embed.Build(), messageReference: new MessageReference(Context.Message.Id), allowedMentions: AllowedMentions.None);
                 }
                 else
                     await ReplyAsync("Invalid subreddit.");
@@ -62,10 +62,6 @@ namespace donniebot.commands
             catch (System.Net.Http.HttpRequestException)
             {
                 await ReplyAsync("Invalid subreddit.");
-            }
-            catch (Exception e)
-            {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
             }
         }
     }

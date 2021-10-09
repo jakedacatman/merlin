@@ -14,30 +14,13 @@ namespace donniebot.commands
     public class PlayTopCommand : ModuleBase<ShardedCommandContext>
     {
         private readonly AudioService _audio;
-        private readonly MiscService _misc;
-        private readonly RandomService _rand;
 
-        public PlayTopCommand(AudioService audio, MiscService misc, RandomService rand)
-        {
-            _audio = audio;
-            _misc = misc;
-            _rand = rand;
-        }
+        public PlayTopCommand(AudioService audio) => _audio = audio;
 
         [Command("playtop")]
         [Alias("pt", "tp")]
-        [RequireDjRole]
+        [RequireDjRole, RequireSameVoiceChannel]
         [Summary("Adds a song or playlist to the beginning of the queue.")]
-        public async Task PlayCmd([Summary("The URL or YouTube search query."), Remainder] string queryOrUrl = null)
-        {
-            try
-            {
-                await _audio.AddAsync(Context.User as SocketGuildUser, Context.Channel as SocketTextChannel, queryOrUrl, position: 0);
-            }
-            catch (Exception e)
-            {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
-            }
-        }
+        public async Task PlayTopAsync([Summary("The URL or YouTube search query."), Remainder] string queryOrUrl = null) => await _audio.AddAsync(Context.User as SocketGuildUser, Context.Channel as SocketTextChannel, queryOrUrl, position: 0);
     }
 }

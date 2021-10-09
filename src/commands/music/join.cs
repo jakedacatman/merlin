@@ -4,6 +4,7 @@ using Discord.WebSocket;
 using donniebot.services;
 using System.Threading.Tasks;
 using Interactivity;
+using donniebot.classes;
 
 namespace donniebot.commands
 {
@@ -11,34 +12,13 @@ namespace donniebot.commands
     public class JoinCommand : ModuleBase<ShardedCommandContext>
     {
         private readonly AudioService _audio;
-        private readonly MiscService _misc;
 
-        public JoinCommand(AudioService audio, MiscService misc)
-        {
-            _audio = audio;
-            _misc = misc;
-        }
+        public JoinCommand(AudioService audio) => _audio = audio;
 
         [Command("join")]
         [Alias("jo")]
         [Summary("Joins the current voice channel.")]
-        public async Task JoinCmd()
-        {
-            try
-            {
-                var vc = (Context.User as SocketGuildUser).VoiceChannel;
-                if (vc == null)
-                {
-                    await ReplyAsync("You must be in a voice channel.");
-                    return;
-                }
-
-                await _audio.ConnectAsync(Context.Channel as SocketTextChannel, vc);
-            }
-            catch (Exception e)
-            {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
-            }
-        }
+        [RequireVoiceChannel]
+        public async Task JoinAsync() => await _audio.ConnectAsync(Context.Channel as SocketTextChannel, (Context.User as SocketGuildUser).VoiceChannel);
     }
 }

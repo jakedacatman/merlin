@@ -23,16 +23,6 @@ namespace donniebot.commands
         [Command("choose")]
         [Alias("ch")]
         [Summary("Chooses between several options.")]
-        public async Task ChooseCmd(params string[] options)
-        {
-            try
-            {
-                await ReplyAsync(options[_rand.RandomNumber(0, options.Length - 1)]);
-            }
-            catch (Exception e)
-            {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
-            }
-        }
+        public async Task ChooseAsync(params string[] options) => await ReplyAsync(options[_rand.RandomNumber(0, options.Length - 1)]);
     }
 }

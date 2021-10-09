@@ -23,30 +23,23 @@ namespace donniebot.commands
         [Command("ping")]
         [Alias("pi")]
         [Summary("Gets the bot's latency.")]
-        public async Task PingCmd()
+        public async Task PingAsync()
         {
-            try
-            {
-                var s = Stopwatch.StartNew();
-                var msg = await ReplyAsync("getting ping...");
-                s.Stop();
+            var s = Stopwatch.StartNew();
+            var msg = await ReplyAsync("getting ping...");
+            s.Stop();
 
-                var embed = new EmbedBuilder()
-                    .WithColor(_rand.RandomColor())
-                    .WithTitle("Ping")
-                    .WithDescription($"{s.ElapsedTicks/1000000d} ms (calculated)\n{Context.Client.GetShardFor(Context.Guild).Latency} ms (estimated)")
-                    .WithCurrentTimestamp();
+            var embed = new EmbedBuilder()
+                .WithColor(_rand.RandomColor())
+                .WithTitle("Ping")
+                .WithDescription($"{s.ElapsedTicks/1000000d} ms (calculated)\n{Context.Client.GetShardFor(Context.Guild).Latency} ms (estimated)")
+                .WithCurrentTimestamp();
 
-                await msg.ModifyAsync(x => 
-                {
-                    x.Embed = embed.Build();
-                    x.Content = " ";
-                });
-            }
-            catch (Exception e)
+            await msg.ModifyAsync(x => 
             {
-                await ReplyAsync(embed: (await _misc.GenerateErrorMessage(e)).Build());
-            }
+                x.Embed = embed.Build();
+                x.Content = " ";
+            });
         }
     }
 }
