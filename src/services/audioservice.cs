@@ -57,7 +57,7 @@ namespace donniebot.services
                 _connections.Add(np);
             }
 
-            await textChannel.SendMessageAsync($"Joined `{channel.Name}` and will send messages in `{textChannel.Name}`.");
+            await textChannel.SendMessageAsync($"Joined `{channel.Name}` and will send messages in `#{textChannel.Name}`.");
 
             return np;
         }

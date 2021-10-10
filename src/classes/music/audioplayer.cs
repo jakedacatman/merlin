@@ -478,12 +478,14 @@ namespace donniebot.classes
                     .ToString(@"hh\:mm\:ss");
             }
 
+            Discord.Rest.RestUserMessage msg;
+
             if (Uri.IsWellFormedUriString(queryOrUrl, UriKind.Absolute))
             {
-                var msg = await channel.SendMessageAsync("Adding your playlist...");
 
                 if (queryOrUrl.Contains("&list=") || queryOrUrl.Contains("?list="))
                 {
+                    msg = await channel.SendMessageAsync("Adding your playlist...");
                     var playlist = await GetPlaylistAsync(queryOrUrl, id, user.Id);
 
                     await EnqueueManyAsync(channel, vc, playlist.Songs, shuffle, position);
@@ -507,6 +509,7 @@ namespace donniebot.classes
                 }
                 else if (queryOrUrl.Contains("spotify.com"))
                 {
+                    msg = await channel.SendMessageAsync("Adding your playlist...");
                     var spotifyPl = await _net.GetSpotifySongsAsync(queryOrUrl);
 
                     var playlist = new List<Song>();
@@ -539,10 +542,12 @@ namespace donniebot.classes
                             .WithCurrentTimestamp()
                             .Build());
                     }
-                }
 
-                await msg.DeleteAsync();
+                    return;
+                }
             }
+
+            msg = await channel.SendMessageAsync("Adding your song...");
 
             var song = await CreateSongAsync(queryOrUrl, id, uId);
 
@@ -551,6 +556,8 @@ namespace donniebot.classes
                 await channel.SendMessageAsync("Unable to locate a song with that ID or search query; please try again.");
                 return;
             }
+            
+            await msg.DeleteAsync();
 
             await channel.SendMessageAsync(embed: new EmbedBuilder()
                 .WithTitle("Added song")
