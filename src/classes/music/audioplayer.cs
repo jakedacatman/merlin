@@ -452,7 +452,7 @@ namespace donniebot.classes
                 return;
             }
             
-            if (vc != VoiceChannel)
+            if (VoiceChannel is not null && vc != VoiceChannel)
             {
                 await channel.SendMessageAsync("You must be in the same voice channel as me.");
                 return;
