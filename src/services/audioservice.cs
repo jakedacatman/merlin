@@ -35,15 +35,7 @@ namespace donniebot.services
             _net = net;
             _db = db;
             _rand = rand;
-
-            SongAdded += OnSongAddedAsync;
-            SongEnded += OnSongEndedAsync;
-
-            _client.UserVoiceStateUpdated += OnVoiceUpdateAsync;
         }
-
-        public event Func<ulong, AudioPlayer, Song, Task> SongAdded;
-        public event Func<Song, AudioPlayer, Task> SongEnded;
 
         public async Task<AudioPlayer> ConnectAsync(SocketTextChannel textChannel, SocketVoiceChannel channel)
         {
@@ -55,7 +47,7 @@ namespace donniebot.services
 
             var connection = await channel.ConnectAsync(true, false);
 
-            var np = new AudioPlayer(id, channel, connection, textChannel);
+            var np = new AudioPlayer(id, channel, connection, textChannel, _client, _net);
 
             if (!GetConnection(id, out var curr))
                 _connections.Add(np);
@@ -70,20 +62,10 @@ namespace donniebot.services
             return np;
         }
 
-        public async Task DisconnectAsync(SocketVoiceChannel channel, ISocketMessageChannel tc = null)
+        public async Task DisconnectAsync(ISocketMessageChannel tc = null)
         {
-            var id = channel.Guild.Id;
-
-            await channel.DisconnectAsync();
-
-            if (GetConnection(id, out var connection))
-            {
-                connection.IsPlaying = false;
-                await connection.LeaveAsync(true, tc);
-
-                _connections.Remove(connection);
-                connection.Dispose();
-            }
+            if (GetConnection((tc as SocketGuildChannel).Guild.Id, out var connection))
+                await connection.DisconnectAsync(tc);
         }
 
         public async Task AddAsync(SocketGuildUser user, SocketTextChannel channel, string queryOrUrl, bool shuffle = false, int? position = null)
@@ -92,7 +74,7 @@ namespace donniebot.services
             var vc = user.VoiceChannel;
             var uId = user.Id;
 
-            if (vc is null)
+            if (vc == null)
             {
                 await channel.SendMessageAsync("You must be in a voice channel.");
                 return;
@@ -104,116 +86,10 @@ namespace donniebot.services
                 return;
             }
 
-            if (string.IsNullOrWhiteSpace(queryOrUrl))
-            {
-                await PlayAsync(id);
-                return;
-            }
+            if (con is null)
+                con = await ConnectAsync(channel, vc);
 
-            var estTime = con is null ? "Now" : TimeSpan.FromSeconds(con.Queue
-                .Sum(x => x.Length.TotalSeconds) + (con.Current?.Length.TotalSeconds - con.Position.TotalSeconds ?? 0))
-                .ToString(@"hh\:mm\:ss");
-
-            if (estTime == "00:00:00" || position == 0) estTime = "Now";
-
-            if (con != null && position.HasValue && con.Queue.Any())
-            {
-                var len = con.Queue.Take(position.Value).Sum(x => x.Length.TotalSeconds);
-
-                estTime = TimeSpan.FromSeconds(len +
-                    (con.Current?.Length.TotalSeconds - con.Position.TotalSeconds ?? 0))
-                    .ToString(@"hh\:mm\:ss");
-            }
-
-            if (Uri.IsWellFormedUriString(queryOrUrl, UriKind.Absolute))
-            {
-                var msg = await channel.SendMessageAsync("Adding your playlist...");
-
-                if (queryOrUrl.Contains("&list=") || queryOrUrl.Contains("?list="))
-                {
-                    var playlist = await GetPlaylistAsync(queryOrUrl, id, user.Id);
-
-                    await EnqueueManyAsync(channel, vc, playlist.Songs, shuffle, position);
-
-                    await channel.SendMessageAsync(embed: new EmbedBuilder()
-                        .WithTitle("Added playlist")
-                        .WithFields(new List<EmbedFieldBuilder>
-                        {
-                            new EmbedFieldBuilder().WithName("Title").WithValue(playlist.Title).WithIsInline(false),
-                            new EmbedFieldBuilder().WithName("Author").WithValue(playlist.Author).WithIsInline(true),
-                            new EmbedFieldBuilder().WithName("Count").WithValue(playlist.Songs.Count).WithIsInline(true),
-                            new EmbedFieldBuilder().WithName("URL").WithValue(playlist.Url).WithIsInline(false),
-                            new EmbedFieldBuilder().WithName("Estimated time").WithValue(estTime).WithIsInline(true)
-                        })
-                        .WithColor(_rand.RandomColor())
-                        .WithThumbnailUrl(playlist.ThumbnailUrl)
-                        .WithCurrentTimestamp()
-                        .Build());
-
-                    return;
-                }
-                else if (queryOrUrl.Contains("spotify.com"))
-                {
-                    var spotifyPl = await _net.GetSpotifySongsAsync(queryOrUrl);
-
-                    var playlist = new List<Song>();
-
-                    foreach (var s in spotifyPl)
-                    {
-                        playlist.Add(await CreateSongAsync(
-                            $"{string.Join(", ", s.Track.Artists?.Select(x => x.Name))} {s.Track.Name} audio", //Travis Scott, Drake SICKO MODE audio
-                            id, 
-                            uId
-                        ));
-                    }
-
-                    try
-                    {
-                        await EnqueueManyAsync(channel, vc, playlist, shuffle, position);
-                    }
-                    finally
-                    {
-                        await channel.SendMessageAsync(embed: new EmbedBuilder()
-                            .WithTitle("Added Spotify playlist")
-                            .WithFields(new List<EmbedFieldBuilder>
-                            {
-                                new EmbedFieldBuilder().WithName("Count").WithValue(spotifyPl.Count).WithIsInline(true),
-                                new EmbedFieldBuilder().WithName("URL").WithValue(queryOrUrl).WithIsInline(false),
-                                new EmbedFieldBuilder().WithName("Estimated time").WithValue(estTime).WithIsInline(true)
-                            })
-                            .WithColor(_rand.RandomColor())
-                            .WithFooter("The song may sound different as it is coming from YouTube, not Spotify.")
-                            .WithCurrentTimestamp()
-                            .Build());
-                    }
-                }
-
-                await msg.DeleteAsync();
-            }
-
-            var song = await CreateSongAsync(queryOrUrl, id, uId);
-
-            if (song is null)
-            {
-                await channel.SendMessageAsync("Unable to locate a song with that ID or search query; please try again.");
-                return;
-            }
-
-            await channel.SendMessageAsync(embed: new EmbedBuilder()
-                .WithTitle("Added song")
-                .WithFields(new List<EmbedFieldBuilder>
-                {
-                    new EmbedFieldBuilder().WithName("Title").WithValue(song.Title).WithIsInline(false),
-                    new EmbedFieldBuilder().WithName("Author").WithValue(song.Author).WithIsInline(true),
-                    new EmbedFieldBuilder().WithName("URL").WithValue(song.Url).WithIsInline(true),
-                    new EmbedFieldBuilder().WithName("Estimated time").WithValue(estTime).WithIsInline(true)
-                })
-                .WithColor(_rand.RandomColor())
-                .WithThumbnailUrl(song.ThumbnailUrl)
-                .WithCurrentTimestamp()
-            .Build());
-
-            await EnqueueAsync(channel, vc, song, shuffle, position);
+            await con.AddAsync(user, channel, queryOrUrl, shuffle, position);
         }
 
         public async Task ResumeAsync(ulong guildId)
@@ -231,46 +107,19 @@ namespace donniebot.services
         private readonly SemaphoreSlim enq = new SemaphoreSlim(1, 1);
         public async Task EnqueueAsync(SocketTextChannel textChannel, SocketVoiceChannel vc, Song song, bool shuffle = false, int? position = null)
         {
-            await enq.WaitAsync();
-            try
-            {
-                var id = vc.Guild.Id;
-                if (!GetConnection(id, out var player))
-                    player = await ConnectAsync(textChannel, vc);
+            var id = vc.Guild.Id;
+            if (!GetConnection(id, out var player))
+                player = await ConnectAsync(textChannel, vc);
 
-                if (song.Url.Contains("youtube.com"))
-                    song.Info = await GetAudioInfoAsync(song.Url);
-                
-                song.Info = await GetAudioInfoAsync(song.Url);
-                player.Enqueue(song, position);
-                if (shuffle) Shuffle(player.GuildId);
-                SongAdded?.Invoke(id, player, song);
-            }
-            finally
-            {
-                enq.Release();
-            }
+            await player.EnqueueAsync(textChannel, vc, song, shuffle, position);
         }
         public async Task EnqueueManyAsync(SocketTextChannel textChannel, SocketVoiceChannel vc, IEnumerable<Song> songs, bool shuffle = false, int? position = null)
         {
-            await enq.WaitAsync();
-            try
-            {
-                var id = vc.Guild.Id;
-                if (!GetConnection(id, out var player))
-                    player = await ConnectAsync(textChannel, vc);
+            var id = vc.Guild.Id;
+            if (!GetConnection(id, out var player))
+                player = await ConnectAsync(textChannel, vc);
 
-                player.EnqueueMany(songs, position);
-                if (shuffle) Shuffle(player.GuildId);
-                SongAdded?.Invoke(id, player, songs.First());
-            }
-            finally
-            {
-                enq.Release();
-            }
-            
-            foreach (var song in songs)
-                song.Info = await GetAudioInfoAsync(song.Url);
+            await player.EnqueueManyAsync(textChannel, vc, songs, shuffle, position);
         }
 
         public bool ToggleLoop(ulong id)
@@ -323,81 +172,6 @@ namespace donniebot.services
             c.Shuffle();
         }
 
-        public async Task OnSongAddedAsync(ulong id, AudioPlayer player, Song s)
-        {
-            if (!player.IsPlaying)
-                await PlayAsync(id);
-        }
-
-        public async Task OnSongEndedAsync(Song s, AudioPlayer player)
-        {
-            if (player.IsLooping)
-            {
-                s.Info = null;
-                await EnqueueAsync(player.TextChannel, player.VoiceChannel, s, position: 0);
-            }
-
-            if (player.Queue.Count > 0)
-            {
-                if (player.GetListeningUsers().Any())
-                {
-
-                    await PlayAsync(player.GuildId);
-                }
-                else
-                    player.Dispose();
-            }
-            else
-            {
-                var id = player.GuildId;
-                
-                if (!queueEndTokens.ContainsKey(id)) 
-                    queueEndTokens.TryAdd(id, new CancellationTokenSource());
-
-                Task OnSongAdded(ulong gId, AudioPlayer p, Song _)
-                {
-                    if (gId == id)
-                        queueEndTokens[id].Cancel();
-
-                    return Task.CompletedTask;
-                }
-
-                SongAdded += OnSongAdded;
-                await Task.Delay(300000, queueEndTokens[id].Token); //5 minutes
-                if (queueEndTokens[id].IsCancellationRequested)
-                    await DisconnectAsync(player.VoiceChannel);
-
-                queueEndTokens.Remove(id);
-                SongAdded -= OnSongAdded;
-            }
-        }
-
-        public async Task OnVoiceUpdateAsync(SocketUser user, SocketVoiceState oldS, SocketVoiceState newS)
-        {
-            try
-            {
-                if (user != _client.CurrentUser) return;
-
-                var oldVc = oldS.VoiceChannel;
-                var newVc = newS.VoiceChannel;
-
-                if (oldVc == null) return;
-
-                if (GetConnection(oldVc.Guild.Id, out var connection))
-                    if (newVc == null)
-                        await DisconnectAsync(connection.VoiceChannel);
-                    else
-                    {
-                        await connection.PauseAsync();
-                        await connection.UpdateAsync(newVc);
-                    }
-            }
-            catch (Discord.Net.WebSocketClosedException e)
-            {
-                Console.WriteLine($"{e}\n{e.StackTrace}");
-            }
-        }
-
         public async Task PlayAsync(ulong id)
         {
             if (!GetConnection(id, out var connection))
@@ -424,25 +198,7 @@ namespace donniebot.services
         public async Task<Song> CreateSongAsync(string queryOrUrl, ulong guildId, ulong userId)
         {
             SongInfo info;
-
-            if (!Uri.IsWellFormedUriString(queryOrUrl, UriKind.Absolute))
-                video = await GetVideoAsync(queryOrUrl);
-            else if (queryOrUrl.Contains("youtube.com") || queryOrUrl.Contains("youtu.be"))
-                video = await yt.Videos.GetAsync(new VideoId(queryOrUrl));
-            else
-            {
-                var reg = new Regex(@"Duration: (\d+\:\d+\:\d+\.\d+),");
-                return new Song(
-                    new SongInfo(
-                        "Direct audio stream", 
-                        queryOrUrl, 
-                        "https://i.jakedacatman.me/Mpmor.png", 
-                        $"<@{userId}>", TimeSpan.FromSeconds(0)),
-                        userId,
-                        guildId);
-            }
-
-            var info = new SongInfo(video.Title, video.Url, video.Thumbnails.MediumResUrl, video.Author, video.Duration);
+            
             if (!Uri.IsWellFormedUriString(queryOrUrl, UriKind.Absolute) || !new Uri(queryOrUrl).Host.Contains("youtube") || !new Uri(queryOrUrl).Host.Contains("youtu.be"))
             {
                 var video = await GetVideoAsync(queryOrUrl);
@@ -494,13 +250,6 @@ namespace donniebot.services
 
             await foreach (var video in videos)
                 songs.Add(new Song(
-                    new SongInfo(
-                        video.Title, 
-                        video.Url, 
-                        video.Thumbnails.MediumResUrl, 
-                        video.Author, 
-                        video.Duration),
-                    userId, 
                     new SongInfo(video.Title,
                         video.Url,
                         video.Thumbnails
@@ -577,7 +326,7 @@ namespace donniebot.services
 
                 if (connection.Current != null)
                 {
-                    items.Add($"{(connection.IsPaused ? "▶️" : "⏸️")} __**1**: {connection.Current.Title} (queued by {GetMention(gId, connection.Current.QueuerId)})__");
+                    items.Add($"{(connection.IsPlaying && !connection.IsPaused ? "▶️" : "⏸️")} __**1**: {connection.Current.Title} (queued by {GetMention(gId, connection.Current.QueuerId)})__");
 
                     for (int i = 0; i < queue.Count; i++)
                         items.Add($"**{i + 2}**: {queue[i].Title} (queued by {GetMention(gId, queue[i].QueuerId)})");

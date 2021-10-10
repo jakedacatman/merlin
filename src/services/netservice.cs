@@ -228,7 +228,7 @@ namespace donniebot.services
             sc.Headers.ContentType = new MediaTypeHeaderValue("application/x-www-form-urlencoded");
 
             if (!string.IsNullOrEmpty(pasteKey))
-                sc.Headers.Add("key", pasteKey); //you can always do don.e _db.AddApiKey("pasteKey", <key>) (and additionally change the host used)
+                sc.Headers.Add("key", pasteKey); //you can always do mer.e _db.AddApiKey("pasteKey", <key>) (and additionally change the host used)
 
             var request = await _hc.PostAsync(pasteHost, sc);
             return await request.Content.ReadAsStringAsync();
@@ -256,7 +256,7 @@ namespace donniebot.services
                 ct.Add(new ByteArrayContent(await File.ReadAllBytesAsync(path)), "file", $"temp.{ext}");
 
                 if (!string.IsNullOrEmpty(uploadKey))
-                    ct.Headers.Add("key", uploadKey); //you can always do don.e _db.AddApiKey("upload", <key>) (and additionally change the host used)
+                    ct.Headers.Add("key", uploadKey); //you can always do mer.e _db.AddApiKey("upload", <key>) (and additionally change the host used)
 
                 var response = await _hc.PostAsync(imageHost, ct);
 

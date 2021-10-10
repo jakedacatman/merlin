@@ -1,12 +1,20 @@
 using System;
 using System.IO;
 using System.Linq;
-using Discord.Audio;
+using YoutubeExplode;
 using System.Threading;
 using Nerdbank.Streams;
+using Discord;
+using Discord.Audio;
 using Discord.WebSocket;
+using donniebot.services;
+using System.Diagnostics;
+using YoutubeExplode.Videos;
 using System.Threading.Tasks;
+using YoutubeExplode.Playlists;
 using System.Collections.Generic;
+using YoutubeExplode.Videos.Streams;
+using System.Net.Http;
 
 namespace donniebot.classes
 {
@@ -33,15 +41,22 @@ namespace donniebot.classes
 
         private int _skips = 0;
         private List<ulong> _skippedUsers = new List<ulong>();
+        private YoutubeClient yt = new YoutubeClient();
+        private HttpClient _hc = new HttpClient();
+        private CancellationTokenSource songEndedToken = new CancellationTokenSource();
+
+        private readonly NetService _net;
+        private readonly DiscordShardedClient _client;
 
         internal uint BytesDownloaded { get; set; } = 0;
         internal uint BytesPlayed { get; set; } = 0;
 
+        public event Func<Song, Task> SongAdded;
         public event Func<Song, Task> SongEnded;
         public event Func<Song, Task> SongSkipped;
         public event Func<bool, Task> SongToggledPlaying;
 
-        public AudioPlayer(ulong id, SocketVoiceChannel channel, IAudioClient client, SocketTextChannel textchannel)
+        public AudioPlayer(ulong id, SocketVoiceChannel channel, IAudioClient client, SocketTextChannel textchannel, DiscordShardedClient shardedClient, NetService net)
         {
             GuildId = id;
             VoiceChannel = channel;
@@ -49,6 +64,93 @@ namespace donniebot.classes
             TextChannel = textchannel;
             Stream = client.CreatePCMStream(AudioApplication.Mixed);
             Queue = new List<Song>();
+            _net = net;
+
+            _client = shardedClient;
+
+            _client.UserVoiceStateUpdated += OnVoiceUpdateAsync;
+
+            SongAdded += OnSongAddedAsync;
+            SongEnded += OnSongEndedAsync;
+        }
+
+        public async Task OnSongAddedAsync(Song s)
+        {
+            if (!IsPlaying)
+                await PlayAsync();
+        }
+
+        public async Task OnSongEndedAsync(Song s)
+        {
+            if (IsLooping)
+            {
+                s.Info = null;
+                await EnqueueAsync(TextChannel, VoiceChannel, s, position: 0);
+            }
+
+            if (Queue.Any())
+            {
+                if (GetListeningUsers().Any())
+                    await PlayAsync();
+                else
+                    Dispose();
+            }
+            else
+            {
+                Task OnSongAdded(Song _)
+                {
+                    songEndedToken.Cancel();
+                    return Task.CompletedTask;
+                }
+
+                SongAdded += OnSongAdded;
+                await Task.Delay(300000, songEndedToken.Token); //5 minutes
+                if (songEndedToken.IsCancellationRequested)
+                    await DisconnectAsync();
+
+                songEndedToken = new CancellationTokenSource();
+                SongAdded -= OnSongAdded;
+            }
+        }
+
+        public async Task OnVoiceUpdateAsync(SocketUser user, SocketVoiceState oldS, SocketVoiceState newS)
+        {
+            try
+            {
+                if (user != VoiceChannel.Guild.CurrentUser) return;
+
+                var oldVc = oldS.VoiceChannel;
+                var newVc = newS.VoiceChannel;
+
+                if (oldVc == null) return;
+
+               if (newVc == null)
+                    await DisconnectAsync();
+                else
+                {
+                    Enqueue(Current, 0);
+                    await DoSkipAsync();
+                    await UpdateAsync(newVc);
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"{e}\n{e.StackTrace}");
+            }
+        }
+
+
+        public async Task DisconnectAsync(ISocketMessageChannel tc = null)
+        {
+            if (tc is null) tc = TextChannel;
+
+            var id = (tc as SocketGuildChannel).Guild.Id;
+
+            await VoiceChannel.DisconnectAsync();
+
+            IsPlaying = false;
+            await LeaveAsync(true, tc);
+            Dispose();
         }
 
         public void ToggleLoop() => IsLooping = !IsLooping;
@@ -113,6 +215,42 @@ namespace donniebot.classes
             HasDisconnected = false;
         }
 
+        private readonly SemaphoreSlim enq = new SemaphoreSlim(1, 1);
+        public async Task EnqueueAsync(SocketTextChannel textChannel, SocketVoiceChannel vc, Song song, bool shuffle = false, int? position = null)
+        {
+            await enq.WaitAsync();
+            try
+            {
+                var id = vc.Guild.Id;
+                
+                song.Info = await GetAudioInfoAsync(song.Url);
+                Enqueue(song, position);
+                if (shuffle) Shuffle();
+                SongAdded?.Invoke(song);
+            }
+            finally
+            {
+                enq.Release();
+            }
+        }
+        public async Task EnqueueManyAsync(SocketTextChannel textChannel, SocketVoiceChannel vc, IEnumerable<Song> songs, bool shuffle = false, int? position = null)
+        {
+            await enq.WaitAsync();
+            try
+            {
+                EnqueueMany(songs, position);
+                if (shuffle) Shuffle();
+                SongAdded?.Invoke(songs.First());
+            }
+            finally
+            {
+                enq.Release();
+            }
+            
+            foreach (var song in songs)
+                song.Info = await GetAudioInfoAsync(song.Url);
+        }
+
         public async Task ResumeAsync()
         {
             if (!IsPlaying) return;
@@ -126,6 +264,115 @@ namespace donniebot.classes
             SongToggledPlaying?.Invoke(IsPaused);
             await TextChannel.SendMessageAsync("Resuming playback.");
         }
+
+        private async Task<AudioOnlyStreamInfo> GetAudioInfoAsync(string ytUrl)
+        {
+            var id = VideoId.TryParse(ytUrl);
+            if (id is null) throw new VideoException("Failed to parse the URL.");
+
+            var info = await yt.Videos.Streams.GetManifestAsync(VideoId.Parse(ytUrl));
+            return info
+                .GetAudioOnlyStreams()
+                .OrderByDescending(x => x.Bitrate)
+                .First();
+        }
+
+        private async Task<Stream> GetAudioAsync(AudioOnlyStreamInfo info) => await yt.Videos.Streams.GetAsync(info);
+        private async Task<Stream> GetAudioAsync(string url) => await _hc.GetStreamAsync(url);
+
+        public async Task<Song> CreateSongAsync(string queryOrUrl, ulong guildId, ulong userId)
+        {
+            SongInfo info;
+            
+            if (!Uri.IsWellFormedUriString(queryOrUrl, UriKind.Absolute) || !new Uri(queryOrUrl).Host.Contains("youtube") || !new Uri(queryOrUrl).Host.Contains("youtu.be"))
+            {
+                var video = await GetVideoAsync(queryOrUrl);
+                if (video is null) return null;
+
+                info = new SongInfo(
+                    video.Title, 
+                    video.Url, 
+                    video.Thumbnails
+                        .OrderByDescending(x => x.Resolution.Area)
+                        .First()
+                        .Url, 
+                    video.Author.Title, 
+                    video.Duration ?? new TimeSpan(0)
+                );
+            }
+            else
+            {
+                var id = VideoId.TryParse(queryOrUrl);
+                if (id is null) throw new VideoException("Invalid video.");
+
+                var video = await yt.Videos.GetAsync(id.Value);
+                if (video is null) throw new VideoException("Invalid video.");
+
+                info = new SongInfo(
+                    video.Title, 
+                    video.Url, 
+                    video.Thumbnails
+                        .OrderByDescending(x => x.Resolution.Area)
+                        .First()
+                        .Url,
+                    video.Author.Title,
+                    video.Duration ?? new TimeSpan(0)
+                );
+            }
+
+            return new Song(info, userId, guildId);
+        }
+
+        public async Task<Playlist> GetPlaylistAsync(string playlistId, ulong guildId, ulong userId)
+        {
+            var songs = new List<Song>();
+
+            var id = PlaylistId.TryParse(playlistId);
+            if (id is null) throw new VideoException("Invalid playlist.");
+
+            var data = await yt.Playlists.GetAsync(id.Value);
+            var videos = yt.Playlists.GetVideosAsync(id.Value);
+
+            await foreach (var video in videos)
+                songs.Add(new Song(
+                    new SongInfo(video.Title,
+                        video.Url,
+                        video.Thumbnails
+                            .OrderByDescending(x => x.Resolution.Area)
+                            .First()
+                            .Url,
+                        video.Author.Title,
+                        video.Duration ?? new TimeSpan(0)),
+                    userId,
+                    guildId));
+
+            return new Playlist(
+                songs, 
+                data.Title, 
+                data.Author.Title, 
+                data.Url, 
+                data.Thumbnails
+                    .OrderByDescending(x => x.Resolution.Area)
+                    .First()
+                    .Url,
+                userId, 
+                guildId
+            );
+        }
+
+        private Process CreateStream()
+        {
+            return Process.Start(new ProcessStartInfo
+            {
+                FileName = "ffmpeg",
+                Arguments = "-hide_banner -loglevel panic -i pipe:0 -ac 2 -f s16le -ar 48000 pipe:1",
+                UseShellExecute = false,
+                RedirectStandardInput = true,
+                RedirectStandardOutput = true
+            });
+        }
+
+        private async Task<YoutubeExplode.Search.VideoSearchResult> GetVideoAsync(string query) => await yt.Search.GetVideosAsync(query).FirstOrDefaultAsync();
 
         public async Task PauseAsync()
         {
@@ -141,12 +388,15 @@ namespace donniebot.classes
             await TextChannel.SendMessageAsync("Pausing playback.");
         }
 
-        internal async Task<int> DoSkipAsync()
+        internal async Task<int> DoSkipAsync(bool sendMessage = true)
         {
             _skips = 0;
             SongSkipped?.Invoke(Current);
-            await TextChannel.SendMessageAsync("Skipping the current song.");
-            return 0;
+
+            if (sendMessage)
+                await TextChannel.SendMessageAsync("Skipping the current song.");
+
+            return _skips;
         }
 
         public IEnumerable<SocketGuildUser> GetListeningUsers() => VoiceChannel.Users.Where(x => 
@@ -187,6 +437,136 @@ namespace donniebot.classes
 
             await TextChannel.SendMessageAsync($"Voted to skip the current song. ({_skips} votes/{requiredCount} required)");
             return _skips;
+        }
+
+        public async Task AddAsync(SocketGuildUser user, SocketTextChannel channel, string queryOrUrl, bool shuffle = false, int? position = null)
+        {
+            var id = user.Guild.Id;
+            var vc = user.VoiceChannel;
+            var uId = user.Id;
+
+            if (vc is null)
+            {
+                await channel.SendMessageAsync("You must be in a voice channel.");
+                return;
+            }
+            
+            if (vc != VoiceChannel)
+            {
+                await channel.SendMessageAsync("You must be in the same voice channel as me.");
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(queryOrUrl))
+            {
+                await ResumeAsync();
+                return;
+            }
+
+            var estTime = !Queue.Any() ? "Now" : TimeSpan.FromSeconds(Queue
+                .Sum(x => x.Length.TotalSeconds) + (Current?.Length.TotalSeconds - Position.TotalSeconds ?? 0))
+                .ToString(@"hh\:mm\:ss");
+
+            if (estTime == "00:00:00" || position == 0) estTime = "Now";
+
+            if (position.HasValue && Queue.Any())
+            {
+                var len = Queue.Take(position.Value).Sum(x => x.Length.TotalSeconds);
+
+                estTime = TimeSpan.FromSeconds(len +
+                    (Current?.Length.TotalSeconds - Position.TotalSeconds ?? 0))
+                    .ToString(@"hh\:mm\:ss");
+            }
+
+            if (Uri.IsWellFormedUriString(queryOrUrl, UriKind.Absolute))
+            {
+                var msg = await channel.SendMessageAsync("Adding your playlist...");
+
+                if (queryOrUrl.Contains("&list=") || queryOrUrl.Contains("?list="))
+                {
+                    var playlist = await GetPlaylistAsync(queryOrUrl, id, user.Id);
+
+                    await EnqueueManyAsync(channel, vc, playlist.Songs, shuffle, position);
+
+                    await channel.SendMessageAsync(embed: new EmbedBuilder()
+                        .WithTitle("Added playlist")
+                        .WithFields(new List<EmbedFieldBuilder>
+                        {
+                            new EmbedFieldBuilder().WithName("Title").WithValue(playlist.Title).WithIsInline(false),
+                            new EmbedFieldBuilder().WithName("Author").WithValue(playlist.Author).WithIsInline(true),
+                            new EmbedFieldBuilder().WithName("Count").WithValue(playlist.Songs.Count).WithIsInline(true),
+                            new EmbedFieldBuilder().WithName("URL").WithValue(playlist.Url).WithIsInline(false),
+                            new EmbedFieldBuilder().WithName("Estimated time").WithValue(estTime).WithIsInline(true)
+                        })
+                        .WithColor(RandomColor())
+                        .WithThumbnailUrl(playlist.ThumbnailUrl)
+                        .WithCurrentTimestamp()
+                        .Build());
+
+                    return;
+                }
+                else if (queryOrUrl.Contains("spotify.com"))
+                {
+                    var spotifyPl = await _net.GetSpotifySongsAsync(queryOrUrl);
+
+                    var playlist = new List<Song>();
+
+                    foreach (var s in spotifyPl)
+                    {
+                        playlist.Add(await CreateSongAsync(
+                            $"{string.Join(", ", s.Track.Artists?.Select(x => x.Name))} {s.Track.Name} audio", //Travis Scott, Drake SICKO MODE audio
+                            id, 
+                            uId
+                        ));
+                    }
+
+                    try
+                    {
+                        await EnqueueManyAsync(channel, vc, playlist, shuffle, position);
+                    }
+                    finally
+                    {
+                        await channel.SendMessageAsync(embed: new EmbedBuilder()
+                            .WithTitle("Added Spotify playlist")
+                            .WithFields(new List<EmbedFieldBuilder>
+                            {
+                                new EmbedFieldBuilder().WithName("Count").WithValue(spotifyPl.Count).WithIsInline(true),
+                                new EmbedFieldBuilder().WithName("URL").WithValue(queryOrUrl).WithIsInline(false),
+                                new EmbedFieldBuilder().WithName("Estimated time").WithValue(estTime).WithIsInline(true)
+                            })
+                            .WithColor(RandomColor())
+                            .WithFooter("The song may sound different as it is coming from YouTube, not Spotify.")
+                            .WithCurrentTimestamp()
+                            .Build());
+                    }
+                }
+
+                await msg.DeleteAsync();
+            }
+
+            var song = await CreateSongAsync(queryOrUrl, id, uId);
+
+            if (song is null)
+            {
+                await channel.SendMessageAsync("Unable to locate a song with that ID or search query; please try again.");
+                return;
+            }
+
+            await channel.SendMessageAsync(embed: new EmbedBuilder()
+                .WithTitle("Added song")
+                .WithFields(new List<EmbedFieldBuilder>
+                {
+                    new EmbedFieldBuilder().WithName("Title").WithValue(song.Title).WithIsInline(false),
+                    new EmbedFieldBuilder().WithName("Author").WithValue(song.Author).WithIsInline(true),
+                    new EmbedFieldBuilder().WithName("URL").WithValue(song.Url).WithIsInline(true),
+                    new EmbedFieldBuilder().WithName("Estimated time").WithValue(estTime).WithIsInline(true)
+                })
+                .WithColor(RandomColor())
+                .WithThumbnailUrl(song.ThumbnailUrl)
+                .WithCurrentTimestamp()
+            .Build());
+
+            await EnqueueAsync(channel, vc, song, shuffle, position);
         }
 
         public async Task PlayAsync()
@@ -369,6 +749,11 @@ namespace donniebot.classes
             }
         }
 
+        private Color RandomColor()
+        {
+            uint clr = Convert.ToUInt32(new Random().Next(0, 0xFFFFFF));
+            return new Color(clr);
+        }
 
         #pragma warning disable VSTHRD100 //Avoid "async void" methods, because any exceptions not handled by the method will crash the process. (what else can i do? if i make it return Task the inheritance does not work)
         public async void Dispose()

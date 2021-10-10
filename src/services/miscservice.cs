@@ -116,7 +116,7 @@ namespace donniebot.services
             else if (e is VideoException ve)
                 description = ve.Message;
             else if (e is HttpRequestException he)
-                description = $"An exception occurred when making an HTTP request: {he.Message}";
+                description = $"An exception occurred when making an HTTP request: {he.Message}\nIf this occurred while queueing a song on YouTube, then the song may be age-restricted.";
             else if (e is SixLabors.ImageSharp.UnknownImageFormatException)
                 description = "The image format was not valid.";
             else
