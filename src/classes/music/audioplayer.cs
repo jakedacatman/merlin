@@ -12,7 +12,7 @@ namespace donniebot.classes
         public ulong GuildId { get; }
         public IAudioClient Connection { get; private set; }
         public SocketVoiceChannel VoiceChannel { get; private set; }
-        public SocketTextChannel TextChannel { get; }
+        public SocketTextChannel TextChannel { get; private set; }
         public AudioOutStream Stream { get; private set; }
         public Song Current { get; set; } = null;
         public List<Song> Queue { get; set; }
@@ -100,10 +100,11 @@ namespace donniebot.classes
                 Queue = Queue.Shuffle().ToList();
         }
 
-        public async Task UpdateAsync(SocketVoiceChannel channel)
+        public async Task UpdateAsync(SocketVoiceChannel channel, SocketTextChannel tC = null)
         {
             VoiceChannel = channel;
             await channel.DisconnectAsync();
+            if (tC is not null) TextChannel = tC;
             Connection = await channel.ConnectAsync(true, false);
             Stream = Connection.CreatePCMStream(AudioApplication.Mixed);
             HasDisconnected = false;

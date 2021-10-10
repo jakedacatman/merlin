@@ -50,21 +50,23 @@ namespace donniebot.services
             if (currUser.VoiceChannel != null)
                 await channel.DisconnectAsync();
 
-            var connection = await channel.ConnectAsync(true, false);
-
-            var np = new AudioPlayer(id, channel, connection, textChannel);
+            AudioPlayer a;
 
             if (!GetConnection(id, out var curr))
-                _connections.Add(np);
+            {
+                var connection = await channel.ConnectAsync(true, false);
+                a = new AudioPlayer(id, channel, connection, textChannel);
+                _connections.Add(a);
+            }
             else
             {
-                _connections.Remove(curr);
-                _connections.Add(np);
+                await curr.UpdateAsync(channel, textChannel);
+                a = curr;
             }
 
             await textChannel.SendMessageAsync($"Joined `{channel.Name}` and will send messages in `{textChannel.Name}`.");
 
-            return np;
+            return a;
         }
 
         public async Task DisconnectAsync(SocketVoiceChannel channel, ISocketMessageChannel tc = null)
@@ -88,6 +90,7 @@ namespace donniebot.services
             var id = user.Guild.Id;
             var vc = user.VoiceChannel;
             var uId = user.Id;
+
 
             if (vc == null)
             {
