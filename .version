@@ -1,6 +1,6 @@
-Sun Oct 10 19:30:13 UTC 2021
-commit 6987a25f1f6c495bc35e54debad304ecc636633c
+Mon Oct 11 02:19:41 UTC 2021
+commit e90d8f4b12a197f57aa4d2dcf8713159c39bbc22
 Author: jakedacatman <helloihaxxedu@gmail.com>
-Date:   2021-10-10 15:29:49 -0400
+Date:   2021-10-10 22:19:23 -0400
 
-    fix play command joining
+    tweaks to fix stuff
