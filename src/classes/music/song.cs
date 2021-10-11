@@ -12,15 +12,19 @@ namespace donniebot.classes
         public ulong QueuerId { get; }
         public ulong GuildId { get; }
         public TimeSpan Length { get; }
-        public long Size { get; set; } = 0L;
-        public AudioOnlyStreamInfo Info { get; set; } = null;
+        public long Size 
+        { 
+            get => Info?.Size.Bytes ?? 0;
+        }
+        public AudioOnlyStreamInfo Info { get; }
 
-        public Song(SongInfo info, ulong queuerId, ulong guildId)
+        public Song(SongInfo info, AudioOnlyStreamInfo audioInfo, ulong queuerId, ulong guildId)
         {
             Author = info.Author;
             Title = info.Title;
             Url = info.Url;
             ThumbnailUrl = info.ThumbnailUrl;
+            Info = audioInfo;
             QueuerId = queuerId;
             GuildId = guildId;
             Length = info.Length;

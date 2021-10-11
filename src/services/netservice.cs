@@ -29,6 +29,8 @@ namespace donniebot.services
         private readonly string spotifyAuthString;
         private readonly HttpClient _spHc;
         private readonly AccountsService _accs;
+                
+        private readonly PlaylistsApi _playlists;
 
         public NetService(DbService db, RandomService rand)
         {
@@ -72,6 +74,7 @@ namespace donniebot.services
 
             _spHc = new HttpClient();
             _accs = new AccountsService(_spHc);
+            _playlists = new PlaylistsApi(_spHc, _accs);
 
             uploadKey = db.GetApiKey("uploadKey") ?? db.GetApiKey("upload");
             pasteKey = db.GetApiKey("pasteKey") ?? uploadKey;
@@ -278,17 +281,17 @@ namespace donniebot.services
 
             if (url.Contains("/playlist/")) //different apis
             {
-                var r = Regex.Match(url, @"\/playlist\/([^\/\?\&]+)\??");
+                var reg = new Regex(@"https:\/\/open.spotify.com\/playlist\/([a-zA-Z0-9]+).*");
 
+                var r = reg.Match(url);
                 if (!r.Success)
                     throw new NotSupportedException("That was not a supported Spotify URL.");
 
-                var id = r.Captures[0].Value.Replace("/playlist/", "");
+                var id = r.Groups[1].Captures[0].Value; //whole regex, then the specific part in parentheses
 
                 //shamelessly stolen from the example here: https://github.com/Ringobot/SpotifyApi.NetCore/blob/master/README.md
-                var playlists = new PlaylistsApi(_spHc, _accs);
                 int limit = 100;
-                var playlist = await playlists.GetTracks(id, limit: limit);
+                var playlist = await _playlists.GetTracks(id, limit: limit);
                 int offset = 0;
                 while (playlist.Items.Any())
                 {
@@ -297,7 +300,7 @@ namespace donniebot.services
                         list.Add(playlist.Items[i]);
                     }
                     offset += limit;
-                    playlist = await playlists.GetTracks(id, limit: limit, offset: offset);
+                    playlist = await _playlists.GetTracks(id, limit: limit, offset: offset);
                 }
             }
             /*else if (url.Contains("/album/"))

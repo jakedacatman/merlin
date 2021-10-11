@@ -20,7 +20,7 @@ namespace donniebot.services
 {
     public class AudioService
     {
-        private List<AudioPlayer> _connections = new List<AudioPlayer>();
+        private List<AudioPlayer> _players = new List<AudioPlayer>();
         private readonly DiscordShardedClient _client;
         private readonly NetService _net;
         private readonly DbService _db;
@@ -47,11 +47,11 @@ namespace donniebot.services
 
             AudioPlayer a;
 
-            if (!GetConnection(id, out var curr))
+            if (!GetPlayer(id, out var curr))
             {
                 var connection = await channel.ConnectAsync(true, false);
                 a = new AudioPlayer(id, channel, connection, textChannel, _client, _net);
-                _connections.Add(a);
+                _players.Add(a);
             }
             else
             {
@@ -66,8 +66,8 @@ namespace donniebot.services
 
         public async Task DisconnectAsync(ISocketMessageChannel tc = null)
         {
-            if (GetConnection((tc as SocketGuildChannel).Guild.Id, out var connection))
-                await connection.DisconnectAsync(tc);
+            if (GetPlayer((tc as SocketGuildChannel).Guild.Id, out var player))
+                await player.DisconnectAsync(tc);
         }
 
         public async Task AddAsync(SocketGuildUser user, SocketTextChannel channel, string queryOrUrl, bool shuffle = false, int? position = null)
@@ -77,41 +77,41 @@ namespace donniebot.services
             var uId = user.Id;
 
 
-            if (vc == null)
+            if (vc is null)
             {
                 await channel.SendMessageAsync("You must be in a voice channel.");
                 return;
             }
             
-            if (GetConnection(id, out var con) && vc != con.VoiceChannel)
+            if (GetPlayer(id, out var player) && vc != player.VoiceChannel)
             {
                 await channel.SendMessageAsync("You must be in the same voice channel as me.");
                 return;
             }
 
-            if (con is null)
-                con = await ConnectAsync(channel, vc);
+            if (player is null)
+                player = await ConnectAsync(channel, vc);
 
-            await con.AddAsync(user, channel, queryOrUrl, shuffle, position);
+            await player.AddAsync(user, channel, queryOrUrl, shuffle, position);
         }
 
         public async Task ResumeAsync(ulong guildId)
         {
-            if (!GetConnection(guildId, out var con)) return;
-            await con.ResumeAsync();
+            if (!GetPlayer(guildId, out var player)) return;
+            await player.ResumeAsync();
         }
 
         public async Task PauseAsync(ulong guildId)
         {
-            if (!GetConnection(guildId, out var con)) return;
-            await con.PauseAsync();
+            if (!GetPlayer(guildId, out var player)) return;
+            await player.PauseAsync();
         }
 
         private readonly SemaphoreSlim enq = new SemaphoreSlim(1, 1);
         public async Task EnqueueAsync(SocketTextChannel textChannel, SocketVoiceChannel vc, Song song, bool shuffle = false, int? position = null)
         {
             var id = vc.Guild.Id;
-            if (!GetConnection(id, out var player))
+            if (!GetPlayer(id, out var player))
                 player = await ConnectAsync(textChannel, vc);
 
             await player.EnqueueAsync(textChannel, vc, song, shuffle, position);
@@ -119,7 +119,7 @@ namespace donniebot.services
         public async Task EnqueueManyAsync(SocketTextChannel textChannel, SocketVoiceChannel vc, IEnumerable<Song> songs, bool shuffle = false, int? position = null)
         {
             var id = vc.Guild.Id;
-            if (!GetConnection(id, out var player))
+            if (!GetPlayer(id, out var player))
                 player = await ConnectAsync(textChannel, vc);
 
             await player.EnqueueManyAsync(textChannel, vc, songs, shuffle, position);
@@ -127,27 +127,27 @@ namespace donniebot.services
 
         public bool ToggleLoop(ulong id)
         {
-            if (!GetConnection(id, out var c))
+            if (!GetPlayer(id, out var player))
                 return false;
 
-            c.ToggleLoop();
-            return c.IsLooping;
+            player.ToggleLoop();
+            return player.IsLooping;
         }
 
         public bool IsLooping(ulong id)
         {
-            if (!GetConnection(id, out var c))
+            if (!GetPlayer(id, out var player))
                 return false;
 
-            return c.IsLooping;
+            return player.IsLooping;
         }
 
         public bool RemoveAt(ulong id, int index)
         {
-            if (!GetConnection(id, out var c))
+            if (!GetPlayer(id, out var player))
                 return false;
 
-            var queue = c.Queue;
+            var queue = player.Queue;
 
             if (index < 1 || index >= queue.Count)
                 return false;
@@ -158,10 +158,10 @@ namespace donniebot.services
 
         public bool ClearQueue(ulong id)
         {
-            if (!GetConnection(id, out var c))
+            if (!GetPlayer(id, out var player))
                 return false;
 
-            var queue = c.Queue;
+            var queue = player.Queue;
 
             queue.RemoveRange(0, queue.Count);
             return true;
@@ -169,18 +169,18 @@ namespace donniebot.services
 
         public void Shuffle(ulong id)
         {
-            if (!GetConnection(id, out var c))
+            if (!GetPlayer(id, out var player))
                 return;
 
-            c.Shuffle();
+            player.Shuffle();
         }
 
         public async Task PlayAsync(ulong id)
         {
-            if (!GetConnection(id, out var connection))
+            if (!GetPlayer(id, out var player))
                 throw new InvalidOperationException("Not connected to a voice channel.");
             
-            await connection.PlayAsync();
+            await player.PlayAsync();
         }
 
         private async Task<AudioOnlyStreamInfo> GetAudioInfoAsync(string ytUrl)
@@ -238,7 +238,7 @@ namespace donniebot.services
                 );
             }
 
-            return new Song(info, userId, guildId);
+            return new Song(info, await GetAudioInfoAsync(info.Url) ,userId, guildId);
         }
 
         public async Task<classes.Playlist> GetPlaylistAsync(string playlistId, ulong guildId, ulong userId)
@@ -261,6 +261,7 @@ namespace donniebot.services
                             .Url,
                         video.Author.Title,
                         video.Duration ?? new TimeSpan(0)),
+                    await GetAudioInfoAsync(video.Url),
                     userId,
                     guildId));
 
@@ -292,56 +293,62 @@ namespace donniebot.services
 
         private async Task<YoutubeExplode.Search.VideoSearchResult> GetVideoAsync(string query) => await yt.Search.GetVideosAsync(query).FirstOrDefaultAsync();
 
-        public bool IsConnected(ulong id) => GetConnection(id, out var _);
+        public bool IsConnected(ulong id) => GetPlayer(id, out var _);
 
-        public bool HasSongs(ulong id) => GetConnection(id, out var c) && (GetCurrent(id) != null || c.Queue.Any());
+        public bool HasSongs(ulong id)
+        {
+            if (!GetPlayer(id, out var player)) return false; 
+            var hasCurrent = player.Current != null;
+            var hasSongsInQueue = player.Queue.Any();
+
+            return hasCurrent || hasSongsInQueue;
+        }
 
         public async Task<int> SkipAsync(SocketGuildUser skipper)
         {
-            
-            if (GetConnection(skipper.Guild.Id, out var c))
+            if (GetPlayer(skipper.Guild.Id, out var player))
             {
                 var djRole = _db.GetItem<DjRole>("djroles", LiteDB.Query.EQ("GuildId", skipper.Guild.Id));
                 if (skipper.Roles.Any(x => x.Id == djRole?.RoleId))
-                    return await c.DoSkipAsync();
+                    return await player.DoSkipAsync();
 
-                return await c.SkipAsync(skipper);
+                return await player.SkipAsync(skipper);
             }
             else return 0;
         }
 
-        public string GetSongPosition(ulong id) => GetConnection(id, out var con) ? $"{con.Position.ToString(@"hh\:mm\:ss")}/{con.Current.Length.ToString(@"hh\:mm\:ss")}" : null;
-        public TimeSpan GetRawPosition(ulong id) => GetConnection(id, out var con) ? con.Current.Length - con.Position : TimeSpan.FromSeconds(0);
-        public double GetDownloadedPercent(ulong id) => GetConnection(id, out var con) ? (double)con.BytesDownloaded / con.Current.Size : 0d;
+        public string GetSongPosition(ulong id) => GetPlayer(id, out var player) ? $"{player.Position.ToString(@"hh\:mm\:ss")}/{player.Current.Length.ToString(@"hh\:mm\:ss")}" : null;
+        public TimeSpan GetRawPosition(ulong id) => GetPlayer(id, out var player) ? player.Current?.Length - player.Position ?? TimeSpan.FromSeconds(0) : TimeSpan.FromSeconds(0);
+        public double GetDownloadedPercent(ulong id) => GetPlayer(id, out var player) ? (double)player.BytesDownloaded / player.Current.Size : 0d;
 
-        public List<SocketGuildUser> GetListeningUsers(ulong id) => GetConnection(id, out var connection) ? connection.GetListeningUsers().ToList() : new List<SocketGuildUser>();
+        public List<SocketGuildUser> GetListeningUsers(ulong id) => GetPlayer(id, out var player) ? player.GetListeningUsers().ToList() : new List<SocketGuildUser>();
 
-        public Song GetCurrent(ulong id) => GetConnection(id, out var connection) ? connection.Current : null;
+        public Song GetCurrent(ulong id) => GetPlayer(id, out var player) ? player.Current : null;
 
         public List<string> GetQueue(ulong id)
         {
             var items = new List<string>();
 
-            if (GetConnection(id, out var connection))
+            if (GetPlayer(id, out var player))
             {
-                var queue = connection.Queue;
-                var gId = connection.GuildId;
+                var queue = player.Queue;
+                var gId = player.GuildId;
 
-                if (connection.Current != null)
+                if (player.Current is not null)
                 {
-                    items.Add($"{(connection.IsPlaying && !connection.IsPaused ? "▶️" : "⏸️")} __**1**: {connection.Current.Title} (queued by {GetMention(gId, connection.Current.QueuerId)})__");
+                    items.Add($"__**1**: {player.Current.Title}__ ({Math.Round(GetDownloadedPercent(gId) * 100d, 1)}%) {(player.IsPlaying && !player.IsPaused ? "▶️" : "⏸️")}");
 
                     for (int i = 0; i < queue.Count; i++)
-                        items.Add($"**{i + 2}**: {queue[i].Title} (queued by {GetMention(gId, queue[i].QueuerId)})");
+                        items.Add($"**{i + 2}**: {queue[i].Title} (queued by {GetMention(player.GuildId, queue[i].QueuerId)})");
                 }
                 else
                     for (int i = 0; i < queue.Count; i++)
-                        items.Add($"**{i + 1}**: {queue[i].Title} (queued by {GetMention(gId, queue[i].QueuerId)})");
+                        items.Add($"**{i + 1}**: {queue[i].Title} (queued by {GetMention(player.GuildId, queue[i].QueuerId)})");
             }
 
             return items;
         }
-        public List<Song> GetRawQueue(ulong id) => GetConnection(id, out var c) ? c.Queue : new List<Song>();
+        public List<Song> GetRawQueue(ulong id) => GetPlayer(id, out var player) ? player.Queue : new List<Song>();
 
         private string GetMention(ulong guildId, ulong userId) =>
             _client
@@ -349,13 +356,13 @@ namespace donniebot.services
                 .GetUser(userId)
                 .Mention;
 
-        public bool GetConnection(ulong id, out AudioPlayer connection)
+        public bool GetPlayer(ulong id, out AudioPlayer player)
         {
-            connection = null;
-            var exists = _connections.Any(x => x.GuildId == id);
+            player = null;
+            var exists = _players.Any(x => x.GuildId == id);
 
             if (exists)
-                connection = _connections.First(x => x.GuildId == id);
+                player = _players.First(x => x.GuildId == id);
 
             return exists;
         }

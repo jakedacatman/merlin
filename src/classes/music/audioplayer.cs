@@ -30,7 +30,7 @@ namespace donniebot.classes
         public TimeSpan Position { 
             get 
             {
-                if (Current == null) return TimeSpan.FromSeconds(0);
+                if (Current is null) return TimeSpan.FromSeconds(0);
                 return TimeSpan.FromSeconds(BytesPlayed / 196608d); //ffmpeg output in bytes/second
             }
         }
@@ -83,10 +83,7 @@ namespace donniebot.classes
         public async Task OnSongEndedAsync(Song s)
         {
             if (IsLooping)
-            {
-                s.Info = null;
                 await EnqueueAsync(TextChannel, VoiceChannel, s, position: 0);
-            }
 
             if (Queue.Any())
             {
@@ -122,9 +119,9 @@ namespace donniebot.classes
                 var oldVc = oldS.VoiceChannel;
                 var newVc = newS.VoiceChannel;
 
-                if (oldVc == null) return;
+                if (oldVc is null) return;
 
-               if (newVc == null)
+               if (newVc is null)
                     await DisconnectAsync();
                 else
                 {
@@ -138,7 +135,6 @@ namespace donniebot.classes
                 Console.WriteLine($"{e}\n{e.StackTrace}");
             }
         }
-
 
         public async Task DisconnectAsync(ISocketMessageChannel tc = null)
         {
@@ -163,14 +159,6 @@ namespace donniebot.classes
                 Queue.Insert(position.Value, s);
         }
 
-        public void EnqueueMany(IEnumerable<Song> s, int? position)
-        {
-            if (!position.HasValue)
-                Queue.AddRange(s);
-            else
-                Queue.InsertRange(position.Value, s);
-        }
-
         public async Task LeaveAsync(bool sendMessage = true, ISocketMessageChannel tc = null)
         {
             _skips = 0;
@@ -190,7 +178,7 @@ namespace donniebot.classes
 
         public Song Pop()
         {
-            var song = Queue[0];
+            var song = Queue.First();
             Queue.Remove(song);
             return song;
         }
@@ -216,17 +204,16 @@ namespace donniebot.classes
             HasDisconnected = false;
         }
 
-        private readonly SemaphoreSlim enq = new SemaphoreSlim(1, 1);
+        private readonly SemaphoreSlim enq = new SemaphoreSlim(10);
         public async Task EnqueueAsync(SocketTextChannel textChannel, SocketVoiceChannel vc, Song song, bool shuffle = false, int? position = null)
         {
             await enq.WaitAsync();
             try
             {
-                var id = vc.Guild.Id;
-                
-                song.Info = await GetAudioInfoAsync(song.Url);
                 Enqueue(song, position);
+
                 if (shuffle) Shuffle();
+                
                 SongAdded?.Invoke(song);
             }
             finally
@@ -239,17 +226,20 @@ namespace donniebot.classes
             await enq.WaitAsync();
             try
             {
-                EnqueueMany(songs, position);
+                foreach (var s in songs)
+                {
+                    Enqueue(s, position);
+
+                    SongAdded?.Invoke(s);
+                    if (position.HasValue) position++;
+                }
+
                 if (shuffle) Shuffle();
-                SongAdded?.Invoke(songs.First());
             }
             finally
             {
                 enq.Release();
             }
-            
-            foreach (var song in songs)
-                song.Info = await GetAudioInfoAsync(song.Url);
         }
 
         public async Task ResumeAsync()
@@ -321,7 +311,7 @@ namespace donniebot.classes
                 );
             }
 
-            return new Song(info, userId, guildId);
+            return new Song(info, await GetAudioInfoAsync(info.Url), userId, guildId);
         }
 
         public async Task<Playlist> GetPlaylistAsync(string playlistId, ulong guildId, ulong userId)
@@ -344,6 +334,7 @@ namespace donniebot.classes
                             .Url,
                         video.Author.Title,
                         video.Duration ?? new TimeSpan(0)),
+                    await GetAudioInfoAsync(video.Url),
                     userId,
                     guildId));
 
@@ -602,12 +593,9 @@ namespace donniebot.classes
                 if (HasDisconnected)
                     await UpdateAsync(VoiceChannel);
 
-                var info = Current.Info ?? await GetAudioInfoAsync(Current.Url);
-
-                Current.Size = info.Size.Bytes;
-
-                using (var str = await GetAudioAsync(info))
+                using (var stream = await GetAudioAsync(Current.Info))
                 using (var downloadStream = new SimplexStream())
+                using (var preConvStream = new MemoryStream())
                 using (var ffmpeg = CreateStream())
                 using (var output = ffmpeg.StandardOutput.BaseStream)
                 using (var input = ffmpeg.StandardInput.BaseStream)
@@ -634,7 +622,7 @@ namespace donniebot.classes
                         return Task.CompletedTask;
                     };
 
-                    async Task Download(CancellationToken token)
+                    async Task Download(CancellationToken token) => await Task.Run(async() =>
                     {
                         try
                         {
@@ -642,7 +630,7 @@ namespace donniebot.classes
                             {
                                 if (token.IsCancellationRequested) break;
 
-                                bytesDown = await str.ReadAsync(bufferDown, 0, block_size);
+                                bytesDown = await stream.ReadAsync(bufferDown, 0, block_size);
                                 BytesDownloaded += (uint)bytesDown;
 
                                 await downloadStream.WriteAsync(bufferDown, 0, bytesDown);
@@ -653,9 +641,9 @@ namespace donniebot.classes
                         {
                             downloadStream.CompleteWriting();
                         }
-                    }
+                    });
 
-                    async Task Read(CancellationToken token)
+                    async Task Read(CancellationToken token) => await Task.Run(async() =>
                     {
                         try
                         {
@@ -672,30 +660,35 @@ namespace donniebot.classes
                         {
 
                         }
-                    }
+                    });
 
                     var hasHadFullChunkYet = false;
-                    async Task Write(CancellationToken token)
+                    async Task Write(CancellationToken token) => await Task.Run(async() =>
                     {
                         try
                         {
+                            var doBreak = false;
                             do
                             {
                                 while (IsPaused) //don't write to discord while paused
                                 {
                                     try
                                     {
-                                        if (token.IsCancellationRequested) return;
+                                        if (token.IsCancellationRequested)
+                                        {
+                                            doBreak = true;
+                                            break;
+                                        }
 
                                         await Task.Delay(-1, pauseCts.Token); //wait forever (until token is called)
                                     }
                                     catch (TaskCanceledException)
                                     {
-
+                                        
                                     }
                                 }
                                 
-                                if (token.IsCancellationRequested) break;
+                                if (token.IsCancellationRequested || doBreak) break;
 
                                 if (hasHadFullChunkYet && bytesConverted < block_size) //if bytesConverted is less than here, then the last (small) chunk is done
                                     break;
@@ -714,7 +707,7 @@ namespace donniebot.classes
                         {
                             ffmpeg.Kill();
                         }
-                    }
+                    });
 
                     try //allows for skipping
                     {

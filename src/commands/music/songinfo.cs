@@ -12,14 +12,14 @@ using Interactivity;
 namespace donniebot.commands
 {
     [Name("Music")]
-    public class CurrentCommand : ModuleBase<ShardedCommandContext>
+    public class SongInfoCommand : ModuleBase<ShardedCommandContext>
     {
         private readonly AudioService _audio;
         private readonly MiscService _misc;
         private readonly RandomService _rand;
         private readonly GuildPrefix _defPre;
 
-        public CurrentCommand(AudioService audio, MiscService misc, RandomService rand, GuildPrefix defPre)
+        public SongInfoCommand(AudioService audio, MiscService misc, RandomService rand, GuildPrefix defPre)
         {
             _audio = audio;
             _misc = misc;
@@ -27,20 +27,34 @@ namespace donniebot.commands
             _defPre = defPre;
         }
 
-        [Command("current")]
-        [Alias("nowplaying", "np")]
-        [RequireSongs]
-        [Summary("Gets information about the currently-playing song.")]
-        public async Task CurrentAsync()
+        [Command("songinfo")]
+        [Alias("si")]
+        [Summary("Gets information about a specific song in the queue.")]
+        public async Task CurrentAsync([Summary("The index of the song.")]int songIndex)
         {
             var id = Context.Guild.Id;
 
-            var song = _audio.GetCurrent(id);
-            if (song == null)
+            if (!_audio.HasSongs(id))
             {
-                await ReplyAsync("There is no song playing right now.");
+                await ReplyAsync($"There are no songs in the queue. Try adding some with `{_defPre.Prefix}add`!");
                 return;
             }
+
+            var queue = _audio.GetRawQueue(id);
+
+            if (!queue.Any())
+            {
+                await ReplyAsync($"There are no songs in the queue besides the currently-playing one. Try `{_defPre.Prefix}np`!");
+                return;
+            }
+
+            if (songIndex > queue.Count + 2 || songIndex < 2)
+            {
+                await ReplyAsync("Invalid index.");
+                return;
+            } 
+
+            var song = queue[songIndex - 2];
 
             await ReplyAsync(embed: new EmbedBuilder()
                 .WithTitle("Now Playing")
@@ -48,8 +62,6 @@ namespace donniebot.commands
                 {
                     new EmbedFieldBuilder().WithName("Title").WithValue(song.Title).WithIsInline(false),
                     new EmbedFieldBuilder().WithName("Author").WithValue(song.Author).WithIsInline(true),
-                    new EmbedFieldBuilder().WithName("Position").WithValue(_audio.GetSongPosition(id) ?? "n/a").WithIsInline(true),
-                    new EmbedFieldBuilder().WithName("% downloaded").WithValue($"{Math.Round(_audio.GetDownloadedPercent(id) * 100d, 3)}%").WithIsInline(true),
                     new EmbedFieldBuilder().WithName("Size").WithValue(_misc.PrettyFormat(song.Size, 3)).WithIsInline(true),
                     new EmbedFieldBuilder().WithName("Queuer").WithValue(Context.Guild.GetUser(song.QueuerId).Mention).WithIsInline(true),
                     new EmbedFieldBuilder().WithName("URL").WithValue(song.Url).WithIsInline(true)
