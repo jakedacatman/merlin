@@ -163,11 +163,12 @@ namespace donniebot.classes
         {
             _skips = 0;
             Queue.RemoveAll(x => x.GuildId >= 0);
-            SongSkipped?.Invoke(this.Current);
+            SongSkipped?.Invoke(Current);
+            Current = null;
 
             if (sendMessage)
             {
-                if (tc != null)
+                if (tc is not null)
                     await tc.SendMessageAsync("👋");
                 else 
                     await TextChannel.SendMessageAsync("👋");
@@ -178,7 +179,7 @@ namespace donniebot.classes
 
         public Song Pop()
         {
-            var song = Queue.First();
+            var song = Queue[0];
             Queue.Remove(song);
             return song;
         }
@@ -577,6 +578,8 @@ namespace donniebot.classes
                 return;
 
             Current = Pop();
+
+            var song = Current;
             
             try
             {
@@ -593,9 +596,8 @@ namespace donniebot.classes
                 if (HasDisconnected)
                     await UpdateAsync(VoiceChannel);
 
-                using (var stream = await GetAudioAsync(Current.Info))
+                using (var stream = await GetAudioAsync(song.Info))
                 using (var downloadStream = new SimplexStream())
-                using (var preConvStream = new MemoryStream())
                 using (var ffmpeg = CreateStream())
                 using (var output = ffmpeg.StandardOutput.BaseStream)
                 using (var input = ffmpeg.StandardInput.BaseStream)
@@ -684,7 +686,7 @@ namespace donniebot.classes
                                     }
                                     catch (TaskCanceledException)
                                     {
-                                        
+
                                     }
                                 }
                                 
@@ -744,7 +746,7 @@ namespace donniebot.classes
                 BytesDownloaded = 0;
                 BytesPlayed = 0;
                 IsPlaying = false;
-                SongEnded?.Invoke(Current);
+                SongEnded?.Invoke(song);
 
                 Current = null;
             }
