@@ -1,6 +1,6 @@
-Fri Oct 15 23:09:51 UTC 2021
-commit fd9d066718757ee3fe49588fec7d5def945e8d93
+Fri Oct 15 23:41:29 UTC 2021
+commit f42b1c8887760f55fab0fa42559d1fdc2f13b1a0
 Author: jakedacatman <helloihaxxedu@gmail.com>
-Date:   2021-10-15 19:08:41 -0400
+Date:   2021-10-15 19:41:13 -0400
 
-    fix same voice channel perms
+    attempt to fix dj role stuff
