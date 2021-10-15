@@ -1,4 +1,5 @@
 using System;
+using LiteDB;
 
 namespace donniebot.classes
 {
@@ -6,6 +7,7 @@ namespace donniebot.classes
     {
         public ulong GuildId { get; }
         public ulong RoleId { get; }
+        [BsonId]
         public int Id { get; set; }
 
         public DjRole(ulong guildId, ulong roleId)

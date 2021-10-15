@@ -19,14 +19,14 @@ namespace donniebot.classes
             var id = context.Guild.Id;
 
             var roleId = (services.GetService(typeof(DbService)) as DbService)
-                .GetItem<DjRole>("djroles", Query.EQ("GuildId", id))?.RoleId ??
+                .GetDjRole(id)?.RoleId ??
                     user.Guild.Roles.FirstOrDefault(x => x.Name == "DJ")?.Id ?? 0;
 
-            if (user == null) return PreconditionResult.FromError("Cannot execute outside of a guild.");
+            if (user is null) return PreconditionResult.FromError("Cannot execute outside of a guild.");
 
             var users = (services.GetService(typeof(AudioService)) as AudioService).GetListeningUsers(id);
 
-            if (users.Count == 1 && users[0].Id == user.Id)
+            if (users.Count is 1 && users[0].Id == user.Id)
                 return PreconditionResult.FromSuccess();
 
             if (user.Roles.Any(x => x.Id == roleId)) return PreconditionResult.FromSuccess();

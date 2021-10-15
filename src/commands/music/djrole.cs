@@ -36,19 +36,19 @@ namespace donniebot.commands
                 var res = await _inter.NextMessageAsync(timeout: TimeSpan.FromSeconds(10)); 
                 if (res.IsSuccess && (res.Value.Content.ToLower().Contains("yes") || res.Value.Content.ToLower() == "y"))
                 {
-                    _db.RemoveItems<DjRole>("djroles", Query.EQ("GuildId", Context.Guild.Id));
-                    await ReplyAsync("Unbound the DJ role.");
+                    if (_db.RemoveDjRole(Context.Guild.Id) > 0)
+                        await ReplyAsync("Unbound the DJ role.");
+                    else
+                        await ReplyAsync("Failed to unbind the DJ role.");
                 }
                 else
-                {
                     _inter.DelayedSendMessageAndDeleteAsync(Context.Channel, deleteDelay: TimeSpan.FromSeconds(10), text: "The DJ role was not unbound.");
-                }
                 return;
             }
             
             var djrole = new DjRole(Context.Guild.Id, role.Id);
 
-            var suc = _db.AddItem<DjRole>("djroles", djrole);
+            var suc = _db.AddDjRole(djrole);
             if (suc) 
                 await ReplyAsync($"Changed the DJ role to {role.Mention}.", allowedMentions: AllowedMentions.None);
             else 
