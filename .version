@@ -1,6 +1,6 @@
-Mon Oct 11 03:04:11 UTC 2021
-commit f752cec0c5225c594da080446e9a4d352aa8753f
+Fri Oct 15 23:09:51 UTC 2021
+commit fd9d066718757ee3fe49588fec7d5def945e8d93
 Author: jakedacatman <helloihaxxedu@gmail.com>
-Date:   2021-10-10 23:03:54 -0400
+Date:   2021-10-15 19:08:41 -0400
 
-    try to fix queue issue
+    fix same voice channel perms
