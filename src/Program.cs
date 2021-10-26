@@ -194,11 +194,10 @@ namespace donniebot
                         .RandomColor()
                     )
                     .WithCurrentTimestamp()
-                    .WithFooter(context.Message.Content)
                     .WithAuthor(x => 
                     {
                         x.Name = context.User.Username;
-                        x.IconUrl = context.User.GetAvatarUrl(size: 512);
+                        x.IconUrl = context.User.GetAvatarUrl();
                     })
                     .WithTitle("Command failed")
                     .WithDescription(res.ErrorReason);
@@ -214,19 +213,23 @@ namespace donniebot
                     }
                     case CommandError.BadArgCount:
                     {
-                        em
-                            .WithTitle("⁉️ Improper amount of arguments")
-                            .WithDescription(res.ErrorReason);
-                        break;
-                    }
-                    case CommandError.UnknownCommand:
-                    {
-                        em
-                            .WithTitle("❓ That command does not exist.")
-                            .WithDescription(res.ErrorReason);
-                        break;
-                    }
+                        em.WithTitle("⁉️ Improper amount of arguments");
 
+                        var value = info.IsSpecified ? info.Value : null;
+
+                        if (value is null)
+                            em.WithDescription(res.ErrorReason);
+                        else
+                        {
+                            var pre = _services.GetService<DbService>().GetPrefix(context.Guild.Id)?.Prefix ?? defaultPrefix;
+
+                            var cmd = context.Message.Content.Split(' ')[0].Replace(pre, "");
+
+                            em.WithDescription($"Usage: `{pre}{cmd} {string.Join(' ', value.Parameters.Select(x => x.Name))}`");
+                        }
+
+                        break;
+                    }
                     case CommandError.Exception:
                     {
                         em = await _services.GetService<MiscService>().GenerateErrorMessageAsync(((ExecuteResult)res).Exception);

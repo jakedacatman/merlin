@@ -19,7 +19,7 @@ namespace donniebot.commands
 
         [Command("loop")]
         [Alias("l", "lo")]
-        [RequireDjRole, RequireSameVoiceChannel]
+        [RequireDjRole, RequireVoiceChannel, RequireSameVoiceChannel]
         [Summary("Toggles looping the currently-playing song.")]
         public async Task LoopAsync()
         {

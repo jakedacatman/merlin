@@ -16,7 +16,7 @@ namespace donniebot.commands
 
         [Command("skip")]
         [Alias("sk")]
-        [RequireSameVoiceChannel]
+        [RequireVoiceChannel, RequireSameVoiceChannel]
         [Summary("Votes to skip the current song.")]
         public async Task SkipAsync() => await _audio.SkipAsync(Context.User as SocketGuildUser);
     }

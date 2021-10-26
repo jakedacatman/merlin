@@ -1298,7 +1298,7 @@ namespace donniebot.services
                     else if (msg is not null && msg.Attachments.Any())
                         return msg?.Attachments.First().Url;
                     else if (isNext)
-                        throw new ImageException("Try the command with a url, or attach an image.");
+                        throw new ImageException("Try the command with a URL, or attach an image.");
                     else
                     {
                         var previousmsg = await _misc.GetPreviousMessageAsync(msg.Channel as SocketTextChannel);

@@ -17,7 +17,7 @@ namespace donniebot.commands
 
         [Command("resume")]
         [Alias("re", "res")]
-        [RequireDjRole, RequireSameVoiceChannel]
+        [RequireDjRole, RequireVoiceChannel, RequireSameVoiceChannel]
         [Summary("Resumes playback.")]
         public async Task ResumeAsync() => await _audio.ResumeAsync(Context.Guild.Id);
     }

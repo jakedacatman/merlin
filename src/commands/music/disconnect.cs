@@ -32,10 +32,10 @@ namespace donniebot.commands
                 await _audio.DisconnectAsync(Context.Channel);
             else
             {
-                if (_audio.GetListeningUsers(Context.Guild.Id).Any() || 
-                    (_audio.GetCurrent(Context.Guild.Id) is not null && 
+                if (_audio.GetListeningUsers(Context.Guild.Id).Any() && 
+                    (_audio.GetCurrent(Context.Guild.Id) is not null || 
                     _audio.GetRawQueue(Context.Guild.Id).Any())
-                )  
+                )
                     await ReplyAsync("You are not in my voice channel, or there are people still listening.");
                 else
                     await _audio.DisconnectAsync(Context.Channel);

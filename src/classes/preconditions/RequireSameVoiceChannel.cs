@@ -19,7 +19,7 @@ namespace donniebot.classes
             if (currUser.VoiceChannel is not null && commandUser.VoiceChannel == currUser.VoiceChannel) 
                 return PreconditionResult.FromSuccess();
             
-            else if (currUser.VoiceChannel is null && commandUser.VoiceChannel is not null)
+            else if (currUser.VoiceChannel is null && commandUser.VoiceChannel != null)
                 return PreconditionResult.FromSuccess();
 
             return PreconditionResult.FromError("You must be in the same voice channel as me.");

@@ -18,7 +18,7 @@ namespace donniebot.commands
 
         [Command("skipplay")]
         [Alias("sp", "skp", "skpl")]
-        [RequireDjRole, RequireSongs, RequireSameVoiceChannel]
+        [RequireDjRole, RequireSongs, RequireVoiceChannel, RequireSameVoiceChannel]
         [Summary("Skips the current song to play another.")]
         public async Task SkipPlayAsync([Summary("The URL or YouTube search query."), Remainder] string queryOrUrl = null)
         {

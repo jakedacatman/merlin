@@ -17,7 +17,7 @@ namespace donniebot.commands
 
         [Command("pause")]
         [Alias("pa", "pau")]
-        [RequireDjRole, RequireSameVoiceChannel]
+        [RequireDjRole, RequireVoiceChannel, RequireSameVoiceChannel]
         [Summary("Pauses playback.")]
         public async Task PauseAsync() => await _audio.PauseAsync(Context.Guild.Id);
     }
