@@ -1,6 +1,6 @@
-Tue Oct 26 20:45:54 UTC 2021
-commit 51661a04026ec9e6b065cf415ac0c26c9002cbc3
+Fri Oct 29 03:39:57 UTC 2021
+commit 679a957d870f9e09ded1d0747282867d92382e36
 Author: jakedacatman <helloihaxxedu@gmail.com>
-Date:   2021-10-26 16:45:27 -0400
+Date:   2021-10-28 23:39:40 -0400
 
-    improved incorrect command params message
+    minor tweaks
