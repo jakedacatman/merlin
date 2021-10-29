@@ -235,6 +235,8 @@ namespace donniebot
                         em = await _services.GetService<MiscService>().GenerateErrorMessageAsync(((ExecuteResult)res).Exception);
                         break;
                     }
+                    case CommandError.UnknownCommand:
+                        return;
                 }
 
                 await context.Channel.SendMessageAsync(embed: em.Build(), messageReference: new MessageReference(context.Message.Id), allowedMentions: AllowedMentions.None);
