@@ -608,10 +608,7 @@ namespace donniebot.classes
                 {
                     IsPlaying = true;
 
-                    var bufferDown = new byte[block_size];
-                    var bufferRead = new byte[block_size];
-                    var bufferWrite = new byte[block_size];
-
+                    byte[] bufferDown = new byte[block_size], bufferRead = new byte[block_size], bufferWrite = new byte[block_size];
                     int bytesDown = 0, bytesRead = 0, bytesConverted = 0;
 
                     var pauseCts = new CancellationTokenSource();
@@ -773,12 +770,19 @@ namespace donniebot.classes
         #pragma warning disable VSTHRD100 //Avoid "async void" methods, because any exceptions not handled by the method will crash the process. (what else can i do? if i make it return Task the inheritance does not work)
         public async void Dispose()
         {
-            HasDisconnected = true;
-            IsPlaying = false;
-            IsPaused = false;
-            await VoiceChannel.DisconnectAsync();
-            Connection.Dispose();
-            await Stream.DisposeAsync();
+            try
+            {
+                HasDisconnected = true;
+                IsPlaying = false;
+                IsPaused = false;
+                await VoiceChannel.DisconnectAsync();
+                Connection.Dispose();
+                await Stream.DisposeAsync();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
         }
         #pragma warning restore VSTHRD100
     }
