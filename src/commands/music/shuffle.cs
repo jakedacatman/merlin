@@ -25,7 +25,7 @@ namespace donniebot.commands
         {
             _audio.Shuffle(Context.Guild.Id);
             
-            await ReplyAsync("♠️ Shuffled the queue!");
+            await ReplyAsync("🎲 Shuffled the queue!");
         }
     }
 }
