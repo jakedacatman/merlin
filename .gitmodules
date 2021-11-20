@@ -6,3 +6,6 @@
 	path = deps/SVGSharpie
 	url = https://github.com/jakedacatman/SVGSharpie
 	branch = master
+[submodule "deps/Discord.InteractivityAddon"]
+	path = deps/Discord.InteractivityAddon
+	url = https://github.com/jakedacatman/Discord.InteractivityAddon

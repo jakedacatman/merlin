@@ -39,6 +39,13 @@ namespace donniebot.services
         private readonly Regex _reg = new Regex(@"[0-9]+(\.[0-9]{1,2})? fps");
         private readonly NekoEndpoints _nkeps;
 
+        private readonly FontFamily impactFontFamily;
+        private readonly FontFamily linuxLFontFamily;
+        private readonly FontFamily limerickFontFamily;
+        private readonly FontFamily twemojiFontFamily;
+        private readonly FontFamily hanaminFontFamily;
+        private readonly FontFamily goulongFontFamily;
+
         public ImageService(MiscService misc, NetService net, RandomService rand, DbService db, NekoEndpoints nkeps, DiscordShardedClient client)
         {
             _misc = misc;
@@ -47,6 +54,25 @@ namespace donniebot.services
             _db = db;
             _nkeps = nkeps;
             _client = client;
+
+
+            if (!SystemFonts.Collection.TryGet("Impact", out impactFontFamily))
+                throw new Exception("Twemoji Mozilla font not found.");
+
+            if (!SystemFonts.Collection.TryGet("HanaminA", out hanaminFontFamily))
+                throw new Exception("HanaminA font not found.");
+
+            if (!SystemFonts.Collection.TryGet("Twemoji Mozilla", out twemojiFontFamily))
+                throw new Exception("Twemoji Mozilla font not found.");
+
+            if (!SystemFonts.Collection.TryGet("Linux Libertine", out linuxLFontFamily))
+                throw new Exception("Linux Libertine font not found.");
+
+            if (!SystemFonts.Collection.TryGet("LimerickCdSerial-Xbold", out limerickFontFamily))
+                throw new Exception("LimerickCdSerial Xbold font not found.");
+
+            if (!SystemFonts.Collection.TryGet("Goulong", out goulongFontFamily))
+                throw new Exception("Goulong font not found.");
         }
 
         public async Task<ISImage> InvertAsync(string url) => Invert(await DownloadFromUrlAsync(url));
@@ -160,17 +186,18 @@ namespace donniebot.services
             return source;
         }
 
-        public async Task<ISImage> CaptionAsync(string url, string text) => Caption(await DownloadFromUrlAsync(url), text);
-        public ISImage Caption(ISImage source, string text)
+        public async Task<ISImage> CaptionAsync(string url, string caption) => Caption(await DownloadFromUrlAsync(url), caption);
+        public ISImage Caption(ISImage source, string caption)
         {
-            var font = SystemFonts.Collection.CreateFont("LimerickCdSerial-Xbold", source.Width / 12f, FontStyle.Bold);
-            //var font = SystemFonts.Collection.CreateFont("Twemoji", source.Width / 12f, FontStyle.Regular);
+            var font = new Font(limerickFontFamily, source.Width / 12f, FontStyle.Bold);
+
             float padding = 0.05f * source.Width;
             float wrap = source.Width - (2 * padding);
 
-            var bounds = TextMeasurer.Measure(text, new RendererOptions(font) 
+            var bounds = TextMeasurer.Measure(caption, new SixLabors.Fonts.TextOptions(font) 
             { 
-                WrappingWidth = wrap, 
+                TextAlignment = TextAlignment.Center,
+                WrappingLength = wrap, 
                 HorizontalAlignment = HorizontalAlignment.Center, 
                 VerticalAlignment = VerticalAlignment.Center 
             });
@@ -178,20 +205,13 @@ namespace donniebot.services
             var height = Math.Max((int)(bounds.Height * 1.25), (int)(source.Height / 4.5f));
 
             var img = new Image<Rgba32>(source.Width, source.Height + height);
-            
 
-            if (!SystemFonts.TryFind("Twemoji Mozilla", out var tcef) && !SystemFonts.TryFind("Twemoji", out tcef))
-                throw new ImageException("Failed to find the Twemoji font. Make sure that it is installed in the right place!");
-                
-            if (!SystemFonts.TryFind("HanaMinA", out var hmf) && !SystemFonts.TryFind("Yu Gothic", out hmf))
-                throw new ImageException("Failed to find the HanaMinA or Yu Gothic fonts. Make sure that either of them is installed in the right place!");
-
-            var to = new TextOptions
+            var to = new SixLabors.ImageSharp.Drawing.Processing.TextOptions
             {
                 HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center,
                 WrapTextWidth = wrap,
-                FallbackFonts = { tcef, hmf }
+                FallbackFonts = { twemojiFontFamily, hanaminFontFamily }
             };
 
             var options = new DrawingOptions()
@@ -204,7 +224,7 @@ namespace donniebot.services
             img.Mutate(x =>
             {
                 x.Fill(SixLabors.ImageSharp.Color.White);
-                x.DrawText(options, text, font, SixLabors.ImageSharp.Color.Black, location);
+                x.DrawText(options, caption, font, SixLabors.ImageSharp.Color.Black, location);
             });
 
             if (source.Frames.Count() > 1)
@@ -330,26 +350,31 @@ namespace donniebot.services
             return source;
         }
 
-        public async Task<ISImage> DemotivationalAsync(string url, string title, string text) => Demotivational(await DownloadFromUrlAsync(url), title, text);
-        public ISImage Demotivational(ISImage source, string title, string text)
+        public async Task<ISImage> DemotivationalAsync(string url, string title, string body) => Demotivational(await DownloadFromUrlAsync(url), title, body);
+        public ISImage Demotivational(ISImage source, string title, string body)
         {
             var w = source.Width;
             var h = source.Height;
 
-            var font = SystemFonts.Collection.CreateFont("Goulong", source.Width / 12f, FontStyle.Regular);
-            var tFont = SystemFonts.Collection.CreateFont("Linux Libertine", source.Width / 6f, FontStyle.Regular);
-            float padding = 0.05f * source.Width;
-            float wrap = source.Width - (2 * padding);
+            var font = new Font(goulongFontFamily, w / 12f, FontStyle.Regular);
 
-            var bounds = TextMeasurer.Measure(text, new RendererOptions(font) 
+            var tFont = new Font(linuxLFontFamily, w / 6f, FontStyle.Regular);
+
+            float padding = 0.05f * w;
+            float wrap = w - (2 * padding);
+
+            var bounds = TextMeasurer.Measure(body, new SixLabors.Fonts.TextOptions(font) 
             { 
-                WrappingWidth = wrap, 
+                TextAlignment = TextAlignment.Center,
+                WrappingLength = wrap, 
                 HorizontalAlignment = HorizontalAlignment.Center, 
                 VerticalAlignment = VerticalAlignment.Center
             });
 
-            var tBounds = TextMeasurer.Measure(title, new RendererOptions(tFont) 
+            var tBounds = TextMeasurer.Measure(title, new SixLabors.Fonts.TextOptions(tFont) 
             {
+                TextAlignment = TextAlignment.Center,
+                WrappingLength = wrap,
                 HorizontalAlignment = HorizontalAlignment.Center, 
                 VerticalAlignment = VerticalAlignment.Center
             });
@@ -359,11 +384,12 @@ namespace donniebot.services
                 var ratio = wrap / tBounds.Width;
                 var size = tFont.Size * ratio;
 
-                tFont = SystemFonts.Collection.CreateFont("Linux Libertine", size, FontStyle.Regular);;
+                tFont = new Font(linuxLFontFamily, size, FontStyle.Regular);;
 
-                tBounds = TextMeasurer.Measure(title, new RendererOptions(tFont) 
+                tBounds = TextMeasurer.Measure(title, new SixLabors.Fonts.TextOptions(tFont) 
                 { 
-                    WrappingWidth = wrap, 
+                    TextAlignment = TextAlignment.Center,
+                    WrappingLength = wrap, 
                     HorizontalAlignment = HorizontalAlignment.Center, 
                     VerticalAlignment = VerticalAlignment.Center
                 });
@@ -385,15 +411,12 @@ namespace donniebot.services
 
             var location = new PointF(bw + padding, r.Bottom + bh);
 
-            SystemFonts.TryFind("Twemoji Mozilla", out var tcef);
-            SystemFonts.TryFind("HanaMinA", out var hmf);
-
-            var to = new TextOptions
+            var to = new SixLabors.ImageSharp.Drawing.Processing.TextOptions
             {
                 HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center,
                 WrapTextWidth = wrap,
-                FallbackFonts = { tcef ?? SystemFonts.Find("Twemoji"), hmf ?? SystemFonts.Find("Yu Gothic") }
+                FallbackFonts = { twemojiFontFamily, hanaminFontFamily }
             };
 
             var options = new DrawingOptions()
@@ -408,163 +431,9 @@ namespace donniebot.services
                 nextY = (height + .25f * bounds.Height);
                 
             location.Y += (nextY);
-            bg.Mutate(x => x.DrawText(options, text, font, SixLabors.ImageSharp.Color.White, location));
+            bg.Mutate(x => x.DrawText(options, body, font, SixLabors.ImageSharp.Color.White, location));
             
             return Overlay((ISImage)bg, source, new Point(bw, bh), source.Size());
-        }
-
-        public async Task<ISImage> RedpillAsync(string choice1, string choice2)
-        {
-            var redpillImg = ISImage.Load(await _net.DownloadFromUrlAsync("https://i.jakedacatman.me/BIQtx.png"));
-
-            Font rF = SystemFonts.CreateFont("Impact", 40f);
-            Font bF = SystemFonts.CreateFont("Impact", 40f);
-
-            var wrap = 200;
-
-            var redBounds = TextMeasurer.Measure(choice1, new RendererOptions(rF) 
-            { 
-                WrappingWidth = wrap,
-                HorizontalAlignment = HorizontalAlignment.Center, 
-                VerticalAlignment = VerticalAlignment.Center
-            });
-
-            var blueBounds = TextMeasurer.Measure(choice2, new RendererOptions(bF) 
-            {
-                WrappingWidth = wrap,
-                HorizontalAlignment = HorizontalAlignment.Center, 
-                VerticalAlignment = VerticalAlignment.Center
-            });
-
-            if (redBounds.Width > wrap)
-            {
-                var ratio = wrap / redBounds.Width;
-                var size = rF.Size * ratio;
-
-                rF = SystemFonts.Collection.CreateFont("Impact", size, FontStyle.Regular);;
-
-                redBounds = TextMeasurer.Measure(choice1, new RendererOptions(rF) 
-                { 
-                    WrappingWidth = wrap, 
-                    HorizontalAlignment = HorizontalAlignment.Left, 
-                    VerticalAlignment = VerticalAlignment.Center
-                });
-            }
-
-            if (blueBounds.Width > wrap)
-            {
-                var ratio = wrap / blueBounds.Width;
-                var size = bF.Size * ratio;
-
-                bF = SystemFonts.Collection.CreateFont("Impact", size, FontStyle.Regular);
-
-                blueBounds = TextMeasurer.Measure(choice2, new RendererOptions(bF) 
-                { 
-                    WrappingWidth = wrap, 
-                    HorizontalAlignment = HorizontalAlignment.Left, 
-                    VerticalAlignment = VerticalAlignment.Center
-                });
-            }
-
-            var location = new PointF(186 - (.5f * redBounds.Width), 270);
-
-            SystemFonts.TryFind("Twemoji Mozilla", out var tcef);
-            SystemFonts.TryFind("HanaMinA", out var hmf);
-
-            var to = new TextOptions
-            {
-                HorizontalAlignment = HorizontalAlignment.Left,
-                VerticalAlignment = VerticalAlignment.Center,
-                WrapTextWidth = wrap,
-                FallbackFonts = { tcef ?? SystemFonts.Find("Twemoji"), hmf ?? SystemFonts.Find("Yu Gothic") }
-            };
-
-            var options = new DrawingOptions()
-            {
-                TextOptions = to
-            };
-
-            redpillImg.Mutate(x => 
-            {
-                x.DrawText(options, choice1, rF, Pens.Solid(SixLabors.ImageSharp.Color.Black, 3), location);
-                x.DrawText(options, choice1, rF, SixLabors.ImageSharp.Color.White, location);
-            });
-
-            location = new PointF(521 - (.5f * blueBounds.Width), 270);
-            redpillImg.Mutate(x => 
-            {
-                x.DrawText(options, choice2, bF, Pens.Solid(SixLabors.ImageSharp.Color.Black, 3), location);
-                x.DrawText(options, choice2, bF, SixLabors.ImageSharp.Color.White, location);
-            });
-
-            return redpillImg;
-        }
-
-        public async Task<string> VideoFilterAsync(string url, Func<ISImage, string, ISImage> func, string arg1)
-        {
-            if (!await _net.IsVideoAsync(url)) throw new VideoException("Not a video.");
-
-            var id = await _net.DownloadToFileAsync(url);
-            
-            var framerate = _reg.Match(await Shell.RunAsync($"ffprobe -hide_banner -show_streams {id}", true)).Value.Replace(" fps", "");
-
-            var tmp = Directory.CreateDirectory($"tmp-{id}");
-            await Shell.FfmpegAsync($"-i {id} -hide_banner -vn {tmp.Name}/{id}.aac", true);
-            await Shell.FfmpegAsync($"-i {id} -r {framerate} -f image2 -hide_banner {tmp.Name}/frame-%d.png", true);
-
-            var files = tmp.EnumerateFiles().Where(x => x.Name.Contains(".png"));
-            for (int i = 0; i < files.Count(); i++)
-            {
-                var f = files.ElementAt(i);
-                var img = await ISImage.LoadAsync(f.FullName);
-
-                if (i == 0 && (img.Width > 1000 || img.Height > 1000))
-                    throw new VideoException("Video too large.");
-
-                img = func(img, arg1);
-
-                File.Delete(f.FullName);
-                Save(img, f.FullName);
-            }
-
-            await Shell.FfmpegAsync($"-f image2 -framerate {framerate} -i {tmp.Name}/frame-%d.png -i {tmp.Name}/{id}.aac -hide_banner -c:v libx264 -c:a copy {id}.mp4", true);
-
-            File.Delete(id);
-            Directory.Delete(tmp.Name, true);
-
-            return $"{id}.mp4";
-        }
-        public async Task<string> VideoFilterAsync(string url, Func<ISImage, string, string, ISImage> func, string arg1, string arg2)
-        {
-            if (!await _net.IsVideoAsync(url)) throw new VideoException("Not a video.");
-
-            var id = await _net.DownloadToFileAsync(url);
-            
-            var framerate = _reg.Match(await Shell.RunAsync($"ffprobe -hide_banner -show_streams {id}", true)).Value.Replace(" fps", "");
-
-            var tmp = Directory.CreateDirectory($"tmp-{id}");
-            await Shell.FfmpegAsync($"-i {id} -hide_banner -vn {tmp.Name}/{id}.aac", true);
-            await Shell.FfmpegAsync($"-i {id} -r {framerate} -f image2 -hide_banner {tmp.Name}/frame-%04d.png", true);
-
-            foreach (var f in tmp.EnumerateFiles().Where(x => x.Name.Contains(".png")))
-            {
-                var img = await ISImage.LoadAsync(f.FullName);
-
-                if (img.Width > 1000 || img.Height > 1000)
-                    throw new VideoException("Video too large.");
-
-                img = func(img, arg1, arg2);
-
-                File.Delete(f.FullName);
-                Save(img, f.FullName);
-            }
-
-            await Shell.FfmpegAsync($"-f image2 -framerate {framerate} -i {tmp.Name}/frame-%04d.png -i {tmp.Name}/{id}.aac -hide_banner -c:v libx264 -c:a copy {id}.mp4", true);
-
-            File.Delete(id);
-            Directory.Delete(tmp.Name, true);
-
-            return $"{id}.mp4";
         }
  
         public ISImage GifFilter(ISImage source, Func<ISImage, ISImage> func)
@@ -774,14 +643,14 @@ namespace donniebot.services
             return src;
         }
 
-        public async Task<ISImage> DrawTextAsync(string url, string text, string topText = null) => DrawText(await DownloadFromUrlAsync(url), text, topText);
-        public ISImage DrawText(ISImage source, string text, string bottomText = null)
+        public async Task<ISImage> DrawTextAsync(string url, string topText, string bottomText = null) => DrawText(await DownloadFromUrlAsync(url), topText, bottomText);
+        public ISImage DrawText(ISImage source, string topText, string bottomText = null)
         {
             if (source.Frames.Count > 1)
-                return GifFilter(source, text, bottomText, DrawText);
+                return GifFilter(source, topText, bottomText, DrawText);
             else
             {
-                if (string.IsNullOrEmpty(text) && string.IsNullOrEmpty(bottomText))
+                if (string.IsNullOrEmpty(topText) && string.IsNullOrEmpty(bottomText))
                     throw new ImageException("Text cannot be blank.");
 
                 float padding = 0.05f * source.Width;
@@ -790,34 +659,36 @@ namespace donniebot.services
                 var maxArea = new SizeF(width, 0.4f * source.Height);
             
                 var tSize = Math.Min(source.Height / 10f, source.Width / 10f);
-                Font tF = SystemFonts.CreateFont("Impact", tSize);
+                Font tF = new Font(impactFontFamily, tSize);
 
                 var meta = source.Metadata;
 
-                var tOptions = new RendererOptions(tF, 72f, 72f, new System.Numerics.Vector2(padding, 0))
+                var tOptions = new SixLabors.Fonts.TextOptions(tF)
                 {
                     VerticalAlignment = VerticalAlignment.Top,
                     HorizontalAlignment = HorizontalAlignment.Center,
-                    WrappingWidth = width
+                    WrappingLength = width,
+                    TextAlignment = TextAlignment.Center
                 };
 
-                var tBounds = TextMeasurer.Measure(text, tOptions);
+                var tBounds = TextMeasurer.Measure(topText, tOptions);
 
                 if (tBounds.Height > maxArea.Height || tBounds.Width > maxArea.Width)
                 {
                     tSize = Math.Min(maxArea.Height / tBounds.Height * tSize, maxArea.Width / tBounds.Width * tSize);
-                    tF = SystemFonts.CreateFont("Impact", tSize);
+                    tF = new Font(impactFontFamily, tSize);
                 }
             
                 var bSize = Math.Min(source.Height / 10f, source.Width / 10f);
-                Font bF = SystemFonts.CreateFont("Impact", bSize);
+                Font bF = new Font(impactFontFamily, bSize);
 
 
-                var bOptions = new RendererOptions(bF, 72f, 72f, new System.Numerics.Vector2(padding, 0))
+                var bOptions = new SixLabors.Fonts.TextOptions(bF)
                 {
                     VerticalAlignment = VerticalAlignment.Bottom,
                     HorizontalAlignment = HorizontalAlignment.Center,
-                    WrappingWidth = width
+                    WrappingLength = width,
+                    TextAlignment = TextAlignment.Center
                 };
 
                 var bBounds = TextMeasurer.Measure(bottomText, bOptions);
@@ -825,23 +696,17 @@ namespace donniebot.services
                 if (bBounds.Height > maxArea.Height || bBounds.Width > maxArea.Width)
                 {
                     bSize = Math.Min(maxArea.Height / bBounds.Height * bSize, maxArea.Width / bBounds.Width * bSize);
-                    bF = SystemFonts.CreateFont("Impact", bSize);
+                    bF = new Font(impactFontFamily, bSize);
                 }
 
-                if (!SystemFonts.TryFind("Twemoji Mozilla", out var tcef) && !SystemFonts.TryFind("Twemoji", out tcef))
-                    throw new ImageException("Failed to find the Twemoji font. Make sure that it is installed in the right place!");
-                
-                if (!SystemFonts.TryFind("HanaMinA", out var hmf) && !SystemFonts.TryFind("Yu Gothic", out hmf))
-                    throw new ImageException("Failed to find the HanaMinA or Yu Gothic fonts. Make sure that either of them is installed in the right place!");
-
-                var to = new TextOptions
+                var to = new SixLabors.ImageSharp.Drawing.Processing.TextOptions
                 {
                     DpiX = 72f,
                     DpiY = 72f,
                     HorizontalAlignment = HorizontalAlignment.Center,
                     VerticalAlignment = VerticalAlignment.Bottom,
                     WrapTextWidth = width,
-                    FallbackFonts = { tcef, hmf }
+                    FallbackFonts = { twemojiFontFamily, hanaminFontFamily }
                 };
 
                 var options = new DrawingOptions()
@@ -858,8 +723,8 @@ namespace donniebot.services
                 {
                     source.Mutate(x =>
                     {
-                        x.DrawText(options, text, bF, Pens.Solid(SixLabors.ImageSharp.Color.Black, bPSize), location);
-                        x.DrawText(options, text, bF, SixLabors.ImageSharp.Color.White, location);
+                        x.DrawText(options, topText, bF, Pens.Solid(SixLabors.ImageSharp.Color.Black, bPSize), location);
+                        x.DrawText(options, topText, bF, SixLabors.ImageSharp.Color.White, location);
                     });
                 }
                 else
@@ -875,8 +740,8 @@ namespace donniebot.services
 
                     source.Mutate(x => 
                     {
-                        x.DrawText(options, text, tF, Pens.Solid(SixLabors.ImageSharp.Color.Black, tPSize), location);
-                        x.DrawText(options, text, tF, SixLabors.ImageSharp.Color.White, location);
+                        x.DrawText(options, topText, tF, Pens.Solid(SixLabors.ImageSharp.Color.Black, tPSize), location);
+                        x.DrawText(options, topText, tF, SixLabors.ImageSharp.Color.White, location);
                     });
                 }
 

@@ -11,8 +11,6 @@ using Newtonsoft.Json.Linq;
 using donniebot.classes;
 using System.Net;
 using HtmlAgilityPack;
-using SpotifyApi.NetCore;
-using SpotifyApi.NetCore.Authorization;
 using LiteDB;
 
 namespace donniebot.services
@@ -25,12 +23,6 @@ namespace donniebot.services
         private readonly string pasteKey;
         private readonly string imageHost;
         private readonly string pasteHost;
-
-        private readonly string spotifyAuthString;
-        private readonly HttpClient _spHc;
-        private readonly AccountsService _accs;
-                
-        private readonly PlaylistsApi _playlists;
 
         public NetService(DbService db, RandomService rand)
         {
@@ -51,30 +43,6 @@ namespace donniebot.services
                 imageHost = Console.ReadLine() ?? "https://i.jakedacatman.me/upload";
                 db.AddHost("imageHost", imageHost);
             }
-
-
-            spotifyAuthString = db.GetApiKey("spotify");
-            if (spotifyAuthString is null)
-            {
-                Console.WriteLine("What is your Spotify app's client id?");
-                var spotifyClientId = Console.ReadLine();
-
-                Console.WriteLine("What is your Spotify app's client secret?");
-                var spotifyClientSecret = Console.ReadLine();
-
-                if (string.IsNullOrEmpty(spotifyClientId) || string.IsNullOrEmpty(spotifyClientSecret)) //refrain from poisoning db
-                    throw new Exception("Must provide Spotify information.");
-
-                spotifyAuthString = $"{spotifyClientId}:{spotifyClientSecret}";
-                db.AddApiKey("spotify", spotifyAuthString);
-            }
-
-            Environment.SetEnvironmentVariable("SpotifyApiClientId", spotifyAuthString.Split(':')[0]);
-            Environment.SetEnvironmentVariable("SpotifyApiClientSecret", spotifyAuthString.Split(':')[1]);
-
-            _spHc = new HttpClient();
-            _accs = new AccountsService(_spHc);
-            _playlists = new PlaylistsApi(_spHc, _accs);
 
             uploadKey = db.GetApiKey("uploadKey") ?? db.GetApiKey("upload");
             pasteKey = db.GetApiKey("pasteKey") ?? uploadKey;
@@ -266,69 +234,6 @@ namespace donniebot.services
                 File.Delete(path); 
                 return await response.Content.ReadAsStringAsync();
             }
-        }
-
-        public async Task<List<PlaylistTrack>> GetSpotifySongsAsync(string url)
-        {
-            url = ParseUrl(url);
-            if (url == null || 
-                !Uri.IsWellFormedUriString(url, UriKind.Absolute) || 
-                !Uri.TryCreate(url, UriKind.Absolute, out var uri) ||
-                !url.Contains("open.spotify.com/")) 
-                    throw new WebException("Invalid URL.");
-
-            var list = new List<PlaylistTrack>();
-
-            if (url.Contains("/playlist/")) //different apis
-            {
-                var reg = new Regex(@"https:\/\/open.spotify.com\/playlist\/([a-zA-Z0-9]+).*");
-
-                var r = reg.Match(url);
-                if (!r.Success)
-                    throw new NotSupportedException("That was not a supported Spotify URL.");
-
-                var id = r.Groups[1].Captures[0].Value; //whole regex, then the specific part in parentheses
-
-                //shamelessly stolen from the example here: https://github.com/Ringobot/SpotifyApi.NetCore/blob/master/README.md
-                int limit = 100;
-                var playlist = await _playlists.GetTracks(id, limit: limit);
-                int offset = 0;
-                while (playlist.Items.Any())
-                {
-                    for (int i = 0; i < playlist.Items.Length; i++)
-                    {
-                        list.Add(playlist.Items[i]);
-                    }
-                    offset += limit;
-                    playlist = await _playlists.GetTracks(id, limit: limit, offset: offset);
-                }
-            }
-            /*else if (url.Contains("/album/"))
-            {
-                var r = Regex.Match(url, @"\/album\/([^\/\?\&]+)\??");
-                var id = r.Captures[0].Value;
-                
-                var albums = new AlbumsApi(_spHc, _accs);
-
-                int limit = 50;
-                var album = await albums.GetAlbumTracks<PlaylistPaged>(id, limit: limit);
-                int offset = 0;
-                while (album.Items.Any())
-                {
-                    for (int i = 0; i < album.Items.Length; i++)
-                    {
-                        list.Add(album.Items[0]);
-                    }
-                    offset += limit;
-                    album = await albums.GetAlbumTracks<PlaylistPaged>(id, limit: limit, offset: offset);
-                }
-            }*/
-            else
-            {
-                throw new NotSupportedException("That was not a supported Spotify URL.");
-            }
-
-            return list;
         }
 
         private string ParseUrl(string url) => url.TrimStart('<').TrimEnd('>');

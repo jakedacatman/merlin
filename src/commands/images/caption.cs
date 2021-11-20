@@ -27,19 +27,11 @@ namespace donniebot.commands
         [Command("caption")]
         [Alias("c", "cap")]
         [Summary("Captions an image.")]
-        public async Task CaptionAsync([Summary("The text to caption.")]string text, [Summary("The image to caption.")] string url = null)
+        public async Task CaptionAsync([Summary("The caption to write.")]string caption, [Summary("The image to caption.")] string url = null)
         {
             url = await _img.ParseUrlAsync(url, Context.Message);
-            if (await _net.IsVideoAsync(url))
-            {
-                var path = await _img.VideoFilterAsync(url, _img.Caption, text);
-                await _img.SendToChannelAsync(path, Context.Channel, new MessageReference(Context.Message.Id));
-            }
-            else
-            {
-                var img = await _img.CaptionAsync(url, text);
-                await _img.SendToChannelAsync(img, Context.Channel, new MessageReference(Context.Message.Id));
-            }
+            var img = await _img.CaptionAsync(url, caption);
+            await _img.SendToChannelAsync(img, Context.Channel, new MessageReference(Context.Message.Id));
         }
     }
 }

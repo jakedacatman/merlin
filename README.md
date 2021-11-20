@@ -10,4 +10,4 @@ how 2 build:
 
 if the packages do not install do `dotnet add package --prerelease <packagename>` in `merlin/src`
 
-also needs the Impact, [Twemoji Mozilla](https://github.com/mozilla/twemoji-colr/releases), and [HanaMinA](https://osdn.net/projects/hanazono-font/downloads/64385/hanazono-20160201.zip) fonts installed; you can take Impact from a Windows installation and install HanaMinA from the Arch package `ttf-hanazono`
+also needs several fonts, like Impact, [Goulong](https://www.ffonts.net/Goulong.font), [Linux Libertine](https://fontlibrary.org/en/font/linux-libertine), [LimerickCdSerial Xbold](https://ufonts.com/fonts/limerickcdserial-xbold-regular.html), [Twemoji Mozilla](https://github.com/mozilla/twemoji-colr/releases), and [HanaMinA](https://osdn.net/projects/hanazono-font/downloads/64385/hanazono-20160201.zip) fonts installed; you can take Impact from a Windows installation and install HanaMinA from the Arch package `ttf-hanazono`

@@ -87,8 +87,7 @@ namespace donniebot
                 ConnectionTimeout = int.MaxValue,
                 TotalShards = await _client.GetRecommendedShardCountAsync(),
                 DefaultRetryMode = RetryMode.AlwaysRetry,
-                MessageCacheSize = 1024,
-                ExclusiveBulkDelete = true
+                MessageCacheSize = 1024
             };
 
             _client = new DiscordShardedClient(cfg);

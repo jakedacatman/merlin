@@ -30,16 +30,8 @@ namespace donniebot.commands
         public async Task DrawTextAsync([Summary("The text to draw.")]string text, [Summary("The optional bottom text to draw.")] string bottomText = null, [Summary("The image to modify.")] string url = null)
         {
             url = await _img.ParseUrlAsync(url, Context.Message);
-            if (await _net.IsVideoAsync(url))
-            {
-                var path = await _img.VideoFilterAsync(url, _img.DrawText, text, bottomText);
-                await _img.SendToChannelAsync(path, Context.Channel, new MessageReference(Context.Message.Id));
-            }
-            else
-            {
-                var img = await _img.DrawTextAsync(url, text, bottomText);
-                await _img.SendToChannelAsync(img, Context.Channel, new MessageReference(Context.Message.Id));
-            }
+            var img = await _img.DrawTextAsync(url, text, bottomText);
+            await _img.SendToChannelAsync(img, Context.Channel, new MessageReference(Context.Message.Id));
         }
     }
 }
