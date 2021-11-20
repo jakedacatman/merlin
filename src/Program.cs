@@ -61,7 +61,6 @@ namespace donniebot
                 .AddSingleton(nekoEndpoints)
                 .AddSingleton<NetService>()
                 .AddSingleton<RandomService>()
-                .AddSingleton<AudioService>()
                 .BuildServiceProvider();
 
             await _commands.AddModulesAsync(Assembly.GetEntryAssembly(), _services);

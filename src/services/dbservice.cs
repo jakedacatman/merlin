@@ -123,27 +123,6 @@ namespace donniebot.services
             )?
             .Url;
 
-        public bool AddDjRole(DjRole role)
-        {
-            var collection = _db.GetCollection<DjRole>("djroles");
-            if (GetDjRole(role.GuildId) is not null)
-                collection.Delete(Query.EQ("GuildId", role.GuildId));
-
-            return collection.Upsert(role);
-        }
-
-        public DjRole GetDjRole(ulong guildId) => _db
-            .GetCollection<DjRole>("djroles")
-            .FindOne(Query
-                .EQ("GuildId", guildId)
-            );
-
-        public int RemoveDjRole(ulong guildId) => _db
-            .GetCollection<DjRole>("djroles")
-            .Delete(Query
-                .EQ("GuildId", guildId)
-            );
-
         public IEnumerable<Object> GetItems(string collection, Query query) => _db.GetCollection(collection).Find(query);
         
         public T GetItem<T>(string collection, Query query) => _db.GetCollection<T>(collection).FindOne(query);

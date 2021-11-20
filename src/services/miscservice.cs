@@ -78,11 +78,7 @@ namespace donniebot.services
             { typeof(RequireUserPermissionAttribute), "user requires perms" },
             { typeof(RequireNsfwAttribute), "requires nsfw channel" },
             { typeof(RequireBotPermissionAttribute), "bot requires perms" },
-            { typeof(RequireContextAttribute), "must be invoked in a guild or dm" },
-	        { typeof(RequireDjRoleAttribute), "requires dj role" },
-	        { typeof(RequireSongsAttribute), "requires songs in queue" },
-	        { typeof(RequireVoiceChannelAttribute), "must be in a voice channel" },
-	        { typeof(RequireSameVoiceChannelAttribute), "must be in bot's voice channel" }
+            { typeof(RequireContextAttribute), "must be invoked in a guild or dm" }
         };
 
         private readonly List<string> prefixes = new List<string>
@@ -116,7 +112,7 @@ namespace donniebot.services
             else if (e is VideoException ve)
                 description = ve.Message;
             else if (e is HttpRequestException he)
-                description = $"An exception occurred when making an HTTP request: {he.Message}\nIf this occurred while queueing a song on YouTube, then the song may be age-restricted.";
+                description = $"An exception occurred when making an HTTP request: {he.Message}";
             else if (e is SixLabors.ImageSharp.UnknownImageFormatException)
                 description = "The image format was not valid.";
             else
@@ -180,8 +176,7 @@ namespace donniebot.services
                 _commands = _services.GetService<CommandService>(),
                 _img = _services.GetService<ImageService>(),
                 _net = _services.GetService<NetService>(),
-                _rand = _services.GetService<RandomService>(),
-                _audio = _services.GetService<AudioService>()
+                _rand = _services.GetService<RandomService>()
             };
             globals._globals = globals;
 
