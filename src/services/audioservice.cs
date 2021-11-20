@@ -114,7 +114,7 @@ namespace donniebot.services
             if (!GetPlayer(id, out var player))
                 player = await ConnectAsync(textChannel, vc);
 
-            await player.EnqueueAsync(textChannel, vc, song, shuffle, position);
+            await player.EnqueueAsync(song, shuffle, position);
         }
         public async Task EnqueueManyAsync(SocketTextChannel textChannel, SocketVoiceChannel vc, IEnumerable<Song> songs, bool shuffle = false, int? position = null)
         {
@@ -122,7 +122,7 @@ namespace donniebot.services
             if (!GetPlayer(id, out var player))
                 player = await ConnectAsync(textChannel, vc);
 
-            await player.EnqueueManyAsync(textChannel, vc, songs, shuffle, position);
+            await player.EnqueueManyAsync(songs, shuffle, position);
         }
 
         public bool ToggleLoop(ulong id)

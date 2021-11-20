@@ -17,6 +17,10 @@ namespace donniebot.classes
             get => Info?.Size.Bytes ?? 0;
         }
         public AudioOnlyStreamInfo Info { get; }
+        public Bitrate Bitrate 
+        { 
+            get => Info?.Bitrate ?? new Bitrate(0);
+        }
 
         public Song(SongInfo info, AudioOnlyStreamInfo audioInfo, ulong queuerId, ulong guildId)
         {

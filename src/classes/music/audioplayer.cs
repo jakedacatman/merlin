@@ -15,6 +15,8 @@ using YoutubeExplode.Playlists;
 using System.Collections.Generic;
 using YoutubeExplode.Videos.Streams;
 using System.Net.Http;
+using System.IO.Pipelines;
+using System.Buffers;
 
 namespace donniebot.classes
 {
@@ -52,8 +54,6 @@ namespace donniebot.classes
         internal uint BytesDownloaded { get; set; } = 0;
         internal uint BytesPlayed { get; set; } = 0;
 
-        private const int block_size = 16384; //16 KiB
-
         public event Func<Song, Task> SongAdded;
         public event Func<Song, Task> SongEnded;
         public event Func<Song, Task> SongSkipped;
@@ -75,6 +75,8 @@ namespace donniebot.classes
 
             SongAdded += OnSongAddedAsync;
             SongEnded += OnSongEndedAsync;
+
+            _hc.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (X11; Linux x86_64; rv:94.0) Gecko/20100101 Firefox/94.0");
         }
 
         public async Task OnSongAddedAsync(Song s)
@@ -86,7 +88,7 @@ namespace donniebot.classes
         public async Task OnSongEndedAsync(Song s)
         {
             if (IsLooping)
-                await EnqueueAsync(TextChannel, VoiceChannel, s, position: 0);
+                await EnqueueAsync(s, position: 0);
 
             if (Queue.Any())
             {
@@ -104,7 +106,8 @@ namespace donniebot.classes
                 }
 
                 SongAdded += OnSongAdded;
-                await Task.Delay(300000, songEndedToken.Token); //5 minutes
+                
+                await Task.Delay(120000, songEndedToken.Token); //2 minutes
                 if (songEndedToken.IsCancellationRequested)
                     await DisconnectAsync();
 
@@ -208,8 +211,8 @@ namespace donniebot.classes
             HasDisconnected = false;
         }
 
-        private readonly SemaphoreSlim enq = new SemaphoreSlim(10);
-        public async Task EnqueueAsync(SocketTextChannel textChannel, SocketVoiceChannel vc, Song song, bool shuffle = false, int? position = null)
+        private readonly SemaphoreSlim enq = new SemaphoreSlim(1);
+        public async Task EnqueueAsync(Song song, bool shuffle = false, int? position = null, bool wasLooped = false)
         {
             await enq.WaitAsync();
             try
@@ -218,14 +221,14 @@ namespace donniebot.classes
 
                 if (shuffle) Shuffle();
                 
-                SongAdded?.Invoke(song);
+                if (!wasLooped) SongAdded?.Invoke(song);
             }
             finally
             {
                 enq.Release();
             }
         }
-        public async Task EnqueueManyAsync(SocketTextChannel textChannel, SocketVoiceChannel vc, IEnumerable<Song> songs, bool shuffle = false, int? position = null)
+        public async Task EnqueueManyAsync(IEnumerable<Song> songs, bool shuffle = false, int? position = null)
         {
             await enq.WaitAsync();
             try
@@ -268,12 +271,11 @@ namespace donniebot.classes
             var info = await yt.Videos.Streams.GetManifestAsync(VideoId.Parse(ytUrl));
             return info
                 .GetAudioOnlyStreams()
-                .OrderByDescending(x => x.Bitrate)
+                .Where(x => x.Bitrate.BitsPerSecond >= VoiceChannel.Bitrate)
+                .OrderBy(x => x.Bitrate)
                 .First();
         }
 
-        //private async Task<Stream> GetAudioAsync(AudioOnlyStreamInfo info) => await yt.Videos.Streams.GetAsync(info);
-        private async Task<Stream> GetAudioAsync(AudioOnlyStreamInfo info) => await GetAudioAsync(info.Url);
         private async Task<Stream> GetAudioAsync(string url) => await _hc.GetStreamAsync(url);
 
         public async Task<Song> CreateSongAsync(string queryOrUrl, ulong guildId, ulong userId)
@@ -485,7 +487,7 @@ namespace donniebot.classes
                     msg = await channel.SendMessageAsync("Adding your playlist...");
                     var playlist = await GetPlaylistAsync(queryOrUrl, id, user.Id);
 
-                    await EnqueueManyAsync(channel, vc, playlist.Songs, shuffle, position);
+                    await EnqueueManyAsync(playlist.Songs, shuffle, position);
 
                     await channel.SendMessageAsync(embed: new EmbedBuilder()
                         .WithTitle("Added playlist")
@@ -522,7 +524,7 @@ namespace donniebot.classes
 
                     try
                     {
-                        await EnqueueManyAsync(channel, vc, playlist, shuffle, position);
+                        await EnqueueManyAsync(playlist, shuffle, position);
                     }
                     finally
                     {
@@ -570,8 +572,9 @@ namespace donniebot.classes
                 .WithCurrentTimestamp()
             .Build());
 
-            await EnqueueAsync(channel, vc, song, shuffle, position);
+            await EnqueueAsync(song, shuffle, position);
         }
+
 
         public async Task PlayAsync()
         {
@@ -600,13 +603,15 @@ namespace donniebot.classes
                 if (HasDisconnected)
                     await UpdateAsync(VoiceChannel);
 
-                using (var songStream = await GetAudioAsync(song.Info))
+                using (var songStream = await GetAudioAsync(song.Info?.Url ?? (await GetAudioInfoAsync(song.Url)).Url))
                 using (var downloadStream = new SimplexStream())
                 using (var ffmpeg = InitProcess("ffmpeg", "-hide_banner -loglevel panic -i pipe:0 -ac 2 -f s16le -ar 48000 pipe:1"))
-                using (var input = ffmpeg.StandardInput.BaseStream)
-                using (var output = ffmpeg.StandardOutput.BaseStream)
+                using (var inputStream = ffmpeg.StandardInput.BaseStream)
+                using (var outputStream = ffmpeg.StandardOutput.BaseStream)
                 {
                     IsPlaying = true;
+
+                    const int block_size = 16384; //16 KiB
 
                     byte[] bufferDown = new byte[block_size], bufferRead = new byte[block_size], bufferWrite = new byte[block_size];
                     int bytesDown = 0, bytesRead = 0, bytesConverted = 0;
@@ -623,23 +628,26 @@ namespace donniebot.classes
                         return Task.CompletedTask;
                     };
 
-                    async Task Download(CancellationToken token) => await Task.Run(async() =>
+                    Task Download(CancellationToken token) => Task.Run(async() =>
                     {
                         try
                         {
+                            Console.WriteLine("began downloading");
                             do
                             {
                                 token.ThrowIfCancellationRequested();
 
                                 bytesDown = await songStream.ReadAsync(bufferDown, 0, block_size);
                                 BytesDownloaded += (uint)bytesDown;
-                                Console.WriteLine(bytesDown);
+                                Console.WriteLine($"{bytesDown} downloaded");
 
                                 await downloadStream.WriteAsync(bufferDown, 0, bytesDown);
                             }
                             while (bytesDown > 0);
+                            
+                            //await downloadStream.CopyToAsync(inputStream);
                         }
-                        catch (Exception)
+                        catch (OperationCanceledException)
                         {
 
                         }
@@ -647,37 +655,47 @@ namespace donniebot.classes
                         {
                             await downloadStream.FlushAsync();
                             downloadStream.CompleteWriting();
+                            Console.WriteLine("finished downloading");
                         }
                     });
 
-                    async Task Read(CancellationToken token) => await Task.Run(async() =>
+                    Task Read(CancellationToken token) => Task.Run(async() =>
                     {
                         try
                         {
+                            Console.WriteLine("began reading");
                             do
                             {
                                 token.ThrowIfCancellationRequested();
 
                                 bytesRead = await downloadStream.ReadAsync(bufferRead, 0, block_size);
-                                await input.WriteAsync(bufferRead, 0, bytesRead);
+
+                                Console.WriteLine($"{bytesRead} read");
+                                await inputStream.WriteAsync(bufferRead, 0, bytesRead);
                             }
                             while (bytesRead > 0);
                         }
-                        catch (Exception)
+                        catch (OperationCanceledException)
                         {
                             
                         }
+                        catch (IOException)
+                        {
+
+                        }
                         finally
                         {
-                            await input.FlushAsync();
+                            await inputStream.FlushAsync();
+                            Console.WriteLine($"finished reading");
                         }
                     });
 
                     var hasHadFullChunkYet = false;
-                    async Task Write(CancellationToken token) => await Task.Run(async() =>
+                    Task Write(CancellationToken token, byte[] playCached = null) => Task.Run(async() =>
                     {
                         try
                         {
+                            Console.WriteLine("began writing");
                             do
                             {
                                 while (IsPaused) //don't write to discord while paused
@@ -688,18 +706,18 @@ namespace donniebot.classes
 
                                         await Task.Delay(-1, pauseCts.Token); //wait forever (until token is called)
                                     }
-                                    catch (TaskCanceledException)
+                                    catch (OperationCanceledException)
                                     {
-
+                                        break;
                                     }
                                 }
-                                
-                                token.ThrowIfCancellationRequested();
 
+                                token.ThrowIfCancellationRequested();
                                 if (hasHadFullChunkYet && bytesConverted < block_size) //if bytesConverted is less than here, then the last (small) chunk is done
                                     break;
 
-                                bytesConverted = await output.ReadAsync(bufferWrite, 0, block_size);
+                                bytesConverted = await outputStream.ReadAsync(bufferWrite, 0, block_size);
+                                Console.WriteLine($"{bytesConverted} converted");
                                 BytesPlayed += (uint)bytesConverted;
 
                                 if (bytesConverted == block_size)
@@ -709,13 +727,14 @@ namespace donniebot.classes
                             }
                             while (bytesConverted > 0);
                         }
-                        catch (Exception)
+                        catch (OperationCanceledException)
                         {
-                            
+
                         }
                         finally
                         {
-                            ffmpeg.Kill();
+                            await Stream.FlushAsync();
+                            Console.WriteLine("finished writing");
                         }
                     });
 
@@ -731,17 +750,16 @@ namespace donniebot.classes
                         };
 
                         await Task.WhenAll(Download(cts.Token), Read(cts.Token), Write(cts.Token));
+                        //await Task.WhenAll(Download(cts.Token), Write(cts.Token));
+                        Console.WriteLine("done with all");
                     }
-                    catch (Exception)
+                    catch (AggregateException)
                     {
 
                     }
                     finally
                     {
                         await Stream.FlushAsync();
-
-                        if (!ffmpeg.HasExited) 
-                            ffmpeg.Kill();
                     }
                 }
             }
@@ -752,6 +770,9 @@ namespace donniebot.classes
             }
             finally
             {
+                if (IsLooping)
+                    await EnqueueAsync(song, position: 0, wasLooped: true);
+
                 BytesDownloaded = 0;
                 BytesPlayed = 0;
                 IsPlaying = false;

@@ -731,6 +731,25 @@ namespace donniebot.services
 
             return sb.ToString();
         }
+        public string PrettyFormatBits(long bits, int place)
+        {
+            double bd = bits; 
+            var sb = new StringBuilder();
+            long divisor = 1 << 10;
+
+            for (int i = 0; i < prefixes.Count; i++)
+            {
+                if (bd < 1024d)
+                {
+                    sb.Append($"{Math.Round(bd, place)} {prefixes[i]}bit{(Math.Round(bd, place) == 1 ? "" : "s")}");
+                    break;
+                }
+
+                bd /= divisor;
+            }
+
+            return sb.ToString();
+        }
 
         public async Task<IMessage> GetNthMessageAsync(SocketTextChannel channel, int pos) => (await channel.GetMessagesAsync().FlattenAsync()).OrderByDescending(x => x.Timestamp).ToArray()[pos];
 

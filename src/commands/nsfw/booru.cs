@@ -30,6 +30,10 @@ namespace donniebot.commands
         [RequireNsfw]
         public async Task BooruAsync([Summary("The search query."), Remainder] string query)
         {
+            await ReplyAsync("The API this command uses is currently down. Sorry for the inconvenience.");
+            return;
+
+            /*
             var img = await _img.GetBooruImageAsync(Context.Guild.Id, query);
 
             if (img.Url == null)
@@ -47,6 +51,7 @@ namespace donniebot.commands
                 .WithFooter($"Posted by {img.Author}");
                     
             await ReplyAsync(embed: embed.Build());
+            */
         }
     }
 }
