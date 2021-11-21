@@ -118,6 +118,7 @@ namespace donniebot.services
             return false;
         }
 
+        public async Task<Stream> GetStreamAsync(string url) => await _hc.GetStreamAsync(url);
 
         public async Task<byte[]> DownloadFromUrlAsync(string url)
         {

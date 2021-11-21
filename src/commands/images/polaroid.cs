@@ -30,6 +30,7 @@ namespace donniebot.commands
             url = await _img.ParseUrlAsync(url, Context.Message);
             var img = await _img.PolaroidAsync(url);
             await _img.SendToChannelAsync(img, Context.Channel, new MessageReference(Context.Message.Id));
+            img.Dispose();
         }
     }
 }

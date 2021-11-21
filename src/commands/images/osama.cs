@@ -31,6 +31,7 @@ namespace donniebot.commands
             var osamaUrl = "https://i.jakedacatman.me/UfLp7.jpg";
             var img = await _img.OverlayAsync(osamaUrl, url, 103, 58, 80, 60, 4f);
             await _img.SendToChannelAsync(img, Context.Channel, new MessageReference(Context.Message.Id));
+            img.Dispose();
         }
     }
 }

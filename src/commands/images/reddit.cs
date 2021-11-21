@@ -52,7 +52,6 @@ namespace donniebot.commands
                         .WithTimestamp(DateTime.UtcNow)
                         .WithImageUrl(img.Url)
                         .WithFooter($"Posted by {img.Author} • From {img.Subreddit}");
-
                         
                     await ReplyAsync(embed: embed.Build(), messageReference: new MessageReference(Context.Message.Id), allowedMentions: AllowedMentions.None);
                 }

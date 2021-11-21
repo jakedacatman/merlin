@@ -29,6 +29,7 @@ namespace donniebot.commands
             url = await _img.ParseUrlAsync(url, Context.Message);
             var img = await _img.SharpenAsync(url, sharpness);
             await _img.SendToChannelAsync(img, Context.Channel, new Discord.MessageReference(Context.Message.Id));
+            img.Dispose();
         }
     }
 }

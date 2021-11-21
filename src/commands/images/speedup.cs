@@ -25,11 +25,12 @@ namespace donniebot.commands
         [Command("speedup")]
         [Alias("su", "speed")]
         [Summary("Speeds up a GIF.")]
-        public async Task SpeedUpAsync([Summary("The speed to change the playback to (in times).")] double speed, [Summary("The image to change.")] string url = null)
+        public async Task SpeedUpAsync([Summary("The speed multiplier.")] double speed, [Summary("The image to change the speed of.")] string url = null)
         {
             url = await _img.ParseUrlAsync(url, Context.Message);
             var img = await _img.SpeedUpAsync(url, speed);
             await _img.SendToChannelAsync(img, Context.Channel, new MessageReference(Context.Message.Id));
+            img.Dispose();
         }
     }
 }

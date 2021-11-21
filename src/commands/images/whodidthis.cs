@@ -37,8 +37,9 @@ namespace donniebot.commands
             var size = new SizeF(1000, 512);
             var location = new PointF(0, 244);
 
-            img = _img.Overlay(wddOverlay, img, location, size);
-            await _img.SendToChannelAsync(img, Context.Channel, new MessageReference(Context.Message.Id));
+            _img.Overlay(wddOverlay, img, location, size);
+            await _img.SendToChannelAsync(wddOverlay, Context.Channel, new MessageReference(Context.Message.Id));
+            img.Dispose();
         }
     }
 }
