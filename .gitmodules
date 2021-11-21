@@ -8,3 +8,7 @@
 [submodule "deps/Fonts"]
 	path = deps/Fonts
 	url = https://github.com/SixLabors/Fonts
+[submodule "deps/ImageSharp.Drawing"]
+	path = deps/ImageSharp.Drawing
+	url = https://github.com/jakedacatman/ImageSharp.Drawing
+	branch = js/text-options
