@@ -5,10 +5,10 @@
 [submodule "deps/Discord.InteractivityAddon"]
 	path = deps/Discord.InteractivityAddon
 	url = https://github.com/jakedacatman/Discord.InteractivityAddon
+[submodule "deps/Fonts"]
+	path = deps/Fonts
+	url = https://github.com/SixLabors/Fonts
 [submodule "deps/ImageSharp.Drawing"]
 	path = deps/ImageSharp.Drawing
 	url = https://github.com/jakedacatman/ImageSharp.Drawing
 	branch = js/text-options
-[submodule "deps/Fonts"]
-	path = deps/Fonts
-	url = https://github.com/SixLabors/Fonts
