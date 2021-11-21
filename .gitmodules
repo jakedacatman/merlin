@@ -1,7 +1,3 @@
-[submodule "deps/YoutubeExplode"]
-	path = deps/YoutubeExplode
-	url = https://github.com/Tyrrrz/YoutubeExplode
-	branch = master
 [submodule "deps/SVGSharpie"]
 	path = deps/SVGSharpie
 	url = https://github.com/jakedacatman/SVGSharpie
@@ -11,7 +7,7 @@
 	url = https://github.com/jakedacatman/Discord.InteractivityAddon
 [submodule "deps/ImageSharp.Drawing"]
 	path = deps/ImageSharp.Drawing
-	url = https://github.com/SixLabors/ImageSharp.Drawing
+	url = https://github.com/jakedacatman/ImageSharp.Drawing
 	branch = js/text-options
 [submodule "deps/Fonts"]
 	path = deps/Fonts
