@@ -1,6 +1,6 @@
-Sat Jan 1 17:54:06 UTC 2022
-commit 32495293a75f770c1e9d2ad7e1457bd41fa56879
+Sat Jan 1 18:07:26 UTC 2022
+commit 90b6bffa8af10be61bb8d4f8c8387e307e38e680
 Author: jakedacatman <helloihaxxedu@gmail.com>
-Date:   2022-01-01 12:53:49 -0500
+Date:   2022-01-01 13:07:11 -0500
 
-    reverted mistake lol
+    fixed nuke command
