@@ -32,7 +32,6 @@ namespace donniebot.commands
             {
                 var img = await _img.ResizeAsync(url, width, height);
                 await _img.SendToChannelAsync(img, Context.Channel, new MessageReference(Context.Message.Id));
-                img.Dispose();
             }
         }
     }

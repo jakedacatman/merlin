@@ -30,7 +30,6 @@ namespace donniebot.commands
             
             var img = await _img.ResizeAsync(url, xScale, yScale);
             await _img.SendToChannelAsync(img, Context.Channel, new MessageReference(Context.Message.Id));
-            img.Dispose();
         }
         [Command("scale")]
         [Alias("sc")]
@@ -41,7 +40,6 @@ namespace donniebot.commands
             
             var img = await _img.ResizeAsync(url, scale, scale);
             await _img.SendToChannelAsync(img, Context.Channel, new MessageReference(Context.Message.Id));
-            img.Dispose();
         }
     }
 }

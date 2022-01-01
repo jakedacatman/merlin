@@ -39,7 +39,6 @@ namespace donniebot.commands
 
             _img.Overlay(wddOverlay, img, location, size);
             await _img.SendToChannelAsync(wddOverlay, Context.Channel, new MessageReference(Context.Message.Id));
-            img.Dispose();
         }
     }
 }

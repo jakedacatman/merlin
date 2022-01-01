@@ -398,20 +398,20 @@ namespace donniebot.services
         public async Task<ISImage> JpegAsync(string url, int quality)
         {
             var source = await DownloadFromUrlAsync(url);
-            Jpeg(source, quality);
-            return source;
+            return Jpeg(source, quality);
         }
-        public void Jpeg(ISImage source, int quality)
+        public ISImage Jpeg(ISImage source, int quality)
         {
             if (source.Frames.Count > 1)
-                GifFilter(source, quality, Jpeg);
+                return GifFilter(source, quality, Jpeg);
             else
             {
                 var path = SaveAsJpeg(source, quality);
                 var f = File.Open(path, FileMode.Open);
-                source = ISImage.Load(f);
+                var img = ISImage.Load(f);
                 f.Dispose();
-                File.Delete(path);  
+                File.Delete(path);
+                return img;
             }
         }
 
@@ -553,6 +553,22 @@ namespace donniebot.services
                 source.Frames.RemoveFrame(i);
                 source.Frames.InsertFrame(i, frame);
             }
+        }
+        public ISImage GifFilter(ISImage source, int x, Func<ISImage, int, ISImage> func)
+        {
+            if (source.Frames.Count <= 1) throw new InvalidOperationException("can't use a gif filter on a stationary image");
+            
+            var delay = source.Frames.RootFrame.Metadata.GetFormatMetadata(GifFormat.Instance).FrameDelay;
+            for (int i = 0; i < source.Frames.Count; i++)
+            {
+                var f = source.Frames.CloneFrame(i);
+                var frame = f.Frames[0];
+                frame.Metadata.GetFormatMetadata(GifFormat.Instance).FrameDelay = delay;
+                source.Frames.RemoveFrame(i);
+                source.Frames.InsertFrame(i, frame);
+            }
+
+            return source;
         }
         public void GifFilter(ISImage source, string x, Action<ISImage, string> func)
         {
@@ -766,7 +782,7 @@ namespace donniebot.services
                     bF = new Font(impactFontFamily, bSize);
                 }
 
-                PointF location = new PointF(.5f * source.Width, .90f * source.Height);
+                PointF location = new PointF(.5f * source.Width, .9f * source.Height);
 
                 var bottomOptions = new TextOptions(bF)
                 {
@@ -801,7 +817,7 @@ namespace donniebot.services
                     var topOptions = new TextOptions(tF)
                     {
                         HorizontalAlignment = HorizontalAlignment.Center,
-                        VerticalAlignment = VerticalAlignment.Bottom,
+                        VerticalAlignment = VerticalAlignment.Center,
                         WrappingLength = width,
                         FallbackFontFamilies = fallbackFonts,
                         Origin = location

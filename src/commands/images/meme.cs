@@ -44,7 +44,6 @@ namespace donniebot.commands
             _img.Jpeg(img, _rand.RandomNumber(1, 15));
 
             await _img.SendToChannelAsync(img, Context.Channel, new MessageReference(Context.Message.Id));
-            img.Dispose();
         }
     }
 }

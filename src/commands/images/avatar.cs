@@ -45,7 +45,7 @@ namespace donniebot.commands
         {
             var url = (await _client.Rest.GetUserAsync(userId))?.GetAvatarUrl(size: 512);
 
-            if (url == null)
+            if (url is null)
             {
                 await ReplyAsync("Invalid user ID.");
                 return;

@@ -32,7 +32,6 @@ namespace donniebot.commands
             url = await _img.ParseUrlAsync(url, Context.Message);
             var img = await _img.DemotivationalAsync(url, title, body);
             await _img.SendToChannelAsync(img, Context.Channel, new MessageReference(Context.Message.Id));
-            img.Dispose();
         }
     }
 }
