@@ -52,7 +52,7 @@ namespace donniebot.services
 
         public async Task<bool> IsVideoAsync(string url)
         {
-            url = ParseUrl(url);
+            url = await ParseUrlAsync(url);
             if (url == null || !Uri.TryCreate(url, UriKind.Absolute, out var uri)) return false;
 
             var res = await _hc.SendAsync(new HttpRequestMessage(HttpMethod.Head, uri));
@@ -71,7 +71,7 @@ namespace donniebot.services
 
         public async Task<long> GetContentLengthAsync(string url)
         {
-            url = ParseUrl(url);
+            url = await ParseUrlAsync(url);
             if (url == null || !Uri.TryCreate(url, UriKind.Absolute, out var uri)) return 0;
 
             var res = await _hc.SendAsync(new HttpRequestMessage(HttpMethod.Head, uri));
@@ -85,7 +85,7 @@ namespace donniebot.services
 
         public async Task<string> GetContentTypeAsync(string url)
         {
-            url = ParseUrl(url);
+            url = await ParseUrlAsync(url);
             if (url == null || !Uri.TryCreate(url, UriKind.Absolute, out var uri)) return null;
 
             var res = await _hc.SendAsync(new HttpRequestMessage(HttpMethod.Head, uri));
@@ -98,7 +98,7 @@ namespace donniebot.services
 
         public async Task<bool> IsSuccessAsync(string url)
         {
-            url = ParseUrl(url);
+            url = await ParseUrlAsync(url);
             if (url == null || !Uri.IsWellFormedUriString(url, UriKind.Absolute) || !Uri.TryCreate(url, UriKind.Absolute, out var uri)) return false;
 
             var res = await _hc.SendAsync(new HttpRequestMessage(HttpMethod.Head, uri));
@@ -118,33 +118,11 @@ namespace donniebot.services
             return false;
         }
 
-        public async Task<Stream> GetStreamAsync(string url) => await _hc.GetStreamAsync(url);
+        public async Task<Stream> GetStreamAsync(string url) => await _hc.GetStreamAsync(await ParseUrlAsync(url));
 
         public async Task<byte[]> DownloadFromUrlAsync(string url)
         {
-            url = ParseUrl(url);
-            if (url.Contains("giphy.com")) 
-            {
-                if (url.Contains('-'))
-                    url = $"https://i.giphy.com/media/{url.Split('-').Last()}/giphy.gif";
-                else 
-                    if (url.Contains("media.giphy.com"))
-                        url = url.Replace("media.", "i.");
-                    else
-                        url = $"https://i.giphy.com/media/{url.Split('/').Last()}/giphy.gif";
-            }
-            else if (url.Contains("tenor.com") && !url.Contains("media.tenor.com"))
-            {
-                var web = new HtmlWeb();
-                var html = await web.LoadFromWebAsync(url);
-
-                url = html
-                    .GetElementbyId("single-gif-container")
-                    .FirstChild
-                    .Element("div")
-                    .Element("img")
-                    .GetAttributeValue("src", null);
-            }
+            url = await ParseUrlAsync(url);
 
             var response = await _hc.GetAsync(new Uri(url));
 
@@ -155,31 +133,10 @@ namespace donniebot.services
         }
         public async Task<string> DownloadToFileAsync(string url)
         {
-            url = ParseUrl(url);
-            if (url.Contains("giphy.com")) 
-            {
-                if (url.Contains('-'))
-                    url = $"https://i.giphy.com/media/{url.Split('-').Last()}/giphy.gif";
-                else 
-                    if (url.Contains("media.giphy.com"))
-                        url = url.Replace("media.", "i.");
-                    else
-                        url = $"https://i.giphy.com/media/{url.Split('/').Last()}/giphy.gif";
-            }
-            else if (url.Contains("tenor.com") && !url.Contains("media.tenor.com"))
-            {
-                var web = new HtmlWeb();
-                var html = await web.LoadFromWebAsync(url);
+            url = await ParseUrlAsync(url);
 
-                url = html
-                    .GetElementbyId("single-gif-container")
-                    .FirstChild
-                    .Element("div")
-                    .Element("img")
-                    .GetAttributeValue("src", null);
-            }
-            
             var response = await _hc.GetAsync(new Uri(url));
+
             if (response.IsSuccessStatusCode)
             {
                 var id = _rand.GenerateId();
@@ -237,6 +194,34 @@ namespace donniebot.services
             }
         }
 
-        private string ParseUrl(string url) => url.TrimStart('<').TrimEnd('>');
+        private async Task<string> ParseUrlAsync(string url)
+        {
+            url = url.TrimStart('<').TrimEnd('>');
+
+            if (url.Contains("giphy.com")) 
+            {
+                if (url.Contains('-'))
+                    url = $"https://i.giphy.com/media/{url.Split('-').Last()}/giphy.gif";
+                else 
+                    if (url.Contains("media.giphy.com"))
+                        url = url.Replace("media.", "i.");
+                    else
+                        url = $"https://i.giphy.com/media/{url.Split('/').Last()}/giphy.gif";
+            }
+            else if (url.Contains("tenor.com") && !url.Contains("media.tenor.com"))
+            {
+                var web = new HtmlWeb();
+                var html = await web.LoadFromWebAsync(url);
+
+                url = html
+                    .GetElementbyId("single-gif-container")
+                    .FirstChild
+                    .Element("div")
+                    .Element("img")
+                    .GetAttributeValue("src", null);
+            }
+
+            return url;
+        }
     }
 }
