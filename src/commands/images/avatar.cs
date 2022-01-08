@@ -4,7 +4,6 @@ using Discord;
 using Discord.WebSocket;
 using Discord.Commands;
 using donniebot.services;
-using Interactivity;
 
 namespace donniebot.commands
 {

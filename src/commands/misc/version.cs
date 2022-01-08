@@ -2,12 +2,8 @@ using System;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
-using Interactivity;
 using System.Collections.Generic;
-using System.Linq;
 using donniebot.services;
-using Discord.WebSocket;
-using Discord.Net;
 using System.IO;
 using donniebot.classes;
 

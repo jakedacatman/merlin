@@ -20,8 +20,8 @@ using Discord.Commands;
 using MoonSharp.Interpreter;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Interactivity;
-using Interactivity.Pagination;
+using Fergun.Interactive;
+using Fergun.Interactive.Pagination;
 
 #pragma warning disable CA2200 //Re-throwing caught exception changes stack information
 
@@ -693,15 +693,22 @@ namespace donniebot.services
             
             if (pages.Count > 1)
                 paginator = new StaticPaginatorBuilder()
-                    .WithDeletion(DeletionOptions.AfterCapturedContext)
                     .WithUsers(user)
-                    .WithDefaultEmotes()
+                    .WithInputType(InputType.Buttons)
+                    .WithOptions(new Dictionary<IEmote, PaginatorAction>
+                    {   
+                        { new Emoji("◀️"), PaginatorAction.Backward },
+                        { new Emoji("▶️"), PaginatorAction.Forward },
+                        { new Emoji("⏮️"), PaginatorAction.SkipToStart },
+                        { new Emoji("⏭️"), PaginatorAction.SkipToEnd },
+                        { new Emoji("🛑"), PaginatorAction.Exit }
+                    })
                     .WithPages(pages);
             else
                 paginator = new StaticPaginatorBuilder()
-                    .WithDeletion(DeletionOptions.AfterCapturedContext)
                     .WithUsers(user)
-                    .WithEmotes(new Dictionary<IEmote, PaginatorAction> { { new Emoji("🛑"), PaginatorAction.Exit } })
+                    .WithInputType(InputType.Buttons)
+                    .WithOptions(new Dictionary<IEmote, PaginatorAction> { { new Emoji("🛑"), PaginatorAction.Exit } })
                     .WithPages(pages);
             
             return paginator;

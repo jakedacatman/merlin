@@ -2,12 +2,7 @@ using System;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
-using Interactivity;
-using Discord.WebSocket;
-using System.Linq;
-using donniebot.classes;
 using donniebot.services;
-using LiteDB;
 
 namespace donniebot.commands
 {
@@ -17,13 +12,11 @@ namespace donniebot.commands
     {
         private readonly MiscService _misc;
         private readonly DbService _db;
-        private readonly InteractivityService _inter;
 
-        public ResetCommand(MiscService misc, DbService db, InteractivityService inter)
+        public ResetCommand(MiscService misc, DbService db)
         {
             _misc = misc;
             _db = db;
-            _inter = inter;
         }
 
         [Command("reset")]

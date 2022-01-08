@@ -1,7 +1,6 @@
 using System;
 using System.Threading.Tasks;
 using Discord.Commands;
-using Interactivity;
 using System.Collections.Generic;
 using donniebot.services;
 using Discord.WebSocket;

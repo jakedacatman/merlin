@@ -5,8 +5,6 @@ using Discord;
 using Discord.WebSocket;
 using Discord.Commands;
 using donniebot.services;
-using donniebot.classes;
-using Interactivity;
 
 namespace donniebot.commands
 {

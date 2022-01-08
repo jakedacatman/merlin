@@ -2,7 +2,7 @@ using System;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
-using Interactivity;
+using Fergun.Interactive;
 using Discord.WebSocket;
 using System.Linq;
 
@@ -50,20 +50,18 @@ namespace donniebot.commands
                 if (_db.GetTag(tag, Context.Guild.Id) == null) await ReplyAsync("Failed to add the tag.");
                 else
                 {
-                    var msg = await ReplyAsync($"A tag already exists with the name \"{tag}\". Remove it?");
-                    var reply = await _inter.NextMessageAsync(timeout: TimeSpan.FromSeconds(10));
-                    
-                    if (!reply.IsSuccess)
-                    {
-                        await msg.DeleteAsync();
-                        return;
-                    }
-                    else
-                        await reply.Value.DeleteAsync();
+                    var msg = await ReplyAsync($"A tag already exists with the name \"{tag}\". Replace it?", 
+                        components: new ComponentBuilder()
+                            .WithButton("Confirm")
+                            .WithButton("Cancel", style: ButtonStyle.Danger)
+                            .Build()
+                    );
 
-                    if (reply.Value.Content.ToLower() == "yes" || reply.Value.Content.ToLower() == "y")
+                    var interaction = await _inter.NextMessageComponentAsync(x => x.User == Context.User && x.Message.Id == msg.Id, timeout: TimeSpan.FromSeconds(10));
+
+                    if (interaction.IsSuccess && interaction.Value.Data.CustomId == "Confirm")
                     {
-                        _db.RemoveTag(tag, Context.Guild.Id);
+                         _db.RemoveTag(tag, Context.Guild.Id);
                         ct = _db.AddTag(tag, value, Context.Guild.Id);
 
                         if (!ct) await ReplyAsync("Failed to add the tag.");

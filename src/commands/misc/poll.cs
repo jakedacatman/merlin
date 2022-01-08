@@ -2,10 +2,9 @@ using System;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
-using Interactivity;
+using Fergun.Interactive;
 using System.Collections.Generic;
 using donniebot.services;
-using Discord.WebSocket;
 using Discord.Net;
 using System.Linq;
 
@@ -16,9 +15,9 @@ namespace donniebot.commands
     {
         private readonly MiscService _misc;
         private readonly RandomService _rand;
-        private readonly InteractivityService _inter;
+        private readonly InteractiveService _inter;
 
-        public PollCommand(MiscService misc, InteractivityService inter, RandomService rand)
+        public PollCommand(MiscService misc, InteractiveService inter, RandomService rand)
         {
             _misc = misc;
             _inter = inter;
@@ -47,7 +46,7 @@ namespace donniebot.commands
             }
             catch (HttpException he) when (he.HttpCode == System.Net.HttpStatusCode.BadRequest) 
             {
-                _inter.DelayedSendMessageAndDeleteAsync(Context.Channel, deleteDelay: TimeSpan.FromSeconds(10), text: "One of your reactions was invalid.");
+                await _inter.DelayedSendMessageAndDeleteAsync(Context.Channel, deleteDelay: TimeSpan.FromSeconds(10), text: "One of your reactions was invalid.");
                 if (msg != null) await msg.DeleteAsync(); 
             }
         }

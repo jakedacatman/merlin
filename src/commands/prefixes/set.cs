@@ -2,12 +2,11 @@ using System;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
-using Interactivity;
-using Discord.WebSocket;
+using Fergun.Interactive;
 using System.Linq;
 using donniebot.classes;
 using donniebot.services;
-using LiteDB;
+using Discord.WebSocket;
 
 namespace donniebot.commands
 {
@@ -17,9 +16,9 @@ namespace donniebot.commands
     {
         private readonly MiscService _misc;
         private readonly DbService _db;
-        private readonly InteractivityService _inter;
+        private readonly InteractiveService _inter;
 
-        public SetCommand(MiscService misc, DbService db, InteractivityService inter)
+        public SetCommand(MiscService misc, DbService db, InteractiveService inter)
         {
             _misc = misc;
             _db = db;
@@ -34,21 +33,16 @@ namespace donniebot.commands
         {
             if (string.IsNullOrWhiteSpace(prefix))
             {
-                var msg = await ReplyAsync($"My current prefix is " + 
-                    $"`{_db.GetPrefix(Context.Guild.Id).Prefix}`" + 
-                    $". Did you intend to reset it?");
+                var msg = await ReplyAsync($"My current prefix is {_db.GetPrefix(Context.Guild.Id).Prefix}`. Did you intend to reset it?", 
+                    components: new ComponentBuilder()
+                        .WithButton("Confirm")
+                        .WithButton("Cancel", style: ButtonStyle.Danger)
+                        .Build()
+                );
 
-                var reply = await _inter.NextMessageAsync(timeout: TimeSpan.FromSeconds(10));
+                var interaction = await _inter.NextMessageComponentAsync(x => x.User == Context.User && x.Message.Id == msg.Id, timeout: TimeSpan.FromSeconds(10));
 
-                if (!reply.IsSuccess)
-                {
-                    await msg.DeleteAsync();
-                    return;
-                }
-                else
-                    await reply.Value.DeleteAsync();
-
-                if (reply.Value.Content.ToLower() == "yes" || reply.Value.Content.ToLower() == "y")
+                if (interaction.IsSuccess && interaction.Value.Data.CustomId == "Confirm")
                 {
                     _db.RemovePrefix(Context.Guild.Id);
                     await ReplyAsync("The prefix has been reset to default; mention me if you are unsure of what that is.");

@@ -1,7 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using Discord.Commands;
-using Interactivity;
+using Fergun.Interactive;
 using donniebot.services;
 
 namespace donniebot.commands
@@ -12,9 +12,9 @@ namespace donniebot.commands
     {
         private readonly MiscService _misc;
         private readonly DbService _db;
-        private readonly InteractivityService _inter;
+        private readonly InteractiveService _inter;
 
-        public TagCommand(MiscService misc, DbService db, InteractivityService inter)
+        public TagCommand(MiscService misc, DbService db, InteractiveService inter)
         {
             _misc = misc;
             _db = db;

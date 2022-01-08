@@ -4,8 +4,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
-using Interactivity;
-using Interactivity.Pagination;
+using Fergun.Interactive;
+using Fergun.Interactive.Pagination;
 using donniebot.services;
 
 namespace donniebot.commands
@@ -16,9 +16,9 @@ namespace donniebot.commands
         private readonly CommandService _commands;
         private readonly MiscService _misc;
         private readonly RandomService _rand;
-        private readonly InteractivityService _inter;
+        private readonly InteractiveService _inter;
 
-        public CommandsCommand(CommandService commands, MiscService misc, RandomService rand, InteractivityService inter)
+        public CommandsCommand(CommandService commands, MiscService misc, RandomService rand, InteractiveService inter)
         {
             _commands = commands;
             _misc = misc;
@@ -57,16 +57,25 @@ namespace donniebot.commands
                         .WithFields(new EmbedFieldBuilder().WithName(module.Key).WithValue(string.Join(", ", module.Value)))
                         .WithColor(_rand.RandomColor()));
 
-                await _inter.SendPaginatorAsync(new StaticPaginatorBuilder()
-                    .WithDeletion(DeletionOptions.AfterCapturedContext)
+                var msg = await _inter.SendPaginatorAsync(new StaticPaginatorBuilder()
                     .WithUsers(Context.User)
-                    .WithDefaultEmotes()
+                    .WithInputType(InputType.Buttons)
                     .WithFooter(PaginatorFooter.PageNumber)
+                    .WithOptions(new Dictionary<IEmote, PaginatorAction>
+                    {   
+                        { new Emoji("◀️"), PaginatorAction.Backward },
+                        { new Emoji("▶️"), PaginatorAction.Forward },
+                        { new Emoji("⏮️"), PaginatorAction.SkipToStart },
+                        { new Emoji("⏭️"), PaginatorAction.SkipToEnd },
+                        { new Emoji("🛑"), PaginatorAction.Exit }
+                    })
                     .WithPages(pages)
                     .Build(), Context.Channel);
-                }
-                else
-                {
+
+                if (msg.IsCanceled) await msg.Message.DeleteAsync();
+            }
+            else
+            {
                 KeyValuePair<string, List<string>> module;
                 var query = modules.Where(x => x.Key.ToLower() == category.ToLower());
                 if (query.Any()) 
@@ -76,7 +85,6 @@ namespace donniebot.commands
                     await ReplyAsync("Category not found.");
                     return;
                 }
-
 
                 var fields = new List<EmbedFieldBuilder> { new EmbedFieldBuilder().WithIsInline(true).WithName(module.Key).WithValue(string.Join(", ", module.Value)) };
 

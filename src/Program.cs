@@ -6,7 +6,6 @@ using Discord;
 using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
 using donniebot.services;
-using Interactivity;
 using LiteDB;
 using System.IO;
 using System.Collections.Generic;
@@ -15,6 +14,7 @@ using System.Net.Http;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using donniebot.classes;
+using Fergun.Interactive;
 
 namespace donniebot
 {
@@ -32,7 +32,10 @@ namespace donniebot
 
         public async Task StartAsync()
         {
-            _client = new DiscordShardedClient();
+            _client = new DiscordShardedClient(new DiscordSocketConfig
+            {
+                GatewayIntents = GatewayIntents.All
+            });
 
             _commands = new CommandService(new CommandServiceConfig
             {
@@ -55,12 +58,12 @@ namespace donniebot
                 .AddSingleton<DbService>()
                 .AddSingleton<MiscService>()
                 .AddSingleton(new GuildPrefix { GuildId = 0, Prefix = defaultPrefix })
-                .AddSingleton(new InteractivityService(_client))
                 .AddSingleton<ImageService>()
                 .AddSingleton<ModerationService>()
                 .AddSingleton(nekoEndpoints)
                 .AddSingleton<NetService>()
                 .AddSingleton<RandomService>()
+                .AddSingleton<InteractiveService>()
                 .BuildServiceProvider();
 
             await _commands.AddModulesAsync(Assembly.GetEntryAssembly(), _services);

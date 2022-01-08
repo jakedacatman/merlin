@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
-using Interactivity;
+using Fergun.Interactive;
 using donniebot.services;
 
 namespace donniebot.commands
@@ -17,9 +17,9 @@ namespace donniebot.commands
         private readonly CommandService _commands;
         private readonly MiscService _misc;
         private readonly IServiceProvider _services;
-        private readonly InteractivityService _inter;
+        private readonly InteractiveService _inter;
 
-        public HelpCommand(CommandService commands, MiscService misc, IServiceProvider services, InteractivityService inter)
+        public HelpCommand(CommandService commands, MiscService misc, IServiceProvider services, InteractiveService inter)
         {
             _commands = commands;
             _misc = misc;
@@ -32,7 +32,7 @@ namespace donniebot.commands
         [Summary("Brings up information about a specific command.")]
         public async Task HelpAsync([Summary("The command to get information about."), Remainder] string command = null)
         {
-            if (command == null) //run don.cmds
+            if (command == null) //run cmds command
             {
                 await _commands.Commands.Where(x => x.Name == "commands").First().ExecuteAsync(Context, ParseResult.FromSuccess(new List<TypeReaderValue> { new TypeReaderValue(null, 1f) }, new List<TypeReaderValue>()), _services);
                 return;
@@ -41,7 +41,10 @@ namespace donniebot.commands
             var cmds = _commands.Commands.Where(x => ((string.IsNullOrEmpty(x.Module.Group) ? "" : $"{x.Module.Group} ") + x.Name).TrimEnd(' ') == command);
             
             if (cmds.Any())
-                await _inter.SendPaginatorAsync(_misc.GenerateCommandInfo(cmds, Context.User as SocketGuildUser).Build(), Context.Channel);
+            {
+                var msg = await _inter.SendPaginatorAsync(_misc.GenerateCommandInfo(cmds, Context.User as SocketGuildUser).Build(), Context.Channel);
+                if (msg.IsCanceled) await msg.Message.DeleteAsync();
+            }
             else 
             {
                 var split = command.Split(' ');
@@ -52,7 +55,10 @@ namespace donniebot.commands
                 )));
                 
                 if (aliases.Any())
-                    await _inter.SendPaginatorAsync(_misc.GenerateCommandInfo(aliases, Context.User as SocketGuildUser).Build(), Context.Channel);
+                {
+                    var msg = await _inter.SendPaginatorAsync(_misc.GenerateCommandInfo(aliases, Context.User as SocketGuildUser).Build(), Context.Channel);
+                    if (msg.IsCanceled) await msg.Message.DeleteAsync();
+                }
                 else
                     await ReplyAsync("This command does not exist.");
             }

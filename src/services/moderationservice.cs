@@ -1,11 +1,9 @@
 using System;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
 using donniebot.classes;
-using LiteDB;
 using System.Collections.Generic;
 
 namespace donniebot.services
