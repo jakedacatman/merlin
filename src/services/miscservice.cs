@@ -105,7 +105,7 @@ namespace donniebot.services
         public async Task<EmbedBuilder> GenerateErrorMessageAsync(Exception e)
         {
             var description = "";
-            if (e is Discord.Net.HttpException ex && ex.DiscordCode == 40005)
+            if (e is Discord.Net.HttpException ex && ex.DiscordCode == DiscordErrorCode.RequestEntityTooLarge)
                 description = "The resulting file was too large to upload to Discord.";
             else if (e is ImageException ie)
                 description = ie.Message;
