@@ -3,10 +3,12 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Fergun.Interactive;
+using Fergun.Interactive.Selection;
+using merlin.classes;
 using Discord.WebSocket;
 using System.Linq;
 
-namespace donniebot.commands
+namespace merlin.commands
 {
     public partial class TagCommand : ModuleBase<ShardedCommandContext>
     {
@@ -37,7 +39,7 @@ namespace donniebot.commands
                 return;
             }
             if (string.IsNullOrWhiteSpace(value))
-            {
+            { 
                 await ReplyAsync("The value is empty.");
                 return;
             }
@@ -50,26 +52,29 @@ namespace donniebot.commands
                 if (_db.GetTag(tag, Context.Guild.Id) == null) await ReplyAsync("Failed to add the tag.");
                 else
                 {
-                    var msg = await ReplyAsync($"A tag already exists with the name \"{tag}\". Replace it?", 
-                        components: new ComponentBuilder()
-                            .WithButton("Confirm", "confirm")
-                            .WithButton("Cancel", "cancel", ButtonStyle.Danger)
-                            .Build()
-                    );
 
-                    var interaction = await _inter.NextMessageComponentAsync(x => x.User == Context.User && x.Message.Id == msg.Id, timeout: TimeSpan.FromSeconds(10));
+                    var interaction = await _inter.SendSelectionAsync(new ButtonSelectionBuilder<string>()
+                        .AddUser(Context.User)
+                        .WithSelectionPage(new PageBuilder()
+                            .WithTitle("⚠️ Warning ⚠️")
+                            .WithDescription($"A tag already exists with the name \"{tag}\". Replace it?")
+                            .WithCurrentTimestamp()
+                            .WithColor(_rand.RandomColor()
+                        ))
+                        .WithInputType(InputType.Buttons)
+                        .WithOptions(new[] { new ButtonOption<string>("Confirm", ButtonStyle.Primary), new ButtonOption<string>("Cancel", ButtonStyle.Danger) })
+                        .Build(), Context.Channel, timeout: TimeSpan.FromSeconds(10)); 
 
-                    if (interaction.IsSuccess && interaction.Value.Data.CustomId == "confirm")
+                    if (interaction.IsSuccess && interaction.Value.Option == "Confirm")
                     {
-                         _db.RemoveTag(tag, Context.Guild.Id);
+                        _db.RemoveTag(tag, Context.Guild.Id);
                         ct = _db.AddTag(tag, value, Context.Guild.Id);
 
                         if (!ct) await ReplyAsync("Failed to add the tag.");
-                        else 
-                        await ReplyAsync($"Added tag `{tag}`.");
+                        else await ReplyAsync($"Added tag `{tag}`.");
                     }
                     
-                    await msg.DeleteAsync();
+                    await interaction.Message.DeleteAsync();
                 }
             }
         }

@@ -4,11 +4,11 @@ using Discord;
 using Discord.Commands;
 using Fergun.Interactive;
 using System.Collections.Generic;
-using donniebot.services;
+using merlin.services;
 using Discord.Net;
 using System.Linq;
 
-namespace donniebot.commands
+namespace merlin.commands
 {
     [Name("Misc")]
     public class PollCommand : ModuleBase<ShardedCommandContext>

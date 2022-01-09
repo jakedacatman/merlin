@@ -1,6 +1,6 @@
 using LiteDB;
 
-namespace donniebot.classes
+namespace merlin.classes
 {
     public class Host
     {

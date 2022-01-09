@@ -3,11 +3,11 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using System.Collections.Generic;
-using donniebot.services;
+using merlin.services;
 using System.IO;
-using donniebot.classes;
+using merlin.classes;
 
-namespace donniebot.commands
+namespace merlin.commands
 {
     [Name("Misc")]
     public class VersionCommand : ModuleBase<ShardedCommandContext>
@@ -33,7 +33,7 @@ namespace donniebot.commands
             else
             {
                 var currVer = ParseFile(await File.ReadAllLinesAsync(".version")); //echo `date` > .version && git log --date=iso >> .version
-                var latestVer = ParseFile((await _net.DownloadAsStringAsync("https://raw.githubusercontent.com/jakedacatman/donniebot/master/.version")).Split('\n'));
+                var latestVer = ParseFile((await _net.DownloadAsStringAsync("https://raw.githubusercontent.com/jakedacatman/merlin/master/.version")).Split('\n'));
                 
                 await ReplyAsync(embed: new EmbedBuilder()
                     .WithTitle($"Commit {currVer.Commit.Substring(0, 7)}") //7 character commit string like github

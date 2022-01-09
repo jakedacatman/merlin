@@ -1,7 +1,7 @@
 using System;
 using LiteDB;
 
-namespace donniebot.classes
+namespace merlin.classes
 {
     public class ModerationAction
     {

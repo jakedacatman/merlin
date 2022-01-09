@@ -3,10 +3,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
-using donniebot.classes;
+using merlin.classes;
 using System.Collections.Generic;
 
-namespace donniebot.services
+namespace merlin.services
 {
     public class ModerationService
     {
@@ -98,7 +98,7 @@ namespace donniebot.services
                 if (user.VoiceChannel is not null)
                     await user.ModifyAsync(x => x.Mute = true);
 
-                var action = new ModerationAction(user.Id, moderator.Id, guild.Id, donniebot.classes.ActionType.Mute, expiry, reason);
+                var action = new ModerationAction(user.Id, moderator.Id, guild.Id, merlin.classes.ActionType.Mute, expiry, reason);
                 AddAction(action);
 
                 return MuteResult.FromSuccess(action);
@@ -129,7 +129,7 @@ namespace donniebot.services
                 RemoveAction(x => 
                     x.UserId == user.Id && 
                     x.GuildId == guild.Id && 
-                    x.Type == donniebot.classes.ActionType.Mute
+                    x.Type == merlin.classes.ActionType.Mute
                 );
 
                 if (user.VoiceChannel is not null)

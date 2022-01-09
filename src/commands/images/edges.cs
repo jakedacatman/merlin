@@ -2,10 +2,10 @@ using System;
 using System.Threading.Tasks;
 using Discord.WebSocket;
 using Discord.Commands;
-using donniebot.services;
+using merlin.services;
 using Discord;
 
-namespace donniebot.commands
+namespace merlin.commands
 {
     [Name("Image")]
     public class EdgesCommand : ModuleBase<ShardedCommandContext>

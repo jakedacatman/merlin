@@ -2,7 +2,7 @@
 using System.Text;
 using System.IO;
 
-namespace donniebot.classes
+namespace merlin.classes
 {
     public class FakeConsole : StringWriter
     {

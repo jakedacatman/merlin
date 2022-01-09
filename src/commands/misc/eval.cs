@@ -2,9 +2,9 @@
 using System.Threading.Tasks;
 using Discord.WebSocket;
 using Discord.Commands;
-using donniebot.services;
+using merlin.services;
 
-namespace donniebot.commands
+namespace merlin.commands
 {
     [Name("Misc")]
     public class EvalCommand : ModuleBase<ShardedCommandContext>

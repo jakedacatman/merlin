@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using donniebot.classes;
+using merlin.classes;
 using Microsoft.Extensions.DependencyInjection;
 using LiteDB;
 
-namespace donniebot.services
+namespace merlin.services
 {
     public class DbService
     {

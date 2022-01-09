@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 
-namespace donniebot.commands
+namespace merlin.commands
 {
     public partial class TagCommand : ModuleBase<ShardedCommandContext>
     {

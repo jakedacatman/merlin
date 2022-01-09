@@ -3,7 +3,7 @@ using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
-namespace donniebot.classes
+namespace merlin.classes
 {
     public static class Shell
     {

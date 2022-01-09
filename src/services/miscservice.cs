@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
-using donniebot.classes;
+using merlin.classes;
 using System.Reflection;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -25,7 +25,7 @@ using Fergun.Interactive.Pagination;
 
 #pragma warning disable CA2200 //Re-throwing caught exception changes stack information
 
-namespace donniebot.services
+namespace merlin.services
 {
     public class MiscService
     {
@@ -34,6 +34,7 @@ namespace donniebot.services
         private readonly NetService _net;
         private readonly Random _random;
         private readonly RandomService _rand;
+        private readonly InteractiveService _inter;
 
         private readonly Dictionary<Type, string> luaTypeAliases = new Dictionary<Type, string>()
         {
@@ -91,13 +92,14 @@ namespace donniebot.services
             "Pi"
         };
 
-        public MiscService(DiscordShardedClient client, IServiceProvider services, NetService net, Random random, RandomService rand)
+        public MiscService(DiscordShardedClient client, IServiceProvider services, NetService net, Random random, RandomService rand, InteractiveService inter)
         {
             _client = client;
             _services = services;
             _random = random;
             _net = net;
             _rand = rand;
+            _inter = inter;
         }
 
         private readonly PhraseCollection errorPhrases = PhraseCollection.Load("phrases.txt", "phrases");
@@ -135,7 +137,7 @@ namespace donniebot.services
 
                 description += $"\nHere is a [link]({await _net.UploadToPastebinAsync(info)}) to the full information on this exception.";
 
-                description += $"\n\nPlease be sure to DM jakedacatman#6121 on [Discord](https://discord.com) with this link or file an issue on the [GitHub page](https://github.com/jakedacatman/donniebot).";
+                description += $"\n\nPlease be sure to DM jakedacatman#6121 on [Discord](https://discord.com) with this link or file an issue on the [GitHub page](https://github.com/jakedacatman/merlin).";
             }
 
             EmbedBuilder embed = new EmbedBuilder()
@@ -712,6 +714,24 @@ namespace donniebot.services
                     .WithPages(pages);
             
             return paginator;
+        }
+
+        public async Task<InteractiveMessageResult> SendPaginatorAsync(SocketUser user, IEnumerable<PageBuilder> pages, ISocketMessageChannel channel)
+        {
+            return await _inter.SendPaginatorAsync(new StaticPaginatorBuilder()
+                .WithUsers(user)
+                .WithInputType(InputType.Buttons)
+                .WithFooter(PaginatorFooter.PageNumber)
+                .WithOptions(new Dictionary<IEmote, PaginatorAction>
+                {   
+                    { new Emoji("◀️"), PaginatorAction.Backward },
+                    { new Emoji("▶️"), PaginatorAction.Forward },
+                    { new Emoji("⏮️"), PaginatorAction.SkipToStart },
+                    { new Emoji("⏭️"), PaginatorAction.SkipToEnd },
+                    { new Emoji("🛑"), PaginatorAction.Exit }
+                })
+                .WithPages(pages)
+                .Build(), channel);
         }
 
         public string PrettyFormat(long bytes, int place)

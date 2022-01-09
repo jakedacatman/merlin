@@ -1,10 +1,10 @@
 ﻿using System;
-using donniebot.services;
+using merlin.services;
 using Discord.Commands;
 using Discord.WebSocket;
 using System.Diagnostics;
 
-namespace donniebot.classes
+namespace merlin.classes
 {
     public class Globals
     {
@@ -43,10 +43,10 @@ namespace donniebot.classes
             "Microsoft.CodeAnalysis.CSharp.Scripting",
             "Microsoft.CodeAnalysis.Scripting",
             "System.Reflection",
-            "donniebot",
-            "donniebot.classes",
-            "donniebot.commands",
-            "donniebot.services",
+            "merlin",
+            "merlin.classes",
+            "merlin.commands",
+            "merlin.services",
             "Newtonsoft.Json",
             "Newtonsoft.Json.Linq",
             "System.Numerics",

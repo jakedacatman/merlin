@@ -10,7 +10,7 @@ using SixLabors.ImageSharp.Formats;
 using SixLabors.ImageSharp.Formats.Jpeg;
 using SixLabors.ImageSharp.Formats.Gif;
 using SixLabors.ImageSharp.PixelFormats;
-using donniebot.classes;
+using merlin.classes;
 using System.Net;
 using System.Threading.Tasks;
 using System.IO;
@@ -24,7 +24,7 @@ using ISImage = SixLabors.ImageSharp.Image;
 using Discord;
 using SixLabors.ImageSharp.Formats.Png;
 
-namespace donniebot.services
+namespace merlin.services
 {
     public class ImageService
     {

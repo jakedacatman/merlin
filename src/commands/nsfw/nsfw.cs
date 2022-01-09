@@ -4,10 +4,10 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
 using Discord.Commands;
-using donniebot.services;
-using donniebot.classes;
+using merlin.services;
+using merlin.classes;
 
-namespace donniebot.commands
+namespace merlin.commands
 {
     [Name("Nsfw")]
     public class NsfwCommand : ModuleBase<ShardedCommandContext>

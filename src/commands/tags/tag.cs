@@ -2,9 +2,9 @@ using System;
 using System.Threading.Tasks;
 using Discord.Commands;
 using Fergun.Interactive;
-using donniebot.services;
+using merlin.services;
 
-namespace donniebot.commands
+namespace merlin.commands
 {
     [Name("Tag")]
     [Group("tag")]
@@ -13,12 +13,14 @@ namespace donniebot.commands
         private readonly MiscService _misc;
         private readonly DbService _db;
         private readonly InteractiveService _inter;
+        private readonly RandomService _rand;
 
-        public TagCommand(MiscService misc, DbService db, InteractiveService inter)
+        public TagCommand(MiscService misc, DbService db, InteractiveService inter, RandomService rand)
         {
             _misc = misc;
             _db = db;
             _inter = inter;
+            _rand = rand;
         }
 
         [Command("")]

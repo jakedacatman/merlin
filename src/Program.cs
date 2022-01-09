@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using Discord;
 using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
-using donniebot.services;
+using merlin.services;
 using LiteDB;
 using System.IO;
 using System.Collections.Generic;
@@ -13,10 +13,10 @@ using System.Linq;
 using System.Net.Http;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using donniebot.classes;
+using merlin.classes;
 using Fergun.Interactive;
 
-namespace donniebot
+namespace merlin
 {
     class Program
     {

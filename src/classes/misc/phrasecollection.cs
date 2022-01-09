@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using LiteDB;
 using System.IO;
 
-namespace donniebot.classes
+namespace merlin.classes
 {
     public class PhraseCollection : List<string>
     {

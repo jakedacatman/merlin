@@ -4,7 +4,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Discord.Commands;
 
-namespace donniebot.classes
+namespace merlin.classes
 {
     public class TimeSpanReader : TypeReader
     {

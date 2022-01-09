@@ -1,10 +1,10 @@
 using System;
 using System.Threading.Tasks;
 using Discord.Commands;
-using donniebot.services;
-using donniebot.classes;
+using merlin.services;
+using merlin.classes;
 
-namespace donniebot.commands
+namespace merlin.commands
 {
     [Name("Misc")]
     public class ShellCommand : ModuleBase<ShardedCommandContext>

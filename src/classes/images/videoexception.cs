@@ -1,6 +1,6 @@
 using System;
 
-namespace donniebot.classes
+namespace merlin.classes
 {
     public class VideoException : Exception
     {

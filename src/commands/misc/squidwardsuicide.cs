@@ -2,10 +2,10 @@ using System;
 using System.Threading.Tasks;
 using Discord.Commands;
 using System.Collections.Generic;
-using donniebot.services;
+using merlin.services;
 using Discord.WebSocket;
 
-namespace donniebot.commands
+namespace merlin.commands
 {
     [Name("Misc")]
     public class SquidwardSuicideCommand : ModuleBase<ShardedCommandContext>

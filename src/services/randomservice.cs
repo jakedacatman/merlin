@@ -2,7 +2,7 @@ using System;
 using Discord;
 using System.Collections.Generic;
 
-namespace donniebot.services
+namespace merlin.services
 {
     public class RandomService
     {

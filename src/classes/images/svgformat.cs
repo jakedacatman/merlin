@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using SixLabors.ImageSharp.Formats;
 
-namespace donniebot.classes
+namespace merlin.classes
 {
     public class SvgFormat : IImageFormat
     {

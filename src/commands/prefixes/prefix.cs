@@ -2,10 +2,10 @@ using System;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
-using donniebot.classes;
-using donniebot.services;
+using merlin.classes;
+using merlin.services;
 
-namespace donniebot.commands
+namespace merlin.commands
 {
     [Name("Prefix")]
     [Group("prefix")]

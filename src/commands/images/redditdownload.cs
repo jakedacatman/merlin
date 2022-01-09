@@ -4,9 +4,9 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
 using Discord.Commands;
-using donniebot.services;
+using merlin.services;
 
-namespace donniebot.commands
+namespace merlin.commands
 {
     [Name("Image")]
     public class RedditDownloadCommand : ModuleBase<ShardedCommandContext>

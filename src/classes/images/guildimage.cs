@@ -1,4 +1,4 @@
-namespace donniebot.classes
+namespace merlin.classes
 {
     public class GuildImage
     {

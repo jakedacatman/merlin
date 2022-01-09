@@ -7,9 +7,9 @@ using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using Fergun.Interactive;
-using donniebot.services;
+using merlin.services;
 
-namespace donniebot.commands
+namespace merlin.commands
 {
     [Name("Help")]
     public class HelpCommand : ModuleBase<ShardedCommandContext>

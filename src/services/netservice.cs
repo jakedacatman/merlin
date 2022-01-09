@@ -8,12 +8,12 @@ using System.Collections.Generic;
 using System.Net.Http.Headers;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using donniebot.classes;
+using merlin.classes;
 using System.Net;
 using HtmlAgilityPack;
 using LiteDB;
 
-namespace donniebot.services
+namespace merlin.services
 {
     public class NetService
     {

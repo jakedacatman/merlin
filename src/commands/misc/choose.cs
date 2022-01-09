@@ -3,9 +3,9 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using System.Diagnostics;
-using donniebot.services;
+using merlin.services;
 
-namespace donniebot.commands
+namespace merlin.commands
 {
     [Name("Misc")]
     public class ChooseCommand : ModuleBase<ShardedCommandContext>

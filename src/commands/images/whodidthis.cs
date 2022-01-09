@@ -2,11 +2,11 @@ using System;
 using System.Threading.Tasks;
 using Discord.WebSocket;
 using Discord.Commands;
-using donniebot.services;
+using merlin.services;
 using Discord;
 using SixLabors.ImageSharp;
 
-namespace donniebot.commands
+namespace merlin.commands
 {
     [Name("Image")]
     public class WhoDidThisCommand : ModuleBase<ShardedCommandContext>

@@ -6,9 +6,9 @@ using Discord;
 using Discord.Commands;
 using Fergun.Interactive;
 using Fergun.Interactive.Pagination;
-using donniebot.services;
+using merlin.services;
 
-namespace donniebot.commands
+namespace merlin.commands
 {
     [Name("Help")]
     public class CommandsCommand : ModuleBase<ShardedCommandContext>
@@ -57,20 +57,7 @@ namespace donniebot.commands
                         .WithFields(new EmbedFieldBuilder().WithName(module.Key).WithValue(string.Join(", ", module.Value)))
                         .WithColor(_rand.RandomColor()));
 
-                var msg = await _inter.SendPaginatorAsync(new StaticPaginatorBuilder()
-                    .WithUsers(Context.User)
-                    .WithInputType(InputType.Buttons)
-                    .WithFooter(PaginatorFooter.PageNumber)
-                    .WithOptions(new Dictionary<IEmote, PaginatorAction>
-                    {   
-                        { new Emoji("◀️"), PaginatorAction.Backward },
-                        { new Emoji("▶️"), PaginatorAction.Forward },
-                        { new Emoji("⏮️"), PaginatorAction.SkipToStart },
-                        { new Emoji("⏭️"), PaginatorAction.SkipToEnd },
-                        { new Emoji("🛑"), PaginatorAction.Exit }
-                    })
-                    .WithPages(pages)
-                    .Build(), Context.Channel);
+                var msg = await _misc.SendPaginatorAsync(Context.User, pages, Context.Channel);
 
                 if (msg.IsCanceled) await msg.Message.DeleteAsync();
             }
