@@ -12,3 +12,6 @@
 	path = deps/ImageSharp.Drawing
 	url = https://github.com/jakedacatman/ImageSharp.Drawing
 	branch = js/text-options
+[submodule "deps/Fergun.Interactive"]
+	path = deps/Fergun.Interactive
+	url = https://github.com/d4n3436/Fergun.Interactive
