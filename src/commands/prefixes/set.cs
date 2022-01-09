@@ -35,14 +35,14 @@ namespace donniebot.commands
             {
                 var msg = await ReplyAsync($"My current prefix is {_db.GetPrefix(Context.Guild.Id).Prefix}`. Did you intend to reset it?", 
                     components: new ComponentBuilder()
-                        .WithButton("Confirm")
-                        .WithButton("Cancel", style: ButtonStyle.Danger)
+                        .WithButton("Confirm", "confirm")
+                        .WithButton("Cancel", "cancel", ButtonStyle.Danger)
                         .Build()
                 );
 
                 var interaction = await _inter.NextMessageComponentAsync(x => x.User == Context.User && x.Message.Id == msg.Id, timeout: TimeSpan.FromSeconds(10));
 
-                if (interaction.IsSuccess && interaction.Value.Data.CustomId == "Confirm")
+                if (interaction.IsSuccess && interaction.Value.Data.CustomId == "confirm")
                 {
                     _db.RemovePrefix(Context.Guild.Id);
                     await ReplyAsync("The prefix has been reset to default; mention me if you are unsure of what that is.");

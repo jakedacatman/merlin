@@ -52,14 +52,14 @@ namespace donniebot.commands
                 {
                     var msg = await ReplyAsync($"A tag already exists with the name \"{tag}\". Replace it?", 
                         components: new ComponentBuilder()
-                            .WithButton("Confirm")
-                            .WithButton("Cancel", style: ButtonStyle.Danger)
+                            .WithButton("Confirm", "confirm")
+                            .WithButton("Cancel", "cancel", ButtonStyle.Danger)
                             .Build()
                     );
 
                     var interaction = await _inter.NextMessageComponentAsync(x => x.User == Context.User && x.Message.Id == msg.Id, timeout: TimeSpan.FromSeconds(10));
 
-                    if (interaction.IsSuccess && interaction.Value.Data.CustomId == "Confirm")
+                    if (interaction.IsSuccess && interaction.Value.Data.CustomId == "confirm")
                     {
                          _db.RemoveTag(tag, Context.Guild.Id);
                         ct = _db.AddTag(tag, value, Context.Guild.Id);
