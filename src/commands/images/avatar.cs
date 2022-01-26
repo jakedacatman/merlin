@@ -34,6 +34,8 @@ namespace merlin.commands
             await ReplyAsync(embed: new EmbedBuilder()
                 .WithColor(_rand.RandomColor())
                 .WithImageUrl(url)
+                .WithTitle($"Avatar for {user.Id}")
+                .WithUrl(url)
                 .WithCurrentTimestamp()
                 .Build(), messageReference: new MessageReference(Context.Message.Id), allowedMentions: AllowedMentions.None);
         }
@@ -53,6 +55,8 @@ namespace merlin.commands
             await ReplyAsync(embed: new EmbedBuilder()
                 .WithColor(_rand.RandomColor())
                 .WithImageUrl(url)
+                .WithTitle($"Avatar for {userId}")
+                .WithUrl(url)
                 .WithCurrentTimestamp()
                 .Build(), messageReference: new MessageReference(Context.Message.Id), allowedMentions: AllowedMentions.None);
         }
