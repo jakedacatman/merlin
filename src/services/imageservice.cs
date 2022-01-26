@@ -179,6 +179,8 @@ namespace merlin.services
         public async Task<ISImage> PixelateAsync(string url, int size)
         {
             var source = await DownloadFromUrlAsync(url);
+            var max = Math.Min(source.Width, source.Height);
+            if (size > max) size = max;
             Pixelate(source, size);
             return source;
         }
