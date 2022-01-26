@@ -1,6 +1,6 @@
-Wed Jan 26 01:28:37 UTC 2022
-commit 639bb59697d1f3be45029cdd266f3c863a8c6528
+Wed Jan 26 01:35:17 UTC 2022
+commit 09d922f801e3eeb733e7e40755e376d7bb04634a
 Author: jakedacatman <helloihaxxedu@gmail.com>
-Date:   2022-01-25 20:28:20 -0500
+Date:   2022-01-25 20:35:00 -0500
 
-    add link for avatar
+    fix pixelate command
