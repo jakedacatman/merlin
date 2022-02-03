@@ -21,125 +21,45 @@ namespace merlin.services
             _db = db;
 
             _actions.AddRange(_db.LoadActions());
-
-            _client.ShardReady += (DiscordSocketClient client) => 
-            {
-                if (client.ShardId >= _client.Shards.Count - 1)
-                {
-                    var complete = Task.Run(async () => 
-                    {
-                        while (true)
-                        {
-                            if (_actions.Any())
-                                foreach (var action in _actions.ToList())
-                                    if (action.Expiry.HasValue && action.Expiry <= DateTime.UtcNow)
-                                    {
-                                        var guild = _client.Guilds.First(x => x.Id == action.GuildId);
-                                        var user = guild.Users.First(x => x.Id == action.UserId);
-                            
-                                        switch (action.Type)
-                                        {
-                                            case classes.ActionType.Mute:
-                                            {
-                                                await TryUnmuteUserAsync(guild, guild.Users.First(x => x.Id == action.UserId));
-                                                break;
-                                            }
-                                            case classes.ActionType.Ban:
-                                            {
-                                                await guild.RemoveBanAsync(user);
-                                                break;
-                                            }
-                                        }
-
-                                        RemoveAction(action);
-                                    }
-
-                            await Task.Delay(1000);
-                        }
-                    });
-                }
-
-                return Task.CompletedTask;
-            };
         }
 
-        public async Task<MuteResult> TryMuteUserAsync(SocketGuild guild, SocketGuildUser moderator, SocketGuildUser user, string reason = null, TimeSpan? expiry = null)
+        public async Task<MuteResult> TryMuteUserAsync(SocketGuildUser moderator, SocketGuildUser user, string reason = null, TimeSpan? expiry = null)
         {
             try
             {
-                IRole role;
+                if (user.TimedOutUntil is not null && user.TimedOutUntil.Value.UtcDateTime > DateTime.UtcNow)
+                    return MuteResult.FromError("The user is already under a timeout.", user.Id);
 
-                if (guild.Roles.Any(x => x.Name == "Muted"))
-                    role = guild.Roles.First(x => x.Name == "Muted");
-                else
-                {
-                    OverwritePermissions Permissions = new OverwritePermissions(addReactions: PermValue.Deny, sendMessages: PermValue.Deny, attachFiles: PermValue.Deny, useExternalEmojis: PermValue.Deny, speak: PermValue.Deny);
+                if (expiry is null || expiry > TimeSpan.FromDays(28)) expiry = TimeSpan.FromDays(28);
 
-                    role = await guild.CreateRoleAsync("Muted", GuildPermissions.None, Color.Default, false, false);
+                await user.SetTimeOutAsync(expiry.Value, new RequestOptions { AuditLogReason = reason });
 
-                    await role.ModifyAsync(x => x.Position = guild.GetUser(_client.CurrentUser.Id).Roles.OrderBy(y => y.Position).Last().Position);
-
-                    foreach (var channel in (guild as SocketGuild).TextChannels)
-                        if (!channel.PermissionOverwrites.Select(x => x.Permissions).Contains(Permissions))
-                            await channel.AddPermissionOverwriteAsync(role, Permissions);
-
-                    foreach (var channel in (guild as SocketGuild).VoiceChannels)
-                        if (!channel.PermissionOverwrites.Select(x => x.Permissions).Contains(Permissions))
-                            await channel.AddPermissionOverwriteAsync(role, Permissions);
-                }
-
-                if (role.Position < user.Roles.OrderBy(x => x.Position).Last().Position)
-                    return MuteResult.FromError("The \"Muted\" role is below the user's highest role.", user.Id);
-
-                if (user.Roles.Contains(role)) return MuteResult.FromError("The user is already muted.", user.Id);
-
-                await user.AddRoleAsync(role);
-                
-                if (user.VoiceChannel is not null)
-                    await user.ModifyAsync(x => x.Mute = true);
-
-                var action = new ModerationAction(user.Id, moderator.Id, guild.Id, merlin.classes.ActionType.Mute, expiry, reason);
+                var action = new ModerationAction(user.Id, moderator.Id, user.Guild.Id, merlin.classes.ActionType.Mute, expiry, reason);
                 AddAction(action);
 
                 return MuteResult.FromSuccess(action);
             }
             catch (Exception e)
             {
-                return MuteResult.FromError($"There was an exception while muting the user. ({e.Message})", user.Id);
+                return MuteResult.FromError($"There was an exception while adding a timeout to the user. ({e.Message})", user.Id);
             }
         }
 
-        public async Task<MuteResult> TryUnmuteUserAsync(SocketGuild guild, SocketGuildUser user)
+        public async Task<MuteResult> TryUnmuteUserAsync(SocketGuildUser user)
         {
             try
             {
-                SocketRole role;
+                if (user.TimedOutUntil is null)
+                    return MuteResult.FromError("The user is not under a timeout.", user.Id);
 
-                if (guild.Roles.Any(x => x.Name == "Muted"))
-                    role = guild.Roles.FirstOrDefault(x => x.Name == "Muted");
-                else return MuteResult.FromError("There is not a \"Muted\" role in the server.", user.Id);
+                await user.RemoveTimeOutAsync();
 
-                if (role.Position < user.Roles.OrderBy(x => x.Position).Last().Position)
-                    return MuteResult.FromError("The \"Muted\" role is below the user's highest role.", user.Id);
-
-                if (!user.Roles.Contains(role)) return MuteResult.FromError("The user is already unmuted.", user.Id);
-
-                await user.RemoveRoleAsync(role);
-
-                RemoveAction(x => 
-                    x.UserId == user.Id && 
-                    x.GuildId == guild.Id && 
-                    x.Type == merlin.classes.ActionType.Mute
-                );
-
-                if (user.VoiceChannel is not null)
-                    await user.ModifyAsync(x => x.Mute = false);
-                    
+                RemoveAction(_actions.First(x => x.Type == classes.ActionType.Mute && x.UserId == user.Id && x.GuildId == user.Guild.Id));
                 return MuteResult.FromSuccess("", user.Id);
             }
             catch (Exception e)
             {
-                return MuteResult.FromError($"There was an exception while unmuting the user. ({e.Message})", user.Id);
+                return MuteResult.FromError($"There was an exception while removing the user's timeout. ({e.Message})", user.Id);
             }
         }
 

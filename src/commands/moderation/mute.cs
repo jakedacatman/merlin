@@ -22,22 +22,29 @@ namespace merlin.commands
         }
 
         [Command("mute")]
+        [Alias("timeout", "to")]
         [RequireBotPermission(GuildPermission.MuteMembers | GuildPermission.ManageRoles)]
         [RequireUserPermission(GuildPermission.MuteMembers)]
         [Summary("Mutes a user.")]
-        public async Task MuteAsync([Summary("The user to mute.")] SocketGuildUser user, [Summary("The length of time to mute them for.")] TimeSpan? period = null, [Summary("The reason for muting them.")] string reason = null)
+        public async Task MuteAsync([Summary("The user to mute.")] SocketGuildUser user, [Summary("The length of time to mute them for (max of 28 days.)")] TimeSpan? period = null, [Summary("The reason for muting them.")] string reason = null)
         {
-            var res = await _mod.TryMuteUserAsync(Context.Guild, (Context.User as SocketGuildUser), user, reason, period);
+            if (period > TimeSpan.FromDays(28))
+            {
+                await ReplyAsync("Timeouts can only last for 28 days.");
+                return;
+            }
+
+            var res = await _mod.TryMuteUserAsync((Context.User as SocketGuildUser), user, reason, period);
             
             if (res.IsSuccess)
             {
                 var msg = $"Consider it done, {Context.User.Mention}.";
-                if (period is not null) msg += $" They will be unmuted at {res.Action.Expiry:r}.";
+                if (period is not null) msg += $" They will be unmuted at {res.Action.Expiry:dd/MM/yyyy HH:mm:ss UTC}.";
 
                 await ReplyAsync(msg);
             }
             else
-                await ReplyAsync($"Failed to mute the user. (`{res.Message}`)");
+                await ReplyAsync($"Failed to mute the user: `{res.Message}`");
         }
     }
 }

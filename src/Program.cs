@@ -34,7 +34,12 @@ namespace merlin
         {
             _client = new DiscordShardedClient(new DiscordSocketConfig
             {
-                GatewayIntents = GatewayIntents.All
+                LogLevel = LogSeverity.Verbose,
+                AlwaysDownloadUsers = true,
+                GatewayIntents = GatewayIntents.All,
+                ConnectionTimeout = int.MaxValue,
+                DefaultRetryMode = RetryMode.AlwaysRetry,
+                MessageCacheSize = 1024
             });
 
             _commands = new CommandService(new CommandServiceConfig
@@ -79,21 +84,6 @@ namespace merlin
                 _db.AddApiKey("discord", apiKey);
                 Console.Clear();
             }
-
-            await _client.LoginAsync(TokenType.Bot, apiKey);
-            await _client.StartAsync();
-
-            var cfg = new DiscordSocketConfig
-            {
-                LogLevel = LogSeverity.Verbose,
-                AlwaysDownloadUsers = false,
-                ConnectionTimeout = int.MaxValue,
-                TotalShards = await _client.GetRecommendedShardCountAsync(),
-                DefaultRetryMode = RetryMode.AlwaysRetry,
-                MessageCacheSize = 1024
-            };
-
-            _client = new DiscordShardedClient(cfg);
 
             await _client.LoginAsync(TokenType.Bot, apiKey);
             await _client.StartAsync();

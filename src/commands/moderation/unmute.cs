@@ -27,12 +27,12 @@ namespace merlin.commands
         [Summary("Unmutes a user.")]
         public async Task UnmuteAsync([Summary("The user to unmute.")] SocketGuildUser user)
         {
-            var res = await _mod.TryUnmuteUserAsync(Context.Guild, user);
+            var res = await _mod.TryUnmuteUserAsync(user);
             
             if (res.IsSuccess)
                 await ReplyAsync($"Consider it done, {Context.User.Mention}.");
             else
-                await ReplyAsync($"Failed to unmute the user. (`{res.Message}`)");
+                await ReplyAsync($"Failed to unmute the user: `{res.Message}`");
         }
     }
 }
