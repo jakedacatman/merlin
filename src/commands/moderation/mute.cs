@@ -26,7 +26,7 @@ namespace merlin.commands
         [RequireBotPermission(GuildPermission.MuteMembers | GuildPermission.ManageRoles)]
         [RequireUserPermission(GuildPermission.MuteMembers)]
         [Summary("Mutes a user.")]
-        public async Task MuteAsync([Summary("The user to mute.")] SocketGuildUser user, [Summary("The length of time to mute them for (max of 28 days.)")] TimeSpan? period = null, [Summary("The reason for muting them.")] string reason = null)
+        public async Task MuteAsync([Summary("The user to mute.")] SocketGuildUser user, [Summary("The length of time to mute them for (max of 28 days.)")] TimeSpan? period = null, [Summary("The reason for muting them."), Remainder] string reason = null)
         {
             if (period > TimeSpan.FromDays(28))
             {
