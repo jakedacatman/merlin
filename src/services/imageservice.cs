@@ -262,6 +262,7 @@ namespace merlin.services
 
             var to = new TextOptions(font)
             {
+                TextAlignment = TextAlignment.Center,
                 HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center,
                 WrappingLength = wrap,
