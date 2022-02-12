@@ -1,6 +1,6 @@
-Sun Feb 6 01:26:55 UTC 2022
-commit cbbf462701d60e7ec737f945c4ddaa50c98633cc
+Sat Feb 12 02:56:47 UTC 2022
+commit 6dd44cba186b2ef16abdfa63daa7d8bfb518786a
 Author: jakedacatman <helloihaxxedu@gmail.com>
-Date:   2022-02-05 20:26:42 -0500
+Date:   2022-02-11 21:56:33 -0500
 
-    tweak mute
+    fixed caption not being centered
