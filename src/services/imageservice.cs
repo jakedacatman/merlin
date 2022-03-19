@@ -424,20 +424,10 @@ namespace merlin.services
             var w = source.Width;
             var h = source.Height;
 
-            var font = new Font(goulongFontFamily, w / 12f, FontStyle.Regular);
-
             var tFont = new Font(linuxLFontFamily, w / 6f, FontStyle.Regular);
 
             float padding = 0.05f * w;
             float wrap = w - (2 * padding);
-
-            var bounds = TextMeasurer.Measure(body, new SixLabors.Fonts.TextOptions(font) 
-            { 
-                TextAlignment = TextAlignment.Center,
-                WrappingLength = wrap, 
-                HorizontalAlignment = HorizontalAlignment.Center, 
-                VerticalAlignment = VerticalAlignment.Center
-            });
 
             var tBounds = TextMeasurer.Measure(title, new SixLabors.Fonts.TextOptions(tFont) 
             {
@@ -454,7 +444,7 @@ namespace merlin.services
 
                 tFont = new Font(linuxLFontFamily, size, FontStyle.Regular);;
 
-                tBounds = TextMeasurer.Measure(title, new SixLabors.Fonts.TextOptions(tFont) 
+                tBounds = TextMeasurer.MeasureBounds(title, new SixLabors.Fonts.TextOptions(tFont) 
                 { 
                     TextAlignment = TextAlignment.Center,
                     WrappingLength = wrap, 
@@ -463,12 +453,23 @@ namespace merlin.services
                 });
             }
 
+            var font = new Font(goulongFontFamily, tFont.Size / 3f, FontStyle.Regular);
+
+            var bounds = TextMeasurer.MeasureBounds(body, new SixLabors.Fonts.TextOptions(font) 
+            { 
+                TextAlignment = TextAlignment.Center,
+                WrappingLength = wrap, 
+                HorizontalAlignment = HorizontalAlignment.Center, 
+                VerticalAlignment = VerticalAlignment.Center
+            });
+
             var bw = (int)Math.Round(w / 8d);
             var bh = (int)Math.Round(h / 8d);
 
             var height = tBounds.Height + bh;
 
-            ISImage bg = new Image<Rgba32>((int)Math.Round((5d / 4d) * w), (int)Math.Round((1.25f * h) + height + bounds.Height));
+            ISImage bg = new Image<Rgba32>((int)Math.Round((5d / 4d) * w), (int)Math.Round((1.25f * h) + tBounds.Height + bounds.Height));
+            bg.Mutate(x => x.Fill(SixLabors.ImageSharp.Color.Black));
 
             var rWidth = Math.Max(0.05f * bw, 3f);
             var offset = rWidth + 2;
@@ -481,6 +482,7 @@ namespace merlin.services
 
             var titleOptions = new TextOptions(tFont)
             {
+                TextAlignment = TextAlignment.Center,
                 HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center,
                 WrappingLength = wrap,
@@ -490,14 +492,13 @@ namespace merlin.services
 
             bg.Mutate(x => x.DrawText(titleOptions, title, SixLabors.ImageSharp.Color.White));
 
-            var nextY = tBounds.Height;// + bh;
-            if (bounds.Width > wrap)
-                nextY = (height + .25f * bounds.Height);
+            var nextY = tBounds.Height / 2f;// + bh;
                 
             location.Y += (nextY);
 
             var bodyOptions = new TextOptions(font)
             {
+                TextAlignment = TextAlignment.Center,
                 HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center,
                 WrappingLength = wrap,
@@ -915,6 +916,17 @@ namespace merlin.services
             return source;
         }
 
+        public async Task<ISImage> BoomerangAsync(string url) => Boomerang(await DownloadFromUrlAsync(url));
+        public ISImage Boomerang(ISImage source)
+        {
+            var newSrc = source.CloneAs<Rgba32>();
+            Reverse(newSrc);
+            for (int i = 0; i < newSrc.Frames.Count; i++)
+                source.Frames.AddFrame(newSrc.Frames[i]);
+
+            return source;
+        }
+
         public string GetNekoEndpoints(bool nsfw)
         {
             if (nsfw)
@@ -1160,7 +1172,7 @@ namespace merlin.services
             Math.Round(img.Metadata.HorizontalResolution, 3), Math.Round(img.Metadata.VerticalResolution, 3));
         }
 
-        public async Task<string> ParseUrlAsync(string url, SocketUserMessage msg, bool isNext = false)
+        public async Task<string> ParseUrlAsync(string url, SocketUserMessage msg, bool isNext = false, bool isPiped = false)
         {
             if (url is not null) 
             {

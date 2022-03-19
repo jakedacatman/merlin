@@ -18,7 +18,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Discord.Net" Version="3.1.0" />
+    <PackageReference Include="Discord.Net" Version="3.4.1" />
     <PackageReference Include="HtmlAgilityPack" Version="1.11.34" />
     <ProjectReference Include="../deps/SVGSharpie/src/UkooLabs.SVGSharpie.ImageSharp/UkooLabs.SVGSharpie.ImageSharp.csproj" />
     <ProjectReference Include="../deps/ImageSharp.Drawing/src/ImageSharp.Drawing/ImageSharp.Drawing.csproj" />
