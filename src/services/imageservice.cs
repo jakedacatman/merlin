@@ -36,7 +36,6 @@ namespace merlin.services
 
         private IImageFormat _format;
         private List<GuildImage> sentImages = new List<GuildImage>();
-        private readonly NekoEndpoints _nkeps;
 
         private readonly FontFamily impactFontFamily;
         private readonly FontFamily linuxLFontFamily;
@@ -47,13 +46,12 @@ namespace merlin.services
 
         private FontFamily[] fallbackFonts;
 
-        public ImageService(MiscService misc, NetService net, RandomService rand, DbService db, NekoEndpoints nkeps, DiscordShardedClient client)
+        public ImageService(MiscService misc, NetService net, RandomService rand, DbService db, DiscordShardedClient client)
         {
             _misc = misc;
             _net = net;
             _rand = rand;
             _db = db;
-            _nkeps = nkeps;
             _client = client;
 
 
@@ -925,99 +923,6 @@ namespace merlin.services
                 source.Frames.AddFrame(newSrc.Frames[i]);
 
             return source;
-        }
-
-        public string GetNekoEndpoints(bool nsfw)
-        {
-            if (nsfw)
-                return $"NSFW: {string.Join(", ", _nkeps.Nsfw.Keys)}";
-            else
-                return $"SFW: {string.Join(", ", _nkeps.Sfw.Keys)}"; 
-        }
-        public async Task<string> GetNekoImageAsync(bool nsfw, ulong gId, string ep = "neko")
-        {
-            var url = "";
-            
-            Dictionary<string, string> endpoints;
-
-            if (nsfw)
-            {
-                endpoints = _nkeps.Nsfw;
-                if (!endpoints.ContainsKey(ep)) 
-                    ep = endpoints["nekoGif"];
-                else
-                    ep = endpoints[ep];
-
-            }
-            else
-            {
-                endpoints = _nkeps.Sfw;
-                if (!endpoints.ContainsKey(ep)) 
-                    ep = endpoints["neko"];
-                else
-                    ep = endpoints[ep];
-            }
-
-            while (true)
-            {
-                var res = JsonConvert.DeserializeObject<JObject>(await _net.DownloadAsStringAsync($"https://nekos.life/api/v2{ep}"));
-                url = res["url"].Value<string>();
-                var obj = new GuildImage(url, gId);
-                if (!sentImages.ContainsObj(obj))
-                {
-                    sentImages.Add(obj);
-                    break;
-                }
-            }
-            
-            return url;
-        }
-
-        public async Task<GuildImage> GetBooruImageAsync(ulong gId, string query)
-        {
-            var img = new GuildImage(null, gId);
-
-            for (int i = 0; i < 10; i++)
-            {
-                var res = JsonConvert.DeserializeObject<JObject>(await _net.DownloadAsStringAsync($"https://cure.ninja/booru/api/json/{i}?f=e&s=50&o=r&q={WebUtility.UrlEncode(query)}"));               
-                if (GetBooruImage(res["results"], gId, query, out img)) break;
-            }
-
-            return img;
-        }
-        private bool GetBooruImage(IEnumerable<JToken> data, ulong gId, string query, out GuildImage image)
-        {
-            for (int i = 0; i < data.Count(); i++)
-            {
-                var r = data.ElementAt(i);
-                var url = r["url"]?.Value<string>();
-                var un = r["userName"]?.Value<string>() ?? "unknown";
-                var s = r["sourceURL"]?.Value<string>() ?? "unknown";
-
-                //temporary fix until the website is functional
-                /*
-                if (r["source"]?.Value<string>() == "Gelbooru")
-                {
-                    var fn = url.Split('/').Last();
-                    url = $"https://img2.gelbooru.com/images/{fn.Substring(0, 2)}/{fn.Substring(2, 2)}/{fn}";
-                }
-                else if (r["source"]?.Value<string>() == "Danbooru")
-                {
-                    var fn = url.Split('/').Last();
-                    url = $"https://cdn.donmai.us/original/{fn.Substring(0, 2)}/{fn.Substring(2, 2)}/{fn}";
-                }
-                */
-                
-                image = new GuildImage(url, gId, s, un, title: $"{r["id"]?.Value<string>()} - {r["source"]?.Value<string>()}");
-
-                if (!sentImages.ContainsObj(image) && !string.IsNullOrWhiteSpace(un))
-                {
-                    sentImages.Add(image);
-                    return true;
-                }
-            }
-            image = new GuildImage(null, gId);
-            return false;
         }
 
         public async Task<GuildImage> GetRedditImageAsync(ulong gId, string name, bool nsfw, string mode = "top")
