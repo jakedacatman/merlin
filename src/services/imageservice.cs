@@ -1108,7 +1108,7 @@ namespace merlin.services
                         usernameOrId = userAndSize[0];
                     }
 
-                    var robloxUrl = $"https://www.roblox.com/Thumbs/Avatar.ashx?x={size}&y={size}&Format=Png&username=";
+                    var robloxUrl = $"https://www.roblox.com/avatar-thumbnail/image?width={size}&height={size}&format=png&userId=";
                     if (ulong.TryParse(usernameOrId, out var id))
                     {
                         var res = JsonConvert.DeserializeObject<JObject>(await _net.DownloadAsStringAsync($"https://users.roblox.com/v1/users/{id}"));
