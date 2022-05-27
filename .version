@@ -1,6 +1,6 @@
-Fri May 27 05:59:41 UTC 2022
-commit 4ba31f0ad8b309b3e9a442e8a1446aae767edf90
+Fri May 27 18:26:24 UTC 2022
+commit daa74fe2d499a1929c72d19532d6e9d58972ba60
 Author: jakedacatman <helloihaxxedu@gmail.com>
-Date:   2022-05-27 01:59:26 -0400
+Date:   2022-05-27 14:26:08 -0400
 
-    part 2
+    made avatar command work with roblox avatars
