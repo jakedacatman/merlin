@@ -1115,7 +1115,7 @@ namespace merlin.services
                         if (res["errors"] is not null)
                             throw new ImageException($"Invalid Roblox user ID. ({res["errors"][0]["message"].Value<string>()})");
                         else
-                            robloxUrl += res["name"].Value<string>();
+                            robloxUrl += res["id"].Value<string>();
                     }
                     else
                     {
@@ -1124,7 +1124,7 @@ namespace merlin.services
                         if (!res["data"].Any() || !res["data"].Any(x => x["name"].Value<string>() == usernameOrId))
                             throw new ImageException("Invalid Roblox username.");
                         else
-                            robloxUrl += usernameOrId;
+                            robloxUrl += res["data"].First(x => x["name"].Value<string>() == usernameOrId)["id"].Value<ulong>();
                     }
 
                     return robloxUrl;
