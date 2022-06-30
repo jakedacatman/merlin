@@ -1,6 +1,6 @@
-Fri May 27 18:26:24 UTC 2022
-commit daa74fe2d499a1929c72d19532d6e9d58972ba60
+Thu Jun 30 03:08:21 UTC 2022
+commit 263b9f6d164d6bebc475dccf32cc97b0e1b1bb3d
 Author: jakedacatman <helloihaxxedu@gmail.com>
-Date:   2022-05-27 14:26:08 -0400
+Date:   2022-06-29 23:07:59 -0400
 
-    made avatar command work with roblox avatars
+    change gif max fps to 100
