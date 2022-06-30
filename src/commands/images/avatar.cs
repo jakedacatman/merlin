@@ -65,7 +65,7 @@ namespace merlin.commands
         [Alias("a", "av")]
         [Priority(0)]
         [Summary("Gets a user's avatar.")]
-        public async Task AvatarAsync([Summary("The ROBLOX username (put \"roblox:\" in front).")] string user)
+        public async Task AvatarAsync([Summary("The ROBLOX username or ID (put \"roblox:\" in front).")] string user)
         {
             var url = await _img.ParseUrlAsync(user, Context.Message, true);
             await ReplyAsync(embed: new EmbedBuilder()

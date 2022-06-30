@@ -72,8 +72,8 @@ namespace merlin.commands
 
                         if (!ct) await ReplyAsync("Failed to add the tag.");
                         else await ReplyAsync($"Added tag `{tag}`.");
-                    }
-                    
+                    }                    
+
                     await interaction.Message.DeleteAsync();
                 }
             }
