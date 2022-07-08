@@ -1,6 +1,6 @@
-Thu Jun 30 03:08:21 UTC 2022
-commit 263b9f6d164d6bebc475dccf32cc97b0e1b1bb3d
+Fri Jul 8 18:06:12 UTC 2022
+commit eb93f8eafe2dcc41ec2ba3d4e5c5b008afe9ec0b
 Author: jakedacatman <helloihaxxedu@gmail.com>
-Date:   2022-06-29 23:07:59 -0400
+Date:   2022-07-08 14:05:55 -0400
 
-    change gif max fps to 100
+    fix gif speed up
