@@ -105,8 +105,6 @@ namespace merlin
 
             _commands.CommandExecuted += CommandExecutedAsync;
 
-            if (!File.Exists("nsfw.txt"))
-                await File.WriteAllTextAsync("nsfw.txt", await _services.GetService<NetService>().DownloadAsStringAsync("https://paste.jakedacatman.me/raw/YU4vA"));
             if (!File.Exists("phrases.txt"))
                 await File.WriteAllTextAsync("phrases.txt", await _services.GetService<NetService>().DownloadAsStringAsync("https://paste.jakedacatman.me/raw/8foSm"));
 

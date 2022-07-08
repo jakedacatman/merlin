@@ -837,7 +837,7 @@ namespace merlin.services
         public async Task<ISImage> ResizeAsync(string url, int x, int y) => Resize(await DownloadFromUrlAsync(url, x, y), x, y);
         public ISImage Resize(ISImage source, int x, int y)
         {
-            if (x > 2000 || y > 2000 || x < 1 || y < 1) throw new ImageException("The dimensions were either too small or too large. The maximum is 2000 x 2000 pixels and the minimum is 1 x 1 pixels.");
+            if (x < 1 || y < 1) throw new ImageException("The dimensions were too small. The minimum is 1 x 1 pixels.");
 
             if (source.Frames.Count > 1)
                 source = ResizeGif(source, x, y);
@@ -860,7 +860,7 @@ namespace merlin.services
             var x = (int)Math.Round(source.Width * scaleX);
             var y = (int)Math.Round(source.Height * scaleY);
 
-            if (x > 2000 || y > 2000 || x < 0 || y < 0) throw new ImageException("The dimensions were either too small or too large.");
+            if (x < 0 || y < 0) throw new ImageException("The dimensions were too small.");
 
             if (source.Frames.Count > 1)
                 source = ResizeGif(source, x, y);
@@ -884,7 +884,7 @@ namespace merlin.services
             for (int i = 0; i < source.Frames.Count; i++)
             {
                 var frame = source.Frames.CloneFrame(i).Frames[0];
-                frame.Metadata.GetFormatMetadata(GifFormat.Instance).FrameDelay = (int)Math.Max(Math.Round(delay / speed), 2);
+                frame.Metadata.GetFormatMetadata(GifFormat.Instance).FrameDelay = (int)Math.Max(Math.Round(delay / speed), 2); //theoretical max of gif is 100 fps (10 ms delay) but i can only get 50 to work
 
                 source.Frames.RemoveFrame(i);
                 source.Frames.InsertFrame(i, frame);
