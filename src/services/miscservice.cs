@@ -128,7 +128,7 @@ namespace merlin.services
                 if (message.Length < 500)
                     description += $"its message:\n\n**{message.Replace("`", @"\`")}**";
                 else
-                    description += $"a [link]({await _net.UploadToPastebinAsync(message)} to its message.";
+                    description += $"a [link]({await _net.UploadToPastebinAsync(message)}) to its message.";
 
                 string trace = e.StackTrace;
                 if (inex is not null) trace += $"\ninner exception: {inex.StackTrace}";

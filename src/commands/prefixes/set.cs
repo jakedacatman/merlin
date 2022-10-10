@@ -39,7 +39,7 @@ namespace merlin.commands
                     .AddUser(Context.User)
                     .WithSelectionPage(new PageBuilder()
                         .WithTitle("⚠️ Warning ⚠️")
-                        .WithDescription($"My current prefix is {_db.GetPrefix(Context.Guild.Id).Prefix}`. Did you intend to reset it?")
+                        .WithDescription($"My current prefix is `{_db.GetPrefix(Context.Guild.Id).Prefix}`. Did you intend to reset it?")
                         .WithCurrentTimestamp()
                         .WithColor(_rand.RandomColor()
                     ))

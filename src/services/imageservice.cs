@@ -1257,7 +1257,8 @@ namespace merlin.services
 
                 var doPing = ping ? Discord.AllowedMentions.All : Discord.AllowedMentions.None;
 
-                if (len > 8388119) //allegedly discord's limit
+                //if (len > 8388119) //allegedly discord's limit
+                if (len >= 8000000) //limit changed?
                     await ch.SendMessageAsync(await _net.UploadAsync(path, ext), messageReference: msg, allowedMentions: doPing);
                 else
                     await ch.SendFileAsync(path, messageReference: msg, allowedMentions: Discord.AllowedMentions.None);
